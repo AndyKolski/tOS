@@ -132,7 +132,7 @@ int kmain(unsigned long magic, unsigned long addr) {
 
 	uint8 buf[16];
 	while (1) {
-		/*if(r > 0 && b == 0) {
+		if(r > 0 && b == 0) {
 			r--;
 			g++;
 		}
@@ -146,13 +146,13 @@ int kmain(unsigned long magic, unsigned long addr) {
 		}
 		c = colorFromRGB(r,g,b);
 		fillRect(mbi->framebuffer_width/4,mbi->framebuffer_height/4,mbi->framebuffer_width/2, mbi->framebuffer_height/2, c);	
-		*/
-		drawDuck();
-		/*itoa(timer_uptime_ticks(), buf, 10);
+		
+		itoa(timer_uptime_ticks(), buf, 10);
 		badPlaceStr("Testing 123. The quick brown fox jumped over the lazy dog. !@#$%^&*()_+1234567890-=", 50, 50, colorFromRGB(0xff, 0xff, 0xff));
 		badPlaceStr("System uptime in ticks:", 50, 50+11, colorFromRGB(0xff, 0xff, 0xff));
 		badPlaceStrBkg(buf, 50, 50+22, colorFromRGB(0xff, 0xff, 0xff), colorFromRGB(0x00, 0x00, 0x00));
-		*/
+		
+		//drawDuck();
 	}
 
 	for(;;);

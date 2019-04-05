@@ -1,5 +1,5 @@
 #include <header.h>
-#include <Duck.h>
+//#include <Duck.h>
 #include <font.h>
 
 char *ptr;
@@ -58,7 +58,7 @@ void badPlaceStrBkg(uint8 *str, uint32 x, uint32 y, uint32 c, uint32 bkc) {
 		badPlaceCharBkg(str[i], x + (i*6), y, c, bkc);
 	}
 }
-void drawDuck() {
+/*void drawDuck() {
 	//640x426x32
 	for (int x = 1; x < 640; ++x)
 	{
@@ -71,7 +71,7 @@ void drawDuck() {
 			ptr[p+2] = duck_map[dp+2];
 		}
 	}
-}
+}*/
 void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, uint32 c) {
 	int s = 0;
 	for (int fy = y; fy < h+y; ++fy) {
