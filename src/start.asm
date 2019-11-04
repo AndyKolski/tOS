@@ -26,8 +26,8 @@ mboot:
 	dd start
 
 	dd 0 ; Mode type
-	dd 640 ; width
-	dd 480 ; height
+	dd 1280 ; width
+	dd 800 ; height
 	dd 24 ; depth
 
 stublet:

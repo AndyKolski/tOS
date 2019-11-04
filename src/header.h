@@ -9,6 +9,12 @@ typedef unsigned char           uint8;
 typedef unsigned short          uint16;
 typedef unsigned int            uint32;
 typedef unsigned long long      uint64;
+typedef char           int8;
+typedef short          int16;
+typedef int            int32;
+typedef long long      int64;
+
+typedef char kchar;
 
 /* This defines what the stack looks like after an ISR was running */
 struct regs
@@ -19,25 +25,16 @@ struct regs
     unsigned int eip, cs, eflags, useresp, ss;   /* pushed by the processor automatically */ 
 };
 
-/* MAIN.C */
-extern char *memcpy(char *dest, const char *src, int count);
+/* COMMON.C */
+extern uint8 *memcpy(uint8 *dest, const uint8 *src, uint32 count);
 extern char *memset(char *dest, char val, int count);
 extern short *memsetw(short *dest, short val, int count);
-extern int strlen(const char *str);
-extern int itoa(int value, char *sp, int radix);
+extern int strlen(const kchar *str);
+extern char* strcpy(kchar* destination, const kchar* source);
+extern int itoa(int64 value, char *sp, int radix);
 extern unsigned char inportb (unsigned short _port);
 extern void outportb (unsigned short _port, unsigned char _data);
-
-/* SCRN.C */
-extern int csr_x;
-extern int csr_y;
-extern int upd_csr_pos;
-extern void cls();
-extern void putch(char c);
-extern void puts(char *str);
-extern void putl(char *str);
-extern void settextcolor(unsigned char forecolor, unsigned char backcolor);
-extern void init_video();
+extern void init_serial();
 
 /* GDT.C */
 extern void gdt_install();
@@ -72,6 +69,10 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 uint32 colorFromRGB(uint8 r, uint8 g, uint8 b);
 void setPixel(uint32 x, uint32 y, uint32 c);
 void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, uint32 c);
+void puts(char *text);
+void putc(kchar chr);
+void printf(char *pcFormat, ...);
+void termBackspace(); //TEMP
 
 
 #endif
