@@ -2,8 +2,8 @@
 
 /* This will keep track of how many ticks that the system
 *  has been running for */
-volatile long timer_ticks = 0;
-volatile int timer_tps = 0;
+volatile uint64 timer_ticks = 0;
+volatile uint32 timer_tps = 0;
 
 /* Handles the timer. In this case, it's very simple: We
 *  increment the 'timer_ticks' variable every time the
@@ -15,10 +15,11 @@ void timer_handler(struct regs *r)
     /* Increment our 'tick count' */
     timer_ticks++;
 
-    /*if (timer_ticks % timer_tps == 0)
+    if (timer_ticks % timer_tps == 0)
     {
-        putl("A second has passed.");
-    }*/
+       kbd_led_handling(1 << (timer_ticks/timer_tps%3));
+       // printf("System uptime: %i secs\n", timer_uptime_secs());
+    }
 }
 
 long timer_uptime_ticks() {
@@ -37,17 +38,13 @@ void timer_install()
     irq_install_handler(0, timer_handler);
 }
 
-void timer_phase(int hz)
-{
-	timer_tps = hz;
-    int divisor = 1193180 / hz;       /* Calculate our divisor */
-    outportb(0x43, 0x36);             /* Set our command byte 0x36 */
-    outportb(0x40, divisor & 0xFF);   /* Set low byte of divisor */
-    outportb(0x40, divisor >> 8);     /* Set high byte of divisor */
+void timer_phase(int freq) {
+    printf("Setting up System Timer at %i Hz...\n", freq);
+    timer_tps = freq;
+    configureTimer(TIMER0_SELECT, TIMER0_CTL, freq, MODE_SQUARE_WAVE);
 }
 
-void timer_wait_ms(unsigned int ms)
-{
+void timer_wait_ms(unsigned int ms) {
     unsigned long eticks;
 
     eticks = timer_ticks + ((ms*timer_tps)/1000);

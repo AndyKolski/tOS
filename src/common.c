@@ -1,9 +1,8 @@
 #include <header.h>
-#include <stdint.h>
 
 uint8 *memcpy(uint8 *dest, const uint8 *src, uint32 count)
 {
-	for (int i = 0; i < count; ++i) {
+	for (uint32 i = 0; i < count; ++i) {
 		dest[i] = src[i];
 	}
 	return dest;
@@ -72,6 +71,10 @@ unsigned char inportb (unsigned short _port)
 	__asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
 	return rv;
 }
+void outportb (unsigned short _port, unsigned char _data)
+{
+	__asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
+}
 static inline uint8_t inb(uint16_t port)
 {
     uint8_t ret;
@@ -79,10 +82,6 @@ static inline uint8_t inb(uint16_t port)
                    : "=a"(ret)
                    : "Nd"(port) );
     return ret;
-}
-void outportb (unsigned short _port, unsigned char _data)
-{
-	__asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
 }
 static inline void outb(uint16_t port, uint8_t val)
 {
@@ -102,22 +101,23 @@ void reverse(char s[]) {
 		 s[j] = c;
 	 }
  }
+
 int itoa(int64 value, char *sp, int radix) {
 	char tmp[66];
 	char *tp = tmp;
 	int i;
-	unsigned v;
+	uint64 v;
 	int sign = (radix == 10 && value < 0);    
 	if (sign)
 		v = -value;
 	else
-		v = (unsigned)value;
+		v = (uint64)value;
 
 	while (v || tp == tmp)
 	{
 		i = v % radix;
 		v /= radix; // v/=radix uses less CPU clocks than v=v/radix does
-		if (i < 10)
+		if (i < 10) 
 		  *tp++ = i+'0';
 		else
 		  *tp++ = i + 'A' - 10;
@@ -171,4 +171,19 @@ void serial_puts(char *text) {
 	for (int i = 0; i < strlen(text); ++i) {
 		write_serial(text[i]);
 	}
+}
+
+void halt() {
+	asm volatile ("cli");
+	while (true) {
+		asm volatile ("hlt");
+	}
+}
+
+void reboot() {
+    uint8_t good = 0x02;
+    while (good & 0x02)
+        good = inb(0x64);
+    outb(0x64, 0xFE);
+    halt();
 }

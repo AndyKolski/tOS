@@ -28,7 +28,7 @@ mboot:
 	dd 0 ; Mode type
 	dd 1280 ; width
 	dd 800 ; height
-	dd 24 ; depth
+	dd 32 ; depth
 
 stublet:
 	push ebx
@@ -494,5 +494,5 @@ irq_common_stub:
 
 SECTION .bss
 	;resb 8192
-	resb 1048576
+	resb 0x100000
 _sys_stack:

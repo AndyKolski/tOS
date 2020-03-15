@@ -1,12 +1,12 @@
 NAME=tOS
-SOURCES=start.o main.o common.o gdt.o idt.o isrs.o irq.o timer.o kb.o display.o
-CARGS = -Wall -g -Og -ffreestanding -I src -c
-COMPILER = ~/gcc-cross-compiler/PKG/usr/local/cross/ia32/bin/i686-pc-linux-gnu-gcc
-LINKER = ~/gcc-cross-compiler/PKG/usr/local/cross/ia32/bin/i686-pc-linux-gnu-ld
+SOURCES=start.o main.o common.o gdt.o idt.o isrs.o irq.o timer.o kb.o display.o memory.o pcspeaker.o pit.o
+CARGS = -Wall -Wextra -g -Og -I src -c -ffreestanding # -Wall: enable all warnings -g: include debug symbols -Og: optimize for debug -I: include path -c: disable linking 
+LARGS = -ffreestanding -nostdlib -lgcc # -ffreestanding: compile for non-hosted environment -nostdlib: don't include standard libraries -lgcc: include libgcc
+COMPILER = i686-elf-gcc
 
-make: $(SOURCES)
+make: clean $(SOURCES)
 	@echo 'linking kernel files...'
-	@$(LINKER) -T linker.ld -o out/$(NAME).bin $(SOURCES)
+	@$(COMPILER) -o out/$(NAME).bin $(SOURCES) -T linker.ld $(LARGS)
 	@echo 'done'
 	@echo 'Bin moved to out/$(NAME).bin'
 
@@ -57,14 +57,26 @@ display.o: src/display.c
 	@echo 'compiling display.o ...'
 	@$(COMPILER) $(CARGS) -o display.o src/display.c
 	@echo 'done'
+memory.o: src/memory.c
+	@echo 'compiling memory.o ...'
+	@$(COMPILER) $(CARGS) -o memory.o src/memory.c
+	@echo 'done'
+pcspeaker.o: src/pcspeaker.c
+	@echo 'compiling pcspeaker.o ...'
+	@$(COMPILER) $(CARGS) -o pcspeaker.o src/pcspeaker.c
+	@echo 'done'
+pit.o: src/pit.c
+	@echo 'compiling pit.o ...'
+	@$(COMPILER) $(CARGS) -o pit.o src/pit.c
+	@echo 'done'
 
 iso: make
 	@echo 'Packing into ISO...'
 	-mkdir isodir isodir/boot
 	@cp out/$(NAME).bin isodir/boot/$(NAME).bin
-	@echo 'set default="0"\nset timeout="0"\nmenuentry "$(NAME)" {\n\tmultiboot /boot/$(NAME).bin\n}' > isodir/boot/grub/grub.cfg
+	@echo 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot /boot/$(NAME).bin\n}' > isodir/boot/grub/grub.cfg
 	@grub-mkrescue -o out/$(NAME).iso isodir
 	@echo 'done'
 	@echo 'ISO moved to out/$(NAME).iso'
 run: iso
-	@qemu-system-i386 -s -boot d -cdrom out/$(NAME).iso -d guest_errors -serial file:serial.log -m 2048M
+	@qemu-system-i386 -s -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -serial file:serial.log -m 2048M -soundhw pcspk

@@ -1,23 +1,26 @@
 OUTPUT_FORMAT("elf32-i386")
 ENTRY(start)
-phys = 0x00100000;
+
+_KERNEL_START_ = 0x00100000;
+
 SECTIONS
 {
-  .text phys : AT(phys) {
+  .text (_KERNEL_START_) : {
     code = .;
+    __START_OF_KERNEL = .;
     *(.text)
     *(.rodata)
-    . = ALIGN(4096);
   }
-  .data : AT(phys + (data - code)) {
+
+  .data : ALIGN(0x1000) {
     data = .;
     *(.data)
-    . = ALIGN(4096);
   }
-  .bss : AT(phys + (bss - code)) {
+
+  .bss : ALIGN(0x1000) {
     bss = .;
-    *(bss)
-    . = ALIGN(4096);
+    *(.bss)
   }
   end = .;
+  __END_OF_KERNEL = .;
 }
