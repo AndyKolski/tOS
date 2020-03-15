@@ -119,6 +119,9 @@ void keyboard_handler(struct regs *r) {
 		if (event.ModifNum == SHIFT) {
 			modState.ShiftDown = event.IsKeyDown;
 		}
+		if (event.ModifNum == ESC && modState.ShiftDown) {
+			reboot();
+		}
 	}
 	if (event.ASCII == '\b') {
 		termBackspace();
