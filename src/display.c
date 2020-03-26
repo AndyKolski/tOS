@@ -127,6 +127,12 @@ void legacyScroll() {
 }
 
 void putc(kchar chr) {
+	if (chr == '\n') {
+		serial_putc('\r');
+		serial_putc('\n');
+	} else {
+		serial_putc(chr);
+	}
 	if (FBScreen) {
 		if (chr > 128 || chr == 0) {
 			return;

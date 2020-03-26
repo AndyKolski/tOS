@@ -45,44 +45,43 @@ struct regs
 int kmain(unsigned long magic, unsigned long addr);
 
 /* COMMON.C */
-extern uint8 *memcpy(uint8 *dest, const uint8 *src, uint32 count);
-extern char *memset(char *dest, char val, int count);
-extern short *memsetw(short *dest, short val, int count);
-extern int strlen(const kchar *str);
-extern char* strcpy(kchar* destination, const kchar* source);
-extern int itoa(int64 value, char *sp, int radix);
-extern unsigned char inportb (unsigned short _port);
-extern void outportb (unsigned short _port, unsigned char _data);
-extern void init_serial();
-extern void halt();
-extern void reboot();
+uint8 *memcpy(uint8 *dest, const uint8 *src, uint32 count);
+char *memset(char *dest, char val, int count);
+short *memsetw(short *dest, short val, int count);
+int strlen(const kchar *str);
+char* strcpy(kchar* destination, const kchar* source);
+int itoa(int64 value, char *sp, int radix);
+unsigned char inportb (unsigned short _port);
+void outportb (unsigned short _port, unsigned char _data);
+void halt();
+void reboot();
 
 /* GDT.C */
-extern void gdt_install();
+void gdt_install();
 
 /* IDT.C */
-extern void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags);
-extern void idt_install();
+void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags);
+void idt_install();
 
 /* ISRS.C */
-extern void isrs_install();
+void isrs_install();
 
 /* IRQ.C */
-extern void irq_install();
-extern void irq_install_handler(int irq, void (*handler)(struct regs *r));
-extern void irq_uninstall_handler(int irq);
+void irq_install();
+void irq_install_handler(int irq, void (*handler)(struct regs *r));
+void irq_uninstall_handler(int irq);
 
 /* TIMER.C */
-extern void timer_install();
-extern void timer_phase(int hz);
-extern long timer_uptime_ticks();
-extern long timer_uptime_secs();
-extern void timer_wait_ms(unsigned int ms);
-extern void timer_wait_ticks(unsigned int ticks);
+void timer_install();
+void timer_phase(int hz);
+long timer_uptime_ticks();
+long timer_uptime_secs();
+void timer_wait_ms(unsigned int ms);
+void timer_wait_ticks(unsigned int ticks);
 
 /* KB.C */
-extern void keyboard_install();
-extern void kbd_led_handling(unsigned char ledstatus);
+void keyboard_install();
+void kbd_led_handling(unsigned char ledstatus);
 
 /* DISPLAY.C */
 void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb_bpp, uint32 fb_pitch, bool useLegacy);
@@ -107,4 +106,8 @@ void tone(uint32 freq);
 void noTone();
 void toneDuration(uint32 freq, uint32 duration);
 
+/* SERIAL.C */
+void init_serial();
+void serial_puts(char *text);
+void serial_putc(char chr);
 #endif

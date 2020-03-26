@@ -77,19 +77,19 @@ void outportb (unsigned short _port, unsigned char _data)
 }
 static inline uint8_t inb(uint16_t port)
 {
-    uint8_t ret;
-    asm volatile ( "inb %1, %0"
-                   : "=a"(ret)
-                   : "Nd"(port) );
-    return ret;
+	 uint8_t ret;
+	 asm volatile ( "inb %1, %0"
+						 : "=a"(ret)
+						 : "Nd"(port) );
+	 return ret;
 }
 static inline void outb(uint16_t port, uint8_t val)
 {
-    asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
-    /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
-     * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
-     * The  outb  %al, %dx  encoding is the only option for all other cases.
-     * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
+	 asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
+	 /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
+	  * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
+	  * The  outb  %al, %dx  encoding is the only option for all other cases.
+	  * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
 }
 void reverse(char s[]) {
 	 int i, j;
@@ -137,42 +137,6 @@ int itoa(int64 value, char *sp, int radix) {
 	return len;
 }
 
-#define PORT 0x3f8   /* COM1 */
-void init_serial() {
-   outb(PORT + 1, 0x00);    // Disable all interrupts
-   outb(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
-   outb(PORT + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
-   outb(PORT + 1, 0x00);    //                  (hi byte)
-   outb(PORT + 3, 0x03);    // 8 bits, no parity, one stop bit
-   outb(PORT + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
-   outb(PORT + 4, 0x0B);    // IRQs enabled, RTS/DSR set
-}
-
-int is_transmit_empty() {
-   return inb(PORT + 5) & 0x20;
-}
- 
-void write_serial(char a) {
-   while (is_transmit_empty() == 0);
- 
-   outb(PORT,a);
-}
-
-int serial_received() {
-   return inb(PORT + 5) & 1;
-}
- 
-char read_serial() {
-   while (serial_received() == 0);
- 
-   return inb(PORT);
-}
-void serial_puts(char *text) {
-	for (int i = 0; i < strlen(text); ++i) {
-		write_serial(text[i]);
-	}
-}
-
 void halt() {
 	asm volatile ("cli");
 	while (true) {
@@ -181,9 +145,9 @@ void halt() {
 }
 
 void reboot() {
-    uint8_t good = 0x02;
-    while (good & 0x02)
-        good = inb(0x64);
-    outb(0x64, 0xFE);
-    halt();
+	 uint8_t good = 0x02;
+	 while (good & 0x02)
+		  good = inb(0x64);
+	 outb(0x64, 0xFE);
+	 halt();
 }

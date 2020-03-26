@@ -1,5 +1,5 @@
 NAME=tOS
-SOURCES=start.o main.o common.o gdt.o idt.o isrs.o irq.o timer.o kb.o display.o memory.o pcspeaker.o pit.o
+SOURCES=start.o main.o common.o gdt.o idt.o isrs.o irq.o timer.o kb.o display.o memory.o pcspeaker.o pit.o serial.o
 CARGS = -Wall -Wextra -g -Og -I src -c -ffreestanding # -Wall: enable all warnings -g: include debug symbols -Og: optimize for debug -I: include path -c: disable linking 
 LARGS = -ffreestanding -nostdlib -lgcc # -ffreestanding: compile for non-hosted environment -nostdlib: don't include standard libraries -lgcc: include libgcc
 COMPILER = i686-elf-gcc
@@ -69,6 +69,10 @@ pit.o: src/pit.c
 	@echo 'compiling pit.o ...'
 	@$(COMPILER) $(CARGS) -o pit.o src/pit.c
 	@echo 'done'
+serial.o: src/serial.c
+	@echo 'compiling serial.o ...'
+	@$(COMPILER) $(CARGS) -o serial.o src/serial.c
+	@echo 'done'
 
 iso: make
 	@echo 'Packing into ISO...'
@@ -79,4 +83,4 @@ iso: make
 	@echo 'done'
 	@echo 'ISO moved to out/$(NAME).iso'
 run: iso
-	@qemu-system-i386 -s -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -serial file:serial.log -m 2048M -soundhw pcspk
+	@qemu-system-i386 -s -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk #-serial file:serial.log 

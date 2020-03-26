@@ -10,7 +10,8 @@ int kmain(unsigned long magic, unsigned long addr) {
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
 		printf("Warning: Boot magic value is 0x%x instead of the expected value: 0x%x\n", magic, MULTIBOOT_BOOTLOADER_MAGIC);
 	}
-
+	puts("Setting up basic serial debugging interface (COM 1)...\n");
+	init_serial();
 	puts("Installing GDT...\n");
 	gdt_install();
 	puts("Installing IDT...\n");
@@ -25,8 +26,6 @@ int kmain(unsigned long magic, unsigned long addr) {
 	keyboard_install();
 	puts("Setting Interrupt Flag...\n");
 	__asm__ __volatile__ ("sti"); 
-	puts("Setting up serial debugging interface (COM 1)...\n");
-	init_serial();
 	printf("Testing printf: char: %c string: %s int: %i negative int: %i hex: 0x%x ", '!', "Hello world", 42, -10, 0xabcdef12);
 	printf("hex2: 0x%x bin: %b\n", 0xcafe,  0b10101010);
 	puts("Initializing Memory Manager\n");
