@@ -1,5 +1,7 @@
-#include <header.h>
+#include <display.h>
+#include <libs.h>
 #include <multiboot.h>
+#include <system.h>
 
 void install_memory(uint32 mmap_addr, uint32 mmap_length, uint32 *kmain) {
 	multiboot_memory_map_t* mmap_entry = (multiboot_memory_map_t*) mmap_addr;

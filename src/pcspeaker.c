@@ -1,4 +1,7 @@
-#include <header.h>
+#include <io.h>
+#include <pit.h>
+#include <system.h>
+#include <timer.h>
 
 
 void tone(uint32 freq) {

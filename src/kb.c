@@ -1,4 +1,8 @@
-#include <header.h>
+#include <display.h>
+#include <io.h>
+#include <irq.h>
+#include <libs.h>
+#include <system.h>
 
 #define NOMOD 0
 #define CTRL 1
@@ -185,7 +189,7 @@ void keyboard_install() {
 void kbd_ack(void) {
 	while(!(inportb(0x60)==0xfa));
 }
-void kbd_led_handling(unsigned char ledstatus) {
+void setKeyboardLEDs(uint8 ledstatus) {
 	outportb(0x60,0xed);
 	kbd_ack();
 	outportb(0x60,ledstatus);

@@ -1,7 +1,10 @@
-#include <header.h>
-//#include <Duck.h>
+#include <display.h>
 #include <font.h>
+#include <libs.h>
+#include <serial.h>
 #include <stdarg.h>
+#include <system.h>
+//#include <Duck.h>
 
 #define GColBLACK 000|(000<<8)|(000<<16)
 #define GColWHITE 255|(255<<8)|(255<<16)

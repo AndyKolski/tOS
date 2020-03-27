@@ -1,5 +1,15 @@
-#include <header.h>
+#include <display.h>
+#include <gdt.h>
+#include <idt.h>
+#include <irq.h>
+#include <isrs.h>
+#include <kb.h>
+#include <memory.h>
 #include <multiboot.h>
+#include <serial.h>
+#include <system.h>
+#include <timer.h>
+
 
 int kmain(unsigned long magic, unsigned long addr) {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;

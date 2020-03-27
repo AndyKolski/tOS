@@ -1,4 +1,5 @@
-#include <header.h>
+#include <libs.h>
+#include <system.h>
 
 /* Defines an IDT entry */
 struct idt_entry

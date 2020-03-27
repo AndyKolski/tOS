@@ -1,4 +1,9 @@
-#include <header.h>
+#include <display.h>
+#include <irq.h>
+#include <kb.h>
+#include <pit.h>
+#include <system.h>
+#include <timer.h>
 
 /* This will keep track of how many ticks that the system
 *  has been running for */
@@ -17,7 +22,7 @@ void timer_handler(struct regs *r)
 
     if (timer_ticks % timer_tps == 0)
     {
-       kbd_led_handling(1 << (timer_ticks/timer_tps%3));
+       setKeyboardLEDs(1 << (timer_ticks/timer_tps%3));
        // printf("System uptime: %i secs\n", timer_uptime_secs());
     }
 }

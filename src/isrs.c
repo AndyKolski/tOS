@@ -1,4 +1,7 @@
-#include <header.h>
+#include <display.h>
+#include <idt.h>
+#include <libs.h>
+#include <system.h>
 
 /* These are function prototypes for all of the exception
 *  handlers: The first 32 entries in the IDT are reserved
