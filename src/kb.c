@@ -115,7 +115,7 @@ scancodeEvent codeSets[4][255] = {
 uint8 currentScancode = 1;
 
 /* Handles the keyboard interrupt */
-void keyboard_handler(struct regs *r) {
+void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 	uint8 scancode = inportb(0x60);
 	scancodeEvent event = codeSets[currentScancode][scancode];
 
