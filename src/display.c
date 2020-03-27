@@ -224,7 +224,7 @@ void formatAndPrintString(kchar *pcFmt, va_list lList) {
 					break; 
 							
 				case 'B': //Boolean
-					puts(va_arg(lList,bool) ? "True" : "False");
+					puts(va_arg(lList,int) ? "True" : "False");
 					break; 
 
 				case '%':
