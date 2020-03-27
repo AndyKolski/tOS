@@ -30,4 +30,4 @@ run : iso
 	@qemu-system-i386 -s -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk #-serial file:serial.log 
 
 clean :
-	-rm $(TARGETS)
+	rm -rf $(TARGETS) out isodir
