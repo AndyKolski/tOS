@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra -g -Og -I src -c -ffreestanding# -Wall: enable all warnin
 LFLAGS = -ffreestanding -nostdlib -lgcc# -ffreestanding: compile for non-hosted environment -nostdlib: don't include standard libraries -lgcc: include libgcc
 CC = i686-elf-gcc
 
-all : setup clean out/$(NAME).bin
+all : setup out/$(NAME).bin
 	@echo 'done'
 
 setup:

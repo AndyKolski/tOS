@@ -6,12 +6,6 @@
 #include <system.h>
 //#include <Duck.h>
 
-#define GColBLACK 000|(000<<8)|(000<<16)
-#define GColWHITE 255|(255<<8)|(255<<16)
-#define GColRED   000|(000<<8)|(255<<16)
-#define GColGREEN 000|(255<<8)|(000<<16)
-#define GColBLUE  255|(000<<8)|(000<<16)
-
 uint32 *ptr;
 uint32 framebuffer_width = 0;
 uint32 framebuffer_height = 0;
@@ -250,11 +244,21 @@ void printf(kchar *pcFormat, ...) {
 }
 
 void termBackspace() {
-	if (cursorx > 0) {
-		cursorx--;
-	} else if(cursory > 0) {
-		cursorx = (framebuffer_width/(fontWidth+1))-1;
-		cursory--;
+	if (FBScreen) {
+		if (cursorx > 0) {
+			cursorx--;
+		} else if(cursory > 0) {
+			cursorx = (framebuffer_width/(fontWidth+1))-1;
+			cursory--;
+		}
+		fillRect(cursorx*(fontWidth+1)+1, cursory*(fontHeight+1)+1, fontWidth+1, fontHeight, backgroundColor); 
+	} else {
+		if (cursorx > 0) {
+			cursorx--;
+		} else if(cursory > 0) {
+			cursorx = (framebuffer_width/(fontWidth+1))-1;
+			cursory--;
+		}
+		basicPtr[cursory * framebuffer_width + cursorx] = ' ' | (15 | 0 << 4) << 8;
 	}
-	fillRect(cursorx*(fontWidth+1)+1, cursory*(fontHeight+1)+1, fontWidth+1, fontHeight, backgroundColor);
 }
