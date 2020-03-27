@@ -205,7 +205,7 @@ void formatAndPrintString(kchar *pcFmt, va_list lList) {
 					break;
 							
 				case 'l' : //long int
-					itoa(va_arg(lList,uint64), buf, 10);
+					itoa(va_arg(lList,int64), buf, 10);
 					puts(buf);
 					break;
 							
@@ -254,6 +254,9 @@ void printf(kchar *pcFormat, ...) {
 }
 
 void termBackspace() {
+	serial_putc('\b');
+	serial_putc(' ');
+	serial_putc('\b');
 	if (FBScreen) {
 		if (cursorx > 0) {
 			cursorx--;

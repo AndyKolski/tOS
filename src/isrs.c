@@ -140,7 +140,7 @@ void fault_handler(struct regs *r)
         *  infinite loop */
         puts("\n\nException: '");
         puts(exception_messages[r->int_no]);
-        puts("'\n");
+        puts("\n");
         for (;;);
     }
 }

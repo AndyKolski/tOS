@@ -1,4 +1,6 @@
+#include <display.h>
 #include <io.h>
+#include <irq.h>
 #include <kb.h>
 #include <libs.h>
 #include <system.h>
@@ -37,9 +39,20 @@ void serial_puts(char *text) {
 	}
 }
 
+void serial_handler(struct regs *r __attribute__((__unused__))) {
+	char i = read_serial();
+	if (i == '\b') {
+		termBackspace();
+	} else {
+		// printf("c: %i ", i);
+		putc(i);
+	}
+}
+
 void init_serial() {
 	IS_SERIAL_ENABLED = true;
-	outportb(PORT + 1, 0x00);    // Disable all interrupts
+	irq_install_handler(4, serial_handler);
+	outportb(PORT + 1, 0x01);    // Enable basic interrupts
 	outportb(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
 	outportb(PORT + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
 	outportb(PORT + 1, 0x00);    //                  (hi byte)

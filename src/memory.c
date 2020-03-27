@@ -37,10 +37,10 @@ void install_memory(uint32 mmap_addr, uint32 mmap_length, uint32 *kmain) {
 		} else {
 			strcpy(type, "MEM_RESERVED_UNKNOWN");
 		}
-		printf("    ENTRY: base_addr: 0x%x length: 0x%x (%i ",
-			mmap_entry->addr,
-			mmap_entry->len, 
-			mmap_entry->len/1024 > 10240 ? mmap_entry->len/1024/1024 : mmap_entry->len/1024);
+		printf("    ENTRY: address: 0x%x length: 0x%x (%i ",
+			(uint32)mmap_entry->addr,
+			(uint32)mmap_entry->len, 
+			(uint32)mmap_entry->len/1024 > 10240 ? mmap_entry->len/1024/1024 : mmap_entry->len/1024);
 		printf("%s) type: %s\n",
 			mmap_entry->len/1024 > 10240 ? "MiB" : "KiB",
 			type);
@@ -49,9 +49,9 @@ void install_memory(uint32 mmap_addr, uint32 mmap_length, uint32 *kmain) {
 	}
 	putc('\n');
 	printf("Total available memory: %l B (%l KiB / %l MiB / %l GiB)\n", totalMem, totalMem/1024, totalMem/1024/1024, totalMem/1024/1024/1024);
-	printf("Longest continuous memory area: 0x%x - size: %l B (%l KiB / %l MiB / %l GiB)\n", largestContinuousMemLocation, largestContinuousMemSize, largestContinuousMemSize/1024, largestContinuousMemSize/1024/1024, largestContinuousMemSize/1024/1024/1024);
+	printf("Longest continuous memory area: 0x%x - size: %l B (%l KiB / %l MiB / %l GiB)\n", (uint32)largestContinuousMemLocation, largestContinuousMemSize, largestContinuousMemSize/1024, largestContinuousMemSize/1024/1024, largestContinuousMemSize/1024/1024/1024);
 	printf("kmain function location: 0x%x\n", &kmain);
-	printf("Kernel start: 0x%x end: 0x%x len: 0x%x (%i B)\n", (uint64)startOfKernel, (uint64)endOfKernel, sizeOfKernel, sizeOfKernel);
+	printf("Kernel start: 0x%x end: 0x%x len: 0x%x (%i KiB)\n", (uint32)startOfKernel, (uint32)endOfKernel, (uint32)sizeOfKernel, (uint32)sizeOfKernel/1024);
 	
 	printf("Kernel is loaded at start of largest memory area: %B\n", largestContinuousMemLocation == startOfKernel);
 	if (largestContinuousMemLocation == startOfKernel) {

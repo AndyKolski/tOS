@@ -10,7 +10,6 @@
 #include <system.h>
 #include <timer.h>
 
-
 int kmain(unsigned long magic, unsigned long addr) {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
 
@@ -39,7 +38,7 @@ int kmain(unsigned long magic, unsigned long addr) {
 	puts("Setting Interrupt Flag...\n");
 	__asm__ __volatile__ ("sti"); 
 	printf("Testing printf: char: %c string: %s int: %i negative int: %i hex: 0x%x ", '!', "Hello world", 42, -10, 0xabcdef12);
-	printf("hex2: 0x%x bin: %b\n", 0xcafe,  0b10101010);
+	printf("hex 2: 0x%x bin: %b\n", 0xcafe,  0b10101010);
 	puts("Initializing Memory Manager\n");
 	install_memory(mbi->mmap_addr, mbi->mmap_length, (uint32*) kmain);
 
