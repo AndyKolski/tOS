@@ -9,6 +9,9 @@
 #define GColGREEN 000|(255<<8)|(000<<16)
 #define GColBLUE  255|(000<<8)|(000<<16)
 
+uint32 framebuffer_width;
+uint32 framebuffer_height;
+
 void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb_bpp, uint32 fb_pitch, bool useLegacy);
 
 uint32 colorFromRGB(uint8 r, uint8 g, uint8 b);
