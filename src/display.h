@@ -20,11 +20,11 @@ void setPixel(uint32 x, uint32 y, uint32 c);
 
 void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, uint32 c);
 
+void fillScreen(uint32 c);
+
 // void drawDuck(uint32 dx, uint32 dy);
 
 void badPlaceChar(kchar ltr, uint32 x, uint32 y, uint32 c);
-
-void badPlaceStr(kchar *str, uint32 x, uint32 y, uint32 c);
 
 void gSetCsrColor(uint32 text, uint32 background);
 
@@ -32,7 +32,7 @@ void gsetCsr(uint32 x, uint32 y);
 
 uint32 getStrWidth(kchar *str);
 
-void legacyScroll();
+void legacyScrollTerminal();
 
 void putc(kchar chr);
 

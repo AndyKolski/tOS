@@ -11,7 +11,7 @@
 #define SHIFT 4
 #define CAPS 5
 
-#define NOA 0
+#define NOA 0 //No ASCII representation
 
 typedef struct scancodeEvent {
 	uint8 ASCII;
@@ -42,8 +42,17 @@ scancodeEvent codeSets[4][255] = {
 		//0th, leave blank
 	},
 	{
-		//1st
+		//1st codeset
+
 		//ASC,UPA, CU,KD,CP,IM,IK,MN
+		// L ASCII
+		//     L Uppercase ASCII
+		//          L Can this key be uppercase?
+		//             L Is this a key-down event?
+		//                L Is this key printable?
+		//                   L Is this a modifier key?
+		//                      L Is this key on the number pad
+		//                        L Key modifier number
 		{0},
 		{NOA, NOA, 0, 1, 0, 1, 0, ESC}, //esc down 0x01
 		{'1', '!', 1, 1, 1, 0, 0, 0}, //[1 !] down 0x02
