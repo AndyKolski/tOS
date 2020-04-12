@@ -3,6 +3,9 @@
 #include <libs.h>
 #include <serial.h>
 #include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #include <system.h>
 //#include <Duck.h>
 
@@ -134,7 +137,7 @@ void legacyScrollTerminal() {
 
 void scrollTerminal() {
 	for (uint32 i = 0; i < framebuffer_height/fontHeight; ++i) {
-		memcpyint(ptr+i*framebuffer_pitch*fontHeight, ptr+(i+1)*framebuffer_pitch*fontHeight, framebuffer_pitch*fontHeight);
+		memcpy((uint8*)(ptr+i*framebuffer_pitch*fontHeight), (uint8*)(ptr+(i+1)*framebuffer_pitch*fontHeight), framebuffer_pitch*fontHeight*framebuffer_bpp*4);
 	}
 	fillRect(0, framebuffer_height-fontHeight, framebuffer_width, fontHeight, backgroundColor);
 	cursory--;
@@ -193,81 +196,6 @@ void putc(kchar chr) {
 			legacyScrollTerminal();
 		}
 	}
-}
-void puts(kchar *text) {
-	for (int i = 0; i < strlen(text); ++i) {
-		putc(text[i]);
-	}
-}
-
-void formatAndPrintString(kchar *pcFmt, va_list lList) { 
-	while(*pcFmt != '\0') {
-		if(*pcFmt == '%') {
-			pcFmt++; // lList
-
-			kchar buf[66] = {0};
-			switch (*pcFmt) {
-				case 'c' : // char
-					putc((kchar)va_arg(lList,int));
-					break; 
-							
-				case 'i' : // int
-					itoa(va_arg(lList,int32), buf, 10);
-					puts(buf);
-					break;
-							
-				case 'u' : // unsigned int
-					itoa(va_arg(lList,uint32), buf, 10);
-					puts(buf);
-					break;
-							
-				case 'l' : // long int
-					itoa(va_arg(lList,int64), buf, 10);
-					puts(buf);
-					break;
-							
-				case 's': // String
-					puts(va_arg(lList,kchar *));
-					break; 
-							
-				case 'x': // Hexadecimal representation
-					itoa(va_arg(lList,uint32), buf, 16);
-					puts(buf);
-					break; 
-							
-				case 'b': // Binary representation
-					itoa(va_arg(lList,uint32), buf, 2);
-					puts(buf);
-					break; 
-							
-				case 'B': // Boolean
-					puts(va_arg(lList,int) ? "True" : "False");
-					break; 
-
-				case '%':
-					putc('%');
-					break; 
-
-				default:
-					break;
-			}
-			pcFmt++;
-		} else {
-		   putc(*pcFmt);
-		   pcFmt++;
-		}
-	}
-	return;
-}
-
-void printf(kchar *pcFormat, ...) {
-	if(!pcFormat) {
-		return;
-	}
-	va_list lList;
-	va_start(lList, pcFormat);
-	formatAndPrintString(pcFormat, lList);
-	return;
 }
 
 void termBackspace() {

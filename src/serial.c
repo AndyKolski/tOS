@@ -3,6 +3,7 @@
 #include <irq.h>
 #include <kb.h>
 #include <libs.h>
+#include <string.h>
 #include <system.h>
 
 #define PORT 0x3f8   /* COM1 */
@@ -34,7 +35,7 @@ void serial_putc(char chr) {
 
 void serial_puts(char *text) {
 	if (!IS_SERIAL_ENABLED) {return;}
-	for (int i = 0; i < strlen(text); ++i) {
+	for (uint32 i = 0; i < strlen(text); ++i) {
 		serial_putc(text[i]);
 	}
 }

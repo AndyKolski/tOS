@@ -36,12 +36,6 @@ void legacyScrollTerminal();
 
 void putc(kchar chr);
 
-void puts(kchar *text);
-
-void formatAndPrintString(kchar *pcFmt, va_list lList);
-
-void printf(kchar *pcFormat, ...);
-
 void termBackspace();
 
 #endif

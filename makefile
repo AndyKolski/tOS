@@ -1,5 +1,5 @@
 NAME=tOS
-TARGETS=start.o main.o libs.o gdt.o idt.o isrs.o irq.o timer.o kb.o display.o memory.o pcspeaker.o pit.o serial.o io.o
+TARGETS=start.o main.o libs.o gdt.o idt.o isrs.o irq.o timer.o kb.o display.o memory.o pcspeaker.o pit.o serial.o io.o stdio.o string.o
 CFLAGS = -Wall -Wextra -g -Og -I src -c -ffreestanding# -Wall: enable all warnings -g: include debug symbols -Og: optimize for debug -I: include path -c: disable linking 
 LFLAGS = -ffreestanding -nostdlib -lgcc# -ffreestanding: compile for non-hosted environment -nostdlib: don't include standard libraries -lgcc: include libgcc
 CC = i686-elf-gcc

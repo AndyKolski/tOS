@@ -1,6 +1,6 @@
-#include <display.h>
 #include <idt.h>
 #include <io.h>
+#include <stdio.h>
 #include <system.h>
 
 /* These are own ISRs that point to our special IRQ handler

@@ -1,4 +1,4 @@
-#include <display.h>
+#include <stdio.h>
 #include <irq.h>
 #include <kb.h>
 #include <pit.h>

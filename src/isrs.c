@@ -1,6 +1,6 @@
-#include <display.h>
 #include <idt.h>
 #include <libs.h>
+#include <stdio.h>
 #include <system.h>
 
 /* These are function prototypes for all of the exception

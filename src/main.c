@@ -7,6 +7,7 @@
 #include <memory.h>
 #include <multiboot.h>
 #include <serial.h>
+#include <stdio.h>
 #include <system.h>
 #include <timer.h>
 
@@ -37,8 +38,7 @@ int kmain(unsigned long magic, unsigned long addr) {
 	keyboard_install();
 	puts("Setting Interrupt Flag...\n");
 	__asm__ __volatile__ ("sti"); 
-	printf("Testing printf: char: %c string: %s int: %i negative int: %i hex: 0x%x ", '!', "Hello world", 42, -10, 0xabcdef12);
-	printf("hex 2: 0x%x bin: %b\n", 0xcafe,  0b10101010);
+	printf("Testing printf: char: %c string: %s int: %i negative int: %i hex: 0x%x hex 2: 0x%x float: %f\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe, 0.123);
 	puts("Initializing Memory Manager\n");
 	install_memory(mbi->mmap_addr, mbi->mmap_length, (uint32*) kmain);
 

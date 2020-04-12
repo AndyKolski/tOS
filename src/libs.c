@@ -1,70 +1,7 @@
 #include <io.h>
+#include <stddef.h>
+#include <string.h>
 #include <system.h>
-
-uint8 *memcpy(uint8 *dest, const uint8 *src, uint32 count)
-{
-	for (uint32 i = 0; i < count; ++i) {
-		dest[i] = src[i];
-	}
-	return dest;
-}
-
-void memcpyint(void *dest, void *src, int n) {
-	int *csrc = (int *) src;
-	int *cdest = (int *) dest;
-
-	for (int i=0; i<n; i++)
-		cdest[i] = csrc[i];
-}
-
-char *memset(char *dest, char val, int count)
-{
-	for (int i = 0; i < count; ++i) {
-		dest[i] = val;
-	}
-	return dest;
-}
-
-short *memsetw(short *dest, short val, int count)
-{
-	for (int i = 0; i < count; ++i) {
-		dest[i] = val;
-	}
-	return dest;
-}
-
-int strlen(const kchar *str)
-{
-	int l = 0;
-	while (str[l] != 0) {
-		l++;
-	}
-	return l;
-}
-
-char* strcpy(kchar* destination, const kchar* source) {
-	// return if no memory is allocated to the destination
-	if (destination == 0)
-		return 0;
-
-	// take a pointer pointing to the beginning of destination string
-	char *ptr = destination;
-	
-	// copy the C-string pointed by source into the array
-	// pointed by destination
-	while (*source != 0)
-	{
-		*destination = *source;
-		destination++;
-		source++;
-	}
-
-	// include the terminating null character
-	*destination = 0;
-
-	// destination is returned by standard strcpy()
-	return ptr;
-}
 
 void reverse(char s[]) {
 	 int i, j;
@@ -110,6 +47,11 @@ int itoa(int64 value, char *sp, int radix) {
 		*sp++ = *--tp;
 
 	return len;
+}
+
+int isdigit (char c) {
+    if ((c>='0') && (c<='9')) return 1;
+    return 0;
 }
 
 void halt() {
