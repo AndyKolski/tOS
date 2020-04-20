@@ -173,7 +173,7 @@ int vprintf (const char* format, va_list list) {
             }
  
             if (format[i] == 'h' || format[i] == 'l' || format[i] == 'j' ||
-                   format[i] == 'z' || format[i] == 't' || format[i] == 'L') {
+                   format[i] == 'z' || format[i] == 't' || format[i] == 'L' || format[i] == 'q') {
                 length = format[i];
                 ++i;
                 if (format[i] == 'h') {

@@ -45,7 +45,7 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 		terminalHeight = framebuffer_height/(fontHeight+1);
 
 		fillScreen(backgroundColor);
-		printf("Created console with size %ix%i (%ipx x %ipx @ %ibpp)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp);
+		printf("Created console with size %ix%i (%ipx x %ipx @ %ibpp) at 0x%x\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr);
 	} else {
 		basicPtr = (uint16*) 0x000b8000;
 		terminalWidth = 80;
