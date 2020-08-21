@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include <system.h>
 #ifndef DISPLAY_H
-# define DISPLAY_H
+#define DISPLAY_H
 
 #define GColBLACK 000|(000<<8)|(000<<16)
 #define GColWHITE 255|(255<<8)|(255<<16)
@@ -9,8 +9,6 @@
 #define GColGREEN 000|(255<<8)|(000<<16)
 #define GColBLUE  255|(000<<8)|(000<<16)
 
-uint32 framebuffer_width;
-uint32 framebuffer_height;
 
 void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb_bpp, uint32 fb_pitch, bool useLegacy);
 

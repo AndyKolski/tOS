@@ -1,5 +1,6 @@
 #include <io.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <system.h>
 
@@ -67,4 +68,11 @@ void reboot() {
 		  good = inb(0x64);
 	 outb(0x64, 0xFE);
 	 halt();
+}
+
+void _assert(kchar *file, uint32 line, kchar *msg, bool conf) {
+	if (!conf) {
+		printf("Assertion failed at %s:%i - %s\n", file, line, msg);
+		halt();
+	}
 }

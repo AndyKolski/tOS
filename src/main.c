@@ -4,6 +4,7 @@
 #include <irq.h>
 #include <isrs.h>
 #include <kb.h>
+#include <libs.h>
 #include <memory.h>
 #include <multiboot.h>
 #include <serial.h>
@@ -20,6 +21,8 @@ int kmain(unsigned long magic, unsigned long addr) {
 	init_serial();
 	
 	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%x\n", mbi->boot_loader_name, mbi->framebuffer_type, mbi-> cmdline, magic);
+
+	printf("t/OS test build, compiled on %s\n", __DATE__ );
 
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
 		printf("Warning: Boot magic value is 0x%x instead of the expected value: 0x%x\n", magic, MULTIBOOT_BOOTLOADER_MAGIC);
