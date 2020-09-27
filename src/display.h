@@ -28,6 +28,8 @@ void gSetCsrColor(uint32 text, uint32 background);
 
 void gsetCsr(uint32 x, uint32 y);
 
+void cursor_pos_updated();
+
 uint32 getStrWidth(kchar *str);
 
 void legacyScrollTerminal();

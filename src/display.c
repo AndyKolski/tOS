@@ -1,5 +1,6 @@
 #include <display.h>
 #include <font.h>
+#include <io.h>
 #include <libs.h>
 #include <serial.h>
 #include <stdarg.h>
@@ -121,6 +122,19 @@ void gSetCsrColor(uint32 text, uint32 background) {
 void gsetCsr(uint32 x, uint32 y) {
 	cursorx = x;
 	cursory = y;
+	cursor_pos_updated();
+}
+
+void cursor_pos_updated() {
+	if (FBScreen) {
+		// There isn't a cursor on the framebuffer screen yet
+	} else {
+		uint16_t pos = cursory * terminalWidth + cursorx;
+		outb(0x3D4, 0x0F);
+		outb(0x3D5, (uint8) (pos & 0xFF));
+		outb(0x3D4, 0x0E);
+		outb(0x3D5, (uint8) ((pos >> 8) & 0xFF));
+	}
 }
 
 uint32 getStrWidth(kchar *str) {
@@ -196,6 +210,7 @@ void putc(kchar chr) {
 			legacyScrollTerminal();
 		}
 	}
+	cursor_pos_updated();
 }
 
 void termBackspace() {
@@ -219,4 +234,5 @@ void termBackspace() {
 		}
 		basicPtr[cursory * terminalWidth + cursorx] = ' ' | (15 | 0 << 4) << 8;
 	}
+	cursor_pos_updated();
 }
