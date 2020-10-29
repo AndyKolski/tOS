@@ -6,6 +6,7 @@
 #include <kb.h>
 #include <libs.h>
 #include <memory.h>
+#include <mouse.h>
 #include <multiboot.h>
 #include <serial.h>
 #include <stdio.h>
@@ -39,6 +40,8 @@ int kmain(unsigned long magic, unsigned long addr) {
 	timer_install();
 	puts("Setting up Keyboard Controller...\n");
 	keyboard_install();
+	puts("Setting up Mouse Controller...\n");
+	mouse_install();
 	puts("Setting Interrupt Flag...\n");
 	__asm__ __volatile__ ("sti"); 
 	printf("Testing printf: char: %c, string: %s, int: %i, negative int: %i, hex: 0x%x, hex 2: 0x%x, float: %f\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe, 0.123);

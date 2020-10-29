@@ -92,6 +92,12 @@ void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, uint32 c) {
 void fillScreen(uint32 c) {
 	fillRect(0, 0, framebuffer_width, framebuffer_height, c);
 }
+void clearScreen() {
+	cursorx = 0; 
+	cursory = 0; 
+	fillScreen(GColBLACK);
+	cursor_pos_updated();
+}
 // void drawDuck(uint32 dx, uint32 dy) {
 // 	//640x426x32
 // 	uint32 *duck_map_32 = &duck_map;
@@ -139,6 +145,13 @@ void cursor_pos_updated() {
 
 uint32 getStrWidth(kchar *str) {
 	return strlen(str) * (fontWidth+1);
+}
+
+int32 getScreenWidth() {
+	return (int32)framebuffer_width;
+}
+int32 getScreenHeight() {
+	return (int32)framebuffer_height;
 }
 
 void legacyScrollTerminal() {
