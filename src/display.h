@@ -19,6 +19,7 @@ void setPixel(uint32 x, uint32 y, uint32 c);
 void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, uint32 c);
 
 void fillScreen(uint32 c);
+void clearScreen();
 
 // void drawDuck(uint32 dx, uint32 dy);
 
@@ -31,6 +32,9 @@ void gsetCsr(uint32 x, uint32 y);
 void cursor_pos_updated();
 
 uint32 getStrWidth(kchar *str);
+
+int32 getScreenWidth();
+int32 getScreenHeight();
 
 void legacyScrollTerminal();
 
