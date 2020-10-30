@@ -2,4 +2,4 @@
 
 #pragma once
 
-void mouse_install();
+void rtc_install();

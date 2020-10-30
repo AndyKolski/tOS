@@ -1,4 +1,4 @@
-#ifndef MULTIBOOT_HEADER
+#pragma once
      #define MULTIBOOT_HEADER 1
      
      /* How many bytes from the start of the file we search for the header. */
@@ -249,5 +249,3 @@
      };
      
      #endif /* ! ASM_FILE */
-     
-     #endif /* ! MULTIBOOT_HEADER */

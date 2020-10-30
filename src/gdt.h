@@ -1,7 +1,5 @@
 #include <system.h>
-#ifndef GDT_H
-# define GDT_H
+
+#pragma once
 
 void gdt_install();
-
-#endif

@@ -1,10 +1,11 @@
 #include <system.h>
-#ifndef KB_H
-# define KB_H
+
+#pragma once
 
 void keyboard_install();
 bool isKeyDown(uint8 keyId);
 void setKeyDownState(uint8 keyId, bool newState);
+void updateLEDs();
 void setKeyboardLEDs(uint8 ledstatus);
 
 #define KEY_Invalid 0
@@ -153,5 +154,3 @@ void setKeyboardLEDs(uint8 ledstatus);
 #define KEY_ACPI_Power 143
 #define KEY_ACPI_Sleep 144
 #define KEY_ACPI_Wake 145
-
-#endif

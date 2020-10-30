@@ -1,7 +1,7 @@
 #include <system.h>
 #include <stddef.h>
-#ifndef STRING_H
-# define STRING_H
+
+#pragma once
 
 void *memcpy(void *dest, const void *src, size_t n);
 
@@ -16,5 +16,3 @@ int strncmp(const char* s1, const char* s2, size_t n);
 char *strcpy(char *restrict dest, const char *restrict src);
 
 size_t strlen(const kchar *s);
-
-#endif

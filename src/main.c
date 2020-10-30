@@ -8,6 +8,7 @@
 #include <memory.h>
 #include <mouse.h>
 #include <multiboot.h>
+#include <rtc.h>
 #include <serial.h>
 #include <stdio.h>
 #include <system.h>
@@ -36,6 +37,8 @@ int kmain(unsigned long magic, unsigned long addr) {
 	isrs_install();
 	puts("Installing IRQs...\n");
 	irq_install();
+	puts("Setting up RTC...\n");
+	rtc_install();
 	timer_phase(1024);
 	timer_install();
 	puts("Setting up Keyboard Controller...\n");

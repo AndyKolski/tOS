@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
-#ifndef __SYSTEM_H
-#define __SYSTEM_H
+
+#pragma once
 
 typedef uint8_t			uint8;
 typedef uint16_t		uint16;
@@ -21,5 +21,3 @@ struct regs {
     unsigned int int_no, err_code;    /* our 'push byte #' and ecodes do this */
     unsigned int eip, cs, eflags, useresp, ss;   /* pushed by the processor automatically */ 
 };
-
-#endif

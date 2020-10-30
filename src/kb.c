@@ -418,12 +418,16 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 			if (keyData.VKeyCode == KEY_ScrollLock) {
 				lockStates.ScrollLock = !lockStates.ScrollLock;
 			}
-
+			updateLEDs();
 		}
 
 		e0Prefix = false;
 		return;
 	}
+}
+
+void updateLEDs() {
+	setKeyboardLEDs((lockStates.ScrollLock) | (lockStates.NumLock << 1) | (lockStates.CapsLock << 2));
 }
 
 bool isKeyDown(uint8 keyId) {
@@ -460,6 +464,7 @@ kchar readChar() {
 
 void keyboard_install() {
 	irq_install_handler(1, keyboard_handler);
+	updateLEDs();
 }
 
 void kbd_ack(void) {

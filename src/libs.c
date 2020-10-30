@@ -1,4 +1,5 @@
 #include <io.h>
+#include <libs.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,10 +51,16 @@ int itoa(int64 value, char *sp, int radix) {
 	return len;
 }
 
-int isdigit (char c) {
+int isDigit (char c) {
     if ((c>='0') && (c<='9')) return 1;
     return 0;
 }
+
+uint8 bcdToDecimal(uint8 bcd) {
+    assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nybble is valid
+    assert((bcd & 0x0F) < 10, "invalid BCD conversion");         // Less significant nybble is valid
+    return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
+}    
 
 void halt() {
 	asm volatile ("cli");

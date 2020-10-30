@@ -137,7 +137,7 @@ MouseEvent parseMouseData() {
 	dY = mouseBuffer[2];
 
 	if (mouseBuffer[0] & XO || mouseBuffer[0] & YO) {
-		printf("Noot!\n");
+		// printf("Noot!\n");
 	}
 
 	if (dX && mouseBuffer[0] & XS) {
@@ -177,7 +177,7 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 			isFinishedPacket = true;
     	}
 		mouseBufferPosition = 0;
-    } else if (!(hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 2) {
+    } else if (!(hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 2) { // basic mouse
     	event = parseMouseData();
 		isFinishedPacket = true;
 		mouseBufferPosition = 0;

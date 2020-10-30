@@ -1,8 +1,9 @@
-#include <stdio.h>
 #include <irq.h>
 #include <kb.h>
 #include <pit.h>
+#include <stdio.h>
 #include <system.h>
+#include <time.h>
 #include <timer.h>
 
 /* This will keep track of how many ticks that the system
@@ -22,9 +23,8 @@ void timer_handler(struct regs *r __attribute__((__unused__)))
 
     if (timer_ticks % timer_tps == 0)
     {
-       setKeyboardLEDs(1 << (timer_ticks/timer_tps%3));
-       // printf("System uptime: %i secs\n", timer_uptime_secs());
-    }
+       timeTick();
+   }
 }
 
 long timer_uptime_ticks() {

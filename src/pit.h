@@ -1,6 +1,6 @@
 #include <system.h>
-#ifndef PIT_H
-# define PIT_H
+
+#pragma once
 
 /* Timer related ports */
 #define TIMER0_CTL 0x40
@@ -18,5 +18,3 @@
 #define MODE_SQUARE_WAVE 0x06
 
 void configureTimer(uint8 timerSelect, uint8 timerCTL, uint32 freq, uint8 mode);
-
-#endif

@@ -145,7 +145,7 @@ int vprintf (const char* format, va_list list) {
                 if (extBreak) break;
             }
  
-            while (isdigit(format[i])) {
+            while (isDigit(format[i])) {
                 lengthSpec *= 10;
                 lengthSpec += format[i] - 48;
                 ++i;
@@ -158,7 +158,7 @@ int vprintf (const char* format, va_list list) {
  
             if (format[i] == '.') {
                 ++i;
-                while (isdigit(format[i])) {
+                while (isDigit(format[i])) {
                     precSpec *= 10;
                     precSpec += format[i] - 48;
                     ++i;

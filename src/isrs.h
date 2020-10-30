@@ -1,7 +1,5 @@
 #include <system.h>
-#ifndef ISRS_H
-# define ISRS_H
+
+#pragma once
 
 void isrs_install();
-
-#endif

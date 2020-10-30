@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include <system.h>
-#ifndef DISPLAY_H
-#define DISPLAY_H
+
+#pragma once
 
 #define GColBLACK 000|(000<<8)|(000<<16)
 #define GColWHITE 255|(255<<8)|(255<<16)
@@ -41,5 +41,3 @@ void legacyScrollTerminal();
 void putc(kchar chr);
 
 void termBackspace();
-
-#endif
