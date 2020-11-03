@@ -136,15 +136,16 @@ MouseEvent parseMouseData() {
 	dX = mouseBuffer[1];
 	dY = mouseBuffer[2];
 
-	if (mouseBuffer[0] & XO || mouseBuffer[0] & YO) {
-		// printf("Noot!\n");
-	}
-
 	if (dX && mouseBuffer[0] & XS) {
 		dX -= 0x100;
 	}
 	if (dY && mouseBuffer[0] & YS) {
 		dY -= 0x100;
+	}
+
+	if (mouseBuffer[0] & XO || mouseBuffer[0] & YO) {
+		dX = 0;
+		dY = 0;
 	}
 
 	event.dX = dX;
@@ -169,13 +170,8 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
     bool isFinishedPacket = false;
 
     if ((hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 3) {
-    	if (hasFiveButtons) { //Five button and scroll wheel
-			event = parseMouseData();
-			isFinishedPacket = true;
-    	} else { // Only scroll wheel
-    		event = parseMouseData();
-			isFinishedPacket = true;
-    	}
+		event = parseMouseData();
+		isFinishedPacket = true;
 		mouseBufferPosition = 0;
     } else if (!(hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 2) { // basic mouse
     	event = parseMouseData();

@@ -6,21 +6,21 @@
 #include <system.h>
 
 
-void install_memory(uint32 mmap_addr, uint32 mmap_length, uint32 *kmain) {
-	multiboot_memory_map_t* mmap_entry = (multiboot_memory_map_t*) mmap_addr;
+void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint32 *kmain) {
+	multiboot_memory_map_t* mmap_entry = mmap_addr;
 
 	extern void* __START_OF_KERNEL;
 	extern void* __END_OF_KERNEL;
-	void* startOfKernel = (void*) &__START_OF_KERNEL; 
-	void* endOfKernel = (void*) &__END_OF_KERNEL;
+	void* startOfKernel = &__START_OF_KERNEL; 
+	void* endOfKernel = &__END_OF_KERNEL;
 	uint64 sizeOfKernel = endOfKernel - startOfKernel;
 
 	uint64 totalMem = 0;
 	uint64 largestContinuousMemSize = 0;
 	void* largestContinuousMemLocation = 0;
 
-	puts("Memory map:\n");
-	while(mmap_entry < (multiboot_memory_map_t*)(mmap_addr + mmap_length)) {
+	// puts("Memory map:\n");
+	while(mmap_entry < (mmap_addr + mmap_length)) {
 		kchar type[32] = {0};
 		if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			strcpy(type, "MEM_AVAILABLE");
@@ -47,15 +47,14 @@ void install_memory(uint32 mmap_addr, uint32 mmap_length, uint32 *kmain) {
 		} else {
 			strcpy(type, "MEM_RESERVED_UNKNOWN");
 		}
-		printf("    ENTRY: address: 0x%08x length: 0x%08x (%5u %s) type: %s\n",
-			mmap_entry->addr > 0xffffffff ? 0 : (uint32)mmap_entry->addr,
-			mmap_entry->len > 0xffffffff ? 0 : (uint32)mmap_entry->len,
-			mmap_entry->len/1024 > 10240 ? (uint32)(mmap_entry->len/1024/1024) : (uint32)(mmap_entry->len/1024),
-			mmap_entry->len/1024 > 10240 ? "MiB" : "KiB",
-			type);
+		// printf("    ENTRY: address: 0x%08x length: 0x%08x (%5u %s) type: %s\n",
+		// 	mmap_entry->addr > 0xffffffff ? 0 : (uint32)mmap_entry->addr,
+		// 	mmap_entry->len > 0xffffffff ? 0 : (uint32)mmap_entry->len,
+		// 	mmap_entry->len/1024 > 10240 ? (uint32)(mmap_entry->len/1024/1024) : (uint32)(mmap_entry->len/1024),
+		// 	mmap_entry->len/1024 > 10240 ? "MiB" : "KiB",
+		// 	type);
 		mmap_entry = (multiboot_memory_map_t*) (mmap_entry + 1);
 	}
-	putc('\n');
 	printf("Total available memory: %qu B (%u KiB / %u MiB / %u GiB)\n", totalMem, (uint32)(totalMem/1024), (uint32)((totalMem/1024+10)/1024), (uint32)((totalMem/1024/1024+10)/1024));
 	printf("Longest continuous memory area: 0x%08x - size: %qu B (%u KiB / %u MiB / %u GiB)\n", (uint32)largestContinuousMemLocation, largestContinuousMemSize, (uint32)(largestContinuousMemSize/1024), (uint32)((largestContinuousMemSize/1024+10)/1024), (uint32)((largestContinuousMemSize/1024/1024+10)/1024));
 	printf("kmain function location: 0x%08x\n", &kmain);

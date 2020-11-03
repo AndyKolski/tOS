@@ -5,8 +5,8 @@
 #include <system.h>
 #include <time.h>
 
-#define cmos_address 0x70
-#define cmos_data 0x71
+#define rtc_address 0x70
+#define rtc_data 0x71
 
 #define update_in_progress_flag 0x80
 
@@ -24,15 +24,36 @@
 bool NMIsEnabled = true;
 
 bool isRTCUpdating() {
-      outb(cmos_address, 0x0A);
-      return (inb(cmos_data) & update_in_progress_flag);
+      outb(rtc_address, 0x0A);
+      return (inb(rtc_data) & update_in_progress_flag);
 }
 uint8 readCMOSRegister(uint8 reg) {
-	outb(cmos_address, (!NMIsEnabled << 7) | (reg));
-	return inb(cmos_data);
+	outb(rtc_address, (!NMIsEnabled << 7) | (reg));
+	return inb(rtc_data);
 }
 
-void rtc_install() {
+void RTC_handler(struct regs *r __attribute__((__unused__))) { // set to exactly 1024 Hz by default. We don't change the default
+	outportb(rtc_address, 0x0C);
+	uint8 source = inportb(rtc_data);
+
+	if (source & 0x40) { // periodic interrupt
+		RTC_Tick(1024);
+	} else if (source & 0x20) { // alarm interrupt
+		// printf("RTC Alarm int\n");
+	} else if (source & 0x10) { // Update-ended interrupt
+		// printf("RTC Update-ended int\n");
+	}
+
+}
+
+void RTC_install() {
+    irq_install_handler(8, RTC_handler);
+
+    outportb(rtc_address, 0x8B);
+    uint8 prev = inportb(rtc_data);
+    outportb(rtc_address, 0x8B);
+    outportb(rtc_data, prev | 0x40);
+
 	while (isRTCUpdating()) {}
 	uint8 statusRegisterBValue = readCMOSRegister(status_register_b);
 

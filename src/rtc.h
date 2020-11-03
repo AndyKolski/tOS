@@ -2,4 +2,4 @@
 
 #pragma once
 
-void rtc_install();
+void RTC_install();

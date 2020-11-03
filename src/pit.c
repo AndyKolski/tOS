@@ -7,9 +7,7 @@
 
 #define PIT_CTL 0x43
 
-
 #define WRITE_WORD 0x30
-
 
 void configurePIT(uint8 timerSelect, uint8 timerCTL, uint32 freq, uint8 mode) {
 	uint32 Div = 1193182 / freq;
@@ -19,11 +17,16 @@ void configurePIT(uint8 timerSelect, uint8 timerCTL, uint32 freq, uint8 mode) {
 	outportb(timerCTL, (uint8) (Div >> 8));	
 }
 
-void PIT_Install() {
-    irq_install_handler(0, timeTick);
+void PIT_handler(struct regs *r __attribute__((__unused__))) {
+	PIT_Tick();
+}
+
+void PIT_Install(int freq) {
+	setPITRate(freq);
+    irq_install_handler(0, PIT_handler);
 }
 
 void setPITRate(int freq) {
-    printf("Setting up PIT at %i Hz...\n", freq);
+    printf("Setting PIT to %i Hz...\n", freq);
     configurePIT(TIMER0_SELECT, TIMER0_CTL, freq, MODE_SQUARE_WAVE);
 }

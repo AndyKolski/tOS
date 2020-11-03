@@ -1,8 +1,14 @@
 NAME=tOS
 TARGETS=start.o main.o libs.o gdt.o idt.o isrs.o irq.o kb.o display.o memory.o pcspeaker.o pit.o serial.o io.o stdio.o string.o mouse.o rtc.o time.o
-CFLAGS = -Wall -Wextra -g -Og -I src -c -ffreestanding# -Wall: enable all warnings -g: include debug symbols -Og: optimize for debug -I: include path -c: disable linking 
-LFLAGS = -ffreestanding -nostdlib -lgcc# -ffreestanding: compile for non-hosted environment -nostdlib: don't include standard libraries -lgcc: include libgcc
+
+# -Wall: enable all warnings, -Wextra: enable extra warnings, -Werror: treat warnings as errors -g: include debug symbols -Og: optimize for debug -I: set include path -c: disable linking 
+CFLAGS = -Wall -Wextra -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wshadow -Werror -g -Og -I src -c -ffreestanding
+
+# -ffreestanding: assume non-hosted environment -nostdlib: don't include standard libraries -lgcc: link libgcc
+LFLAGS = -ffreestanding -nostdlib -lgcc
+
 CC = i686-elf-gcc
+
 
 all: setup out/$(NAME).bin
 	@echo '$(NAME) compilation completed'

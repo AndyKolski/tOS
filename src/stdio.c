@@ -424,7 +424,7 @@ int vprintf (const char* format, va_list list) {
  
                     floating -= (int) floating;
  
-                    for (int i = 0; i < precSpec; ++i) {
+                    for (int o = 0; o < precSpec; ++o) {
                         floating *= 10;
                     }
                     intmax_t decPlaces = (intmax_t) (floating + 0.5);

@@ -12,9 +12,15 @@ typedef struct HumanTime {
 	uint32 year;
 } HumanTime;
 
-void timeTick(struct regs *r __attribute__((__unused__)));
+void PIT_Tick();
+
+void RTC_Tick();
+
+void timeTick();
 
 void initTime();
+
+void printHumanTime();
 
 void setTimeFromHuman(HumanTime time);
 
