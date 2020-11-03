@@ -25,11 +25,9 @@ void setTime(int64 time) {
 
 inline void PIT_Tick() {
 	PIT_ticks++;
-	if (PIT_ticks % PIT_tps == 0) {
-		puts("Time: ");
-		printHumanTime();
-		puts("\n");
-	}
+	// if (PIT_ticks % PIT_tps == 0) {
+	
+	// }
 }
 
 inline void RTC_Tick() {
@@ -50,7 +48,7 @@ void initTime() {
 
 void printHumanTime() {
 	HumanTime hTime = getHumanTime();
-	printf("%s, %s %i %i %02i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours % 12, hTime.minutes, hTime.seconds, hTime.hours > 12 ? "PM" : "AM");
+	printf("%s, %s %i %i %02i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
 }
 
 void setTimeFromHuman(HumanTime time) {
@@ -87,7 +85,7 @@ int64 getTime() {
 	return systemTime;
 }
 
-int8 timeZoneOffset = 0; //-6; //-7;
+int8 timeZoneOffset = 0; //-7; //-6;
 
 HumanTime getHumanTime() {
 	HumanTime returnTime = {0};
