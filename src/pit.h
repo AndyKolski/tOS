@@ -17,4 +17,8 @@
 #define MODE_RATE 0x04
 #define MODE_SQUARE_WAVE 0x06
 
-void configureTimer(uint8 timerSelect, uint8 timerCTL, uint32 freq, uint8 mode);
+void configurePIT(uint8 timerSelect, uint8 timerCTL, uint32 freq, uint8 mode);
+
+void PIT_Install();
+
+void setPITRate(int freq);

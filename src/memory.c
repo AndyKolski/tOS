@@ -5,21 +5,19 @@
 #include <string.h>
 #include <system.h>
 
+
 void install_memory(uint32 mmap_addr, uint32 mmap_length, uint32 *kmain) {
 	multiboot_memory_map_t* mmap_entry = (multiboot_memory_map_t*) mmap_addr;
 
-	extern uint64 __START_OF_KERNEL;
-	extern uint64 __END_OF_KERNEL;
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
-	uint64 startOfKernel = (uint64) &__START_OF_KERNEL; 
-	uint64 endOfKernel = (uint64) &__END_OF_KERNEL;
-	#pragma GCC diagnostic pop
-	uint64 sizeOfKernel = (uint64)endOfKernel - (uint64)startOfKernel;
+	extern void* __START_OF_KERNEL;
+	extern void* __END_OF_KERNEL;
+	void* startOfKernel = (void*) &__START_OF_KERNEL; 
+	void* endOfKernel = (void*) &__END_OF_KERNEL;
+	uint64 sizeOfKernel = endOfKernel - startOfKernel;
 
 	uint64 totalMem = 0;
 	uint64 largestContinuousMemSize = 0;
-	uint64 largestContinuousMemLocation = 0;
+	void* largestContinuousMemLocation = 0;
 
 	puts("Memory map:\n");
 	while(mmap_entry < (multiboot_memory_map_t*)(mmap_addr + mmap_length)) {
@@ -27,12 +25,15 @@ void install_memory(uint32 mmap_addr, uint32 mmap_length, uint32 *kmain) {
 		if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			strcpy(type, "MEM_AVAILABLE");
 			totalMem += mmap_entry->len;
-			if (mmap_entry->len > 0xffffffff) {
+			if (mmap_entry->addr > 0xffffffff) {
 				strcat(type, " - past 32 bits, not marking as available");
 			} else {
 				if (mmap_entry->len > largestContinuousMemSize) {
 					largestContinuousMemSize = mmap_entry->len;
-					largestContinuousMemLocation = mmap_entry->addr;
+					#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
+						largestContinuousMemLocation = (void*)mmap_entry->addr;
+					#pragma GCC diagnostic pop
 				}
 			}
 		} else if (mmap_entry->type == MULTIBOOT_MEMORY_RESERVED) {

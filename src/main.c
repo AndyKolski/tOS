@@ -12,7 +12,7 @@
 #include <serial.h>
 #include <stdio.h>
 #include <system.h>
-#include <timer.h>
+#include <time.h>
 
 int kmain(unsigned long magic, unsigned long addr) {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
@@ -37,10 +37,10 @@ int kmain(unsigned long magic, unsigned long addr) {
 	isrs_install();
 	puts("Installing IRQs...\n");
 	irq_install();
+	puts("Initializing Time...\n");
+	initTime();
 	puts("Setting up RTC...\n");
 	rtc_install();
-	timer_phase(1024);
-	timer_install();
 	puts("Setting up Mouse Controller...\n");
 	mouse_install();
 	puts("Setting up Keyboard Controller...\n");
@@ -53,6 +53,6 @@ int kmain(unsigned long magic, unsigned long addr) {
 
 	puts("Done.\n");
 	
-	for(;;);
+	while (true) {}
 	return 0;
 }

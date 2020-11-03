@@ -1,3 +1,4 @@
+#include <pit.h>
 #include <stdio.h>
 #include <system.h>
 #include <time.h>
@@ -7,14 +8,26 @@ char *monthNames[12] = {"January", "February", "March", "April", "May", "June", 
 
 volatile int64 systemTime = 0;
 
+volatile uint64 timer_ticks = 0;
+volatile uint32 timer_tps = 0;
+
 void setTime(int64 time) {
 	systemTime = time;
 	HumanTime hTime = getHumanTime();
 	printf("Set system time to: %s %i %i %02i:%02i:%02i %s\n", monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours % 12, hTime.minutes, hTime.seconds, hTime.hours > 12 ? "PM" : "AM");
 }
 
-void timeTick() {
-	systemTime++;
+void timeTick(struct regs *r __attribute__((__unused__))) {
+	timer_ticks++;
+	if (timer_ticks % timer_tps == 0) {
+		systemTime++;
+	}
+}
+
+void initTime() {
+	timer_tps = 4096;
+	setPITRate(timer_tps);
+	PIT_Install();
 }
 
 void setTimeFromHuman(HumanTime time) {
@@ -95,4 +108,19 @@ HumanTime getHumanTime() {
 	returnTime.year = year;
 
 	return returnTime;
+}
+
+long getUptime() {
+	return timer_ticks / timer_tps;
+}
+long getUptimeTicks() {
+	return timer_ticks;
+}
+
+void wait(uint32 ms) {
+    unsigned long eticks;
+
+    eticks = timer_ticks + ((ms*timer_tps)/1000);
+    while(timer_ticks < eticks) {}
+    return;
 }
