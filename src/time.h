@@ -12,23 +12,25 @@ typedef struct HumanTime {
 	uint32 year;
 } HumanTime;
 
+typedef int64 time_t;
+
+void setTime(time_t time);
+
 void PIT_Tick();
 
 void RTC_Tick();
-
-void timeTick();
 
 void initTime();
 
 void printHumanTime();
 
-void setTimeFromHuman(HumanTime time);
+time_t getTimeFromHuman(HumanTime time);
 
-int64 getTime();
+time_t getTime();
 
 HumanTime getHumanTime();
 
-long getUptime();
-long getUptimeTicks();
+uint64 getUptimeSeconds();
+uint64 getUptimeMs();
 
-void wait(uint32 ms);
+void wait(uint64 ms);

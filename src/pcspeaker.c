@@ -10,11 +10,11 @@ void tone(uint32 freq) {
 	}
 	configurePIT(TIMER2_SELECT, TIMER2_CTL, freq, MODE_SQUARE_WAVE);
 	
-	outportb(0x61, inportb(0x61) | 3);
+	outb(0x61, inb(0x61) | 3);
 	
 }
 void noTone() {
-	outportb(0x61, inportb(0x61) & ~3);
+	outb(0x61, inb(0x61) & ~3);
 }
 void toneDuration(uint32 freq, uint32 duration) {
 	tone(freq);

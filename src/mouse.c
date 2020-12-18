@@ -1,7 +1,7 @@
 #include <display.h>
 #include <io.h>
 #include <irq.h>
-#include <kb.h>
+#include <keyboard.h>
 #include <libs.h>
 #include <stdio.h>
 #include <system.h>
@@ -31,40 +31,38 @@
 
 void prepare_for_input() {
     while (true) {
-        if (inportb(I8042_STATUS) & 1)
+        if (inb(I8042_STATUS) & 1)
             return;
     }
 }
 uint8 mouse_read() {
     prepare_for_input();
-    return inportb(I8042_BUFFER);
+    return inb(I8042_BUFFER);
 }
 uint8 wait_then_read(uint8 port) {
     prepare_for_input();
-    return inportb(port);
+    return inb(port);
 }
 void prepare_for_output() {
     while (true) {
-        if (!(inportb(I8042_STATUS) & 2))
+        if (!(inb(I8042_STATUS) & 2))
             return;
     }
 }
 void mouse_write(uint8 data) {
     prepare_for_output();
-    outportb(I8042_STATUS, 0xd4);
+    outb(I8042_STATUS, 0xd4);
     prepare_for_output();
-    outportb(I8042_BUFFER, data);
+    outb(I8042_BUFFER, data);
 }
 void wait_then_write(uint8 port, uint8 data) {
     prepare_for_output();
-    outportb(port, data);
+    outb(port, data);
 }
 
 void expect_ack() {
     uint8 data = mouse_read();
-    if (data != I8042_ACK) {
-    	assert("Not ack", false);
-    }
+   	assert(data == I8042_ACK, "Not ack");
 }
 uint8 get_device_id() {
     mouse_write(PS2MOUSE_GET_DEVICE_ID);
@@ -117,67 +115,66 @@ void centerMouseOnScreen() {
 }
 
 MouseEvent parseMouseData() {
-	int8 dX = 0;
-	int8 dY = 0;
-	int8 dZ = 0;
-
 	MouseEvent event = {0};
 
-	if (hasFiveButtons && hasScrollWheel) {
-		dZ = (mouseBuffer[3] & 0x0f);
-
-		if (dZ == 15) {// -1 in 4 bits
-		    dZ = -1;
-		}
-	} else if (hasScrollWheel) { // untested
-		dZ = mouseBuffer[3];
-	}
-
-	dX = mouseBuffer[1];
-	dY = mouseBuffer[2];
-
-	if (dX && mouseBuffer[0] & XS) {
-		dX -= 0x100;
-	}
-	if (dY && mouseBuffer[0] & YS) {
-		dY -= 0x100;
-	}
-
-	if (mouseBuffer[0] & XO || mouseBuffer[0] & YO) {
-		dX = 0;
-		dY = 0;
-	}
-
-	event.dX = dX;
-	event.dY = dY;
-	event.dZ = dZ;
+	event.dX = 0;
+	event.dY = 0;
+	event.dZ = 0;
 	event.LeftButton = (mouseBuffer[0] & BL) == BL;
 	event.RightButton = (mouseBuffer[0] & BR) == BR;
 	event.MiddleButton = (mouseBuffer[0] & BM) == BM;
+	event.FourthButton = false;
+	event.FifthButton = false;
+
+	if (hasFiveButtons && hasScrollWheel) {
+		event.dZ = (mouseBuffer[3] & 0x0f);
+		if (event.dZ == 15) {// -1 in 4 bits
+		    event.dZ = -1;
+		}
+		event.FourthButton = (mouseBuffer[3] & 0x10) == 0x10;
+		event.FifthButton = (mouseBuffer[3] & 0x20) == 0x20;
+	} else if (hasScrollWheel) {
+		event.dZ = mouseBuffer[3] & 0x0f;
+	}
+
+	event.dX = mouseBuffer[1];
+	event.dY = mouseBuffer[2];
+
+	if (event.dX && mouseBuffer[0] & XS) {
+		event.dX -= 0x100;
+	}
+	if (event.dY && mouseBuffer[0] & YS) {
+		event.dY -= 0x100;
+	}
+
+	if (mouseBuffer[0] & XO || mouseBuffer[0] & YO) {
+		event.dX = 0;
+		event.dY = 0;
+	}
 	return event;
 }
 
 void mouse_handler(struct regs *r __attribute__((__unused__))) {
-	uint8 status = inportb(I8042_STATUS);
+	uint8 status = inb(I8042_STATUS);
     if (!(((status & I8042_WHICH_BUFFER) == I8042_MOUSE_BUFFER) && (status & I8042_BUFFER_FULL)))
         return;
 
-    uint8 data = inportb(I8042_BUFFER);
+    uint8 data = inb(I8042_BUFFER);
     
     mouseBuffer[mouseBufferPosition] = data;
     MouseEvent event = {0};
 
     bool isFinishedPacket = false;
 
-    if ((hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 3) {
+    if ((hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 3) { // either scroll wheel or 5-button mouse, both use 4-byte packets
 		event = parseMouseData();
 		isFinishedPacket = true;
 		mouseBufferPosition = 0;
-    } else if (!(hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 2) { // basic mouse
+    } else if (!(hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 2) { // basic mouse, uses 3-byte packets
     	event = parseMouseData();
 		isFinishedPacket = true;
 		mouseBufferPosition = 0;
-    } else {
+    } else { // buffer not yet full. Wait for next packet
     	mouseBufferPosition++;
     }
 
@@ -188,7 +185,7 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 
 		// xPos += event.dX;
 		// yPos -= event.dY;
-		// zPos -= event.dZ * 4;
+		// zPos += event.dZ * 8;
 
 		// if (xPos <= 0) {
 		// 	xPos = 0;
@@ -216,6 +213,7 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 		setKeyDownState(KEY_Mouse_Middle, event.MiddleButton);
 		setKeyDownState(KEY_Mouse_4, event.FourthButton);
 		setKeyDownState(KEY_Mouse_5, event.FifthButton);
+
 		if (event.LeftButton) {
 			printf("Left Click\n");
 		}
@@ -224,6 +222,12 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 		}
 		if (event.MiddleButton) {
 			printf("Middle Click\n");
+		}
+		if (event.FourthButton) {
+			printf("Button 4 Click\n");
+		}
+		if (event.FifthButton) {
+			printf("Button 5 Click\n");
 		}
     }
 	return;
@@ -234,7 +238,6 @@ void mouse_install() {
     mouse_write(PS2MOUSE_REQUEST_SINGLE_PACKET);
     uint8 maybe_ack = mouse_read();
     if (maybe_ack == I8042_ACK) {
-        puts("Mouse detected\n");
     	//Mouse is available. Ignore next 3 packets
         mouse_read();
         mouse_read();
@@ -266,9 +269,6 @@ void mouse_install() {
         }
         if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
            hasScrollWheel = true;
-           puts("Mouse wheel enabled\n");
-       } else {
-           puts("No mouse wheel detected\n");
        }
 
 	    if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
@@ -280,9 +280,9 @@ void mouse_install() {
 	    }
 	    if (device_id == PS2MOUSE_INTELLIMOUSE_EXPLORER_ID) {
            hasFiveButtons = true;
-           puts("5 button mouse mode enabled\n");
        	}
 		irq_install_handler(12, mouse_handler);
+    	printf("Detected mouse configuration - scroll wheel: %s, buttons: %i\n", (hasScrollWheel ? "true" : "false"), (hasFiveButtons ? 5 : 3));
     } else {
     	puts("No mouse present or detected\n");
     }

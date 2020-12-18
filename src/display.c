@@ -26,8 +26,8 @@ uint32 cursory = 0; // the vertical position of the cursor on the terminal, in c
 
 bool FBScreen = false; // is the display graphical or a text console
 
-uint32 textColor = GColWHITE;
-uint32 backgroundColor = GColBLACK;
+color_t textColor = GColWHITE;
+color_t backgroundColor = GColBLACK;
 
 void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb_bpp, uint32 fb_pitch, bool useLegacy) {
 	FBScreen = !useLegacy;
@@ -59,11 +59,71 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 		printf("Created console with size %ix%i (--px x --px @ --bpp)\n", terminalWidth, terminalHeight);
 	}}
 
-uint32 colorFromRGB(uint8 r, uint8 g, uint8 b) {
+color_t colorFromRGB(uint8 r, uint8 g, uint8 b) {
 	return b|(g<<8)|(r<<16);
 }
 
-void setPixel(uint32 x, uint32 y, uint32 c) {
+color_t _colorFromHSV(uint8 h, uint8 s, uint8 v) {
+	    uint8 r = 0;
+	    uint8 g = 0;
+	    uint8 b = 0;
+
+	    uint8 region = 0;
+	    uint8 remainder = 0;
+	    uint8 p = 0;
+	    uint8 q = 0;
+	    uint8 t = 0;
+
+	    if (s == 0) {
+	        r = v;
+	        g = v;
+	        b = v;
+	        return colorFromRGB(r, g, b);
+	    }
+
+	    region = h / 43;
+	    remainder = (h - (region * 43)) * 6; 
+
+	    p = (v * (255 - s)) >> 8;
+	    q = (v * (255 - ((s * remainder) >> 8))) >> 8;
+	    t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
+
+	    switch (region) {
+	        case 0:
+	            r = v;
+	            g = t;
+	            b = p;
+	            break;
+	        case 1:
+	            r = q;
+	            g = v;
+	            b = p;
+	            break;
+	        case 2:
+	            r = p;
+	            g = v;
+	            b = t;
+	            break;
+	        case 3:
+	            r = p;
+	            g = q;
+	            b = v;
+	            break;
+	        case 4:
+	            r = t;
+	            g = p;
+	            b = v;
+	            break;
+	        default:
+	            r = v;
+	            g = p;
+	            b = q;
+	            break;
+	    }
+	    return colorFromRGB(r, g, b);
+}
+
+inline void setPixel(uint32 x, uint32 y, color_t c) {
 	uint32 p;
 	if (framebuffer_bpp == 1 && framebuffer_pitch == framebuffer_width) { // slight optimization for most likely configuration
 		p = x + y * framebuffer_pitch;
@@ -76,7 +136,7 @@ void setPixel(uint32 x, uint32 y, uint32 c) {
 	// ptr[p+2] = c >> 16;
 	return;
 }
-void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, uint32 c) {
+void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
 	int s = 0;
 	for (uint32 fy = y; fy < h+y; ++fy) {
 		uint32 offset = fy * framebuffer_pitch;
@@ -89,7 +149,7 @@ void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, uint32 c) {
 	return;
 }
 
-void fillScreen(uint32 c) {
+void fillScreen(color_t c) {
 	fillRect(0, 0, framebuffer_width, framebuffer_height, c);
 }
 void clearScreen() {
@@ -108,7 +168,7 @@ void clearScreen() {
 // 	}
 // }
 
-void badPlaceChar(kchar ltr, uint32 x, uint32 y, uint32 c) {
+void badPlaceChar(kchar ltr, uint32 x, uint32 y, color_t c) {
 	for (uint8 py = 0; py < fontHeight; ++py) {
 		for (uint8 px = 0; px < fontWidth+1; ++px) {
 			if (font[(uint8)ltr][py]>>(fontWidth-px)&1) {
@@ -120,7 +180,7 @@ void badPlaceChar(kchar ltr, uint32 x, uint32 y, uint32 c) {
 	}
 }
 
-void gSetCsrColor(uint32 text, uint32 background) {
+void gSetCsrColor(color_t text, color_t background) {
 	textColor = text;
 	backgroundColor = background;
 }
@@ -152,6 +212,12 @@ int32 getScreenWidth() {
 }
 int32 getScreenHeight() {
 	return (int32)framebuffer_height;
+}
+int32 getTerminalWidth() {
+	return (int32)framebuffer_width/fontWidth;
+}
+int32 getTerminalHeight() {
+	return (int32)framebuffer_height/fontHeight;
 }
 
 void legacyScrollTerminal() {

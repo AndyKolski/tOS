@@ -33,11 +33,11 @@ uint8 readCMOSRegister(uint8 reg) {
 }
 
 void RTC_handler(struct regs *r __attribute__((__unused__))) { // set to exactly 1024 Hz by default. We don't change the default
-	outportb(rtc_address, 0x0C);
-	uint8 source = inportb(rtc_data);
+	outb(rtc_address, 0x0C);
+	uint8 source = inb(rtc_data);
 
 	if (source & 0x40) { // periodic interrupt
-		RTC_Tick(1024);
+		RTC_Tick();
 	} else if (source & 0x20) { // alarm interrupt
 		// printf("RTC Alarm int\n");
 	} else if (source & 0x10) { // Update-ended interrupt
@@ -49,10 +49,10 @@ void RTC_handler(struct regs *r __attribute__((__unused__))) { // set to exactly
 void RTC_install() {
     irq_install_handler(8, RTC_handler);
 
-    outportb(rtc_address, 0x8B);
-    uint8 prev = inportb(rtc_data);
-    outportb(rtc_address, 0x8B);
-    outportb(rtc_data, prev | 0x40);
+    outb(rtc_address, 0x8B);
+    uint8 prev = inb(rtc_data);
+    outb(rtc_address, 0x8B);
+    outb(rtc_data, prev | 0x40);
 
 	while (isRTCUpdating()) {}
 	uint8 statusRegisterBValue = readCMOSRegister(status_register_b);
@@ -96,7 +96,7 @@ void RTC_install() {
 	time.month = month;
 	time.year = year;
 
-	setTimeFromHuman(time);
+	setTime(getTimeFromHuman(time));
 
 	// printf("%i/%i %i %i:%i:%i\n", month, day, year, hours, minutes, seconds);
 }

@@ -4,7 +4,7 @@
 #include <system.h>
 
 /* These are function prototypes for all of the exception
-*  handlers: The first 32 entries in the IDT are reserved
+*  handlers=The first 32 entries in the IDT are reserved
 *  by Intel, and are designed to service exceptions! */
 extern void isr0();
 extern void isr1();
@@ -138,9 +138,11 @@ void fault_handler(struct regs *r)
         /* Display the description for the Exception that occurred.
         *  In this tutorial, we will simply halt the system using an
         *  infinite loop */
-        puts("\n\nException: '");
-        puts(exception_messages[r->int_no]);
-        puts("\n");
+        printf("\n [!!!] %s - Int: %i ErrCode: %08x\n\
+    EDI=0x%08x ESI=0x%08x EBP=0x%08x EBX=0x%08x EDX=0x%08x ECX=0x%08x EAX=0x%08x\n\
+    EIP=0x%08x  CS=0x%08x EFLAGS=0x%08x", \
+    exception_messages[r->int_no], r->int_no, r->err_code, r->edi, r->esi, r->ebp, r->ebx, r->edx, r->ecx, r->eax, r->eip, r->cs, r->eflags);
         for (;;);
     }
+
 }

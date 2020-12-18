@@ -57,15 +57,15 @@ int isDigit (char c) {
 }
 
 uint8 bcdToDecimal(uint8 bcd) {
-    assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nybble is valid
-    assert((bcd & 0x0F) < 10, "invalid BCD conversion");         // Less significant nybble is valid
+    assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nibble is valid
+    assert((bcd & 0x0F) < 10, "invalid BCD conversion");         // Less significant nibble is valid
     return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
 }    
 
 void halt() {
-	asm volatile ("cli");
+	__asm__ volatile ("cli");
 	while (true) {
-		asm volatile ("hlt");
+		__asm__ volatile ("hlt");
 	}
 }
 
@@ -79,7 +79,7 @@ void reboot() {
 
 void _assert(kchar *file, uint32 line, kchar *msg, bool conf) {
 	if (!conf) {
-		printf("Assertion failed at %s:%i - %s\n", file, line, msg);
+		printf("\n [!!!] Assertion failed at %s:%i - %s\n", file, line, msg);
 		halt();
 	}
 }

@@ -1,7 +1,7 @@
 #include <display.h>
 #include <io.h>
 #include <irq.h>
-#include <kb.h>
+#include <keyboard.h>
 #include <libs.h>
 #include <stdio.h>
 #include <system.h>
@@ -323,13 +323,13 @@ volatile kchar pendingKeyEvent = 0;
 
 void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 	while (true) {
-		uint8 status = inportb(I8042_STATUS);
+		uint8 status = inb(I8042_STATUS);
 	
 		if (!(((status & I8042_WHICH_BUFFER) == I8042_KEYBOARD_BUFFER) && (status & I8042_BUFFER_FULL))) {
 			return;
 
 		}
-		uint8 inByte = inportb(I8042_BUFFER);
+		uint8 inByte = inb(I8042_BUFFER);
 		if (inByte == I8042_ACK) {
 			return;
 		}
@@ -368,7 +368,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 				e1Prefix = false;
 				keyData.VKeyCode = KEY_Invalid;
 				isKeyDownEvent = true;
-				assert(false, "Unreachable");
+				assertf("Unexpected E1 code");
 			}
 		} else {
 			keyData = scancodeLookup[scancode];	
@@ -396,6 +396,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 
 		if (isKeyDownEvent) {
 			// printf("Id: %i (%s) ", keyData.VKeyCode, "");
+			
 			if (keyData.IsPrintable) {
 				if ((lockStates.CapsLock || keyPressStates[KEY_LeftShift] || keyPressStates[KEY_RightShift]) && keyData.CanUppercase) {
 					putc(keyData.UpperASCII);
@@ -435,7 +436,7 @@ bool isKeyDown(uint8 keyId) {
 }
 
 void setKeyDownState(uint8 keyId, bool newState) {
-	if (newState != keyPressStates[keyId]) { //State change
+	if (newState != keyPressStates[keyId]) { // on state change
 
 	}
 	keyPressStates[keyId] = newState;
@@ -468,10 +469,10 @@ void keyboard_install() {
 }
 
 void kbd_ack(void) {
-	while(!(inportb(0x60)==0xfa));
+	while(!(inb(0x60)==0xfa));
 }
 void setKeyboardLEDs(uint8 ledstatus) {
-	outportb(0x60,0xed);
+	outb(0x60,0xed);
 	kbd_ack();
-	outportb(0x60,ledstatus);
+	outb(0x60,ledstatus);
 }
