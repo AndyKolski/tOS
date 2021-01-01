@@ -20,7 +20,7 @@ void setTime(time_t time) {
 	systemTime = time;
 	puts("Set system time to: ");
 	printHumanTime();
-	puts("\n");
+	printf(" (%i)\n", time);
 }
 
 inline void PIT_Tick() {
@@ -99,7 +99,7 @@ HumanTime getHumanTime() {
 	int hour = (time / 60 / 60) % 24;
 
 	int daysSince = time / 60 / 60 / 24;
-	int yearsSince = time / 60 / 60 / 24 / 365.25;
+	float yearsSince = time / 60.0 / 60 / 24 / 365.25;
 	int dayOfYear = daysSince - yearsSince * 365.25 + 1;
 	int year = 1970 + yearsSince;
 	int weekday = (daysSince + 4) % 7;
