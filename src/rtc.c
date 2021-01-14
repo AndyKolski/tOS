@@ -96,9 +96,9 @@ void RTC_install() {
 	time.month = month;
 	time.year = year;
 
+	// printf("%i/%i/%i %i:%i:%i\n", month, day, year, hours, minutes, seconds);
 	setTime(getTimeFromHuman(time));
 
-	// printf("%i/%i %i %i:%i:%i\n", month, day, year, hours, minutes, seconds);
 }
 
 

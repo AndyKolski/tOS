@@ -4,9 +4,18 @@
 #include <system.h>
 #include <time.h>
 
+const char *monthNames[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+const char *weekDayNames[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 
-char *monthNames[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-char *weekDayNames[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+const int daysPerMonth[2][12] = {
+	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }, // Normal year
+	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }  // Leap year
+};
+
+#define SECONDS_PER_YEAR 31557600 // 60 * 60 * 24 * 365.25
+#define SECONDS_PER_DAY 86400 // 60 * 60 * 24
+#define	SECONDS_PER_HOUR 3600 // 60 * 60
+#define SECONDS_PER_MINUTE 60 // 60
 
 volatile time_t systemTime = 0;
 
@@ -16,10 +25,14 @@ volatile uint32 RTC_tps = 0;
 volatile uint64 PIT_ticks = 0;
 volatile uint32 PIT_tps = 0;
 
+bool isLeapYear(int year) {
+	return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+}
+
 void setTime(time_t time) {
 	systemTime = time;
 	puts("Set system time to: ");
-	printHumanTime();
+	printHumanTime(time);
 	printf(" (%i)\n", time);
 }
 
@@ -46,37 +59,31 @@ void initTime() {
 	RTC_install();
 }
 
-void printHumanTime() {
-	HumanTime hTime = getHumanTime();
+void printHumanTime(time_t time) {
+	HumanTime hTime = getHumanTime(time);
 	printf("%s, %s %i %i %i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
 }
 
 time_t getTimeFromHuman(HumanTime time) {
-	int64 calculatedValue = 0;
+	time_t calculatedValue = 0;
 	for(uint8 i = 0; i < (time.year - 1970); i++){
-		if ((1970 + i) % 4 == 0 && ((1970 + i) % 100 != 0 || (1970 + i) % 400 == 0)) {
-			calculatedValue += 366 * 24 * 60 * 60;
+		if (isLeapYear(1970 + i)) {
+			calculatedValue += 366 * SECONDS_PER_DAY;
 		} else {
-			calculatedValue += 365 * 24 * 60 * 60;
+			calculatedValue += 365 * SECONDS_PER_DAY;
 		}
 	}
 
-	uint8 daysPerMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-	if (time.year % 4 == 0 && (time.year % 100 != 0 || time.year % 400 == 0)) {
-		daysPerMonth[1] = 29;
-	} else {
-		daysPerMonth[1] = 28;
-	}
+	bool leap = isLeapYear(time.year);
 
 	for(uint8 i = 0; i < time.month-1; i++){
-		calculatedValue += daysPerMonth[i] * 24 * 60 * 60;
+		calculatedValue += daysPerMonth[leap][i] * SECONDS_PER_DAY;
 	}
 
-	calculatedValue += (time.day-1) * 60 * 60 * 24;
+	calculatedValue += (time.day-1) * SECONDS_PER_DAY;
 
-	calculatedValue += time.hours * 60 * 60;
-	calculatedValue += time.minutes * 60;
+	calculatedValue += time.hours * SECONDS_PER_HOUR;
+	calculatedValue += time.minutes * SECONDS_PER_MINUTE;
 	calculatedValue += time.seconds;
 	return calculatedValue;
 }
@@ -87,44 +94,38 @@ time_t getTime() {
 
 int8 timeZoneOffset = 0; //-7; //-6;
 
-HumanTime getHumanTime() {
+HumanTime getHumanTime(time_t timestamp) {
 	HumanTime returnTime = {0};
 
-	uint8 daysPerMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	timestamp += timeZoneOffset*3600;
 
-	time_t time = systemTime + timeZoneOffset*3600;
+	int second = timestamp % 60;
+	int minute = timestamp / SECONDS_PER_MINUTE % 60;
+	int hour = timestamp / SECONDS_PER_HOUR % 24;
 
-	int second = time % 60;
-	int minute = (time / 60) % 60;
-	int hour = (time / 60 / 60) % 24;
+	int yearsSinceEpoch = timestamp / SECONDS_PER_YEAR;
+	int daysSinceEpoch = timestamp / SECONDS_PER_DAY;
 
-	int daysSince = time / 60 / 60 / 24;
-	float yearsSince = time / 60.0 / 60 / 24 / 365.25;
-	int dayOfYear = daysSince - yearsSince * 365.25 + 1;
-	int year = 1970 + yearsSince;
-	int weekday = (daysSince + 4) % 7;
+	int dayOfYear = daysSinceEpoch - (yearsSinceEpoch * SECONDS_PER_YEAR / SECONDS_PER_DAY);
 
-	bool isLeapYear = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+	int year =  yearsSinceEpoch + 1970;
+	bool leap = isLeapYear(year);
 
-	if (isLeapYear) {
-		daysPerMonth[1] = 29;
-	} else {
-		daysPerMonth[1] = 28;
-	}
+	int dayOfWeek = (daysSinceEpoch + 4) % 7;
 
 	int month = 0;
-	int day = dayOfYear;
-	for (; daysPerMonth[month] <= day; month++) {
-		day -= daysPerMonth[month];
+	int dayOfMonth = dayOfYear;
+	for (; daysPerMonth[leap][month] < dayOfMonth; month++) {
+		dayOfMonth -= daysPerMonth[leap][month];
 	}
 	month++;
-	day++;
+	dayOfMonth++;	
 
 	returnTime.seconds = second;
 	returnTime.minutes = minute;
 	returnTime.hours = hour;
-	returnTime.day = day;
-	returnTime.weekday = weekday;
+	returnTime.day = dayOfYear;
+	returnTime.weekday = dayOfWeek;
 	returnTime.month = month;
 	returnTime.year = year;
 

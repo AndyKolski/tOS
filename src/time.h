@@ -14,6 +14,8 @@ typedef struct HumanTime {
 
 typedef int64 time_t;
 
+bool isLeapYear(int year);
+
 void setTime(time_t time);
 
 void PIT_Tick();
@@ -22,13 +24,13 @@ void RTC_Tick();
 
 void initTime();
 
-void printHumanTime();
+void printHumanTime(time_t time);
 
 time_t getTimeFromHuman(HumanTime time);
 
 time_t getTime();
 
-HumanTime getHumanTime();
+HumanTime getHumanTime(time_t timestamp);
 
 uint64 getUptimeSeconds();
 uint64 getUptimeMs();
