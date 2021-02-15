@@ -12,10 +12,12 @@ const int daysPerMonth[2][12] = {
 	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }  // Leap year
 };
 
-#define SECONDS_PER_YEAR 31557600 // 60 * 60 * 24 * 365.25
 #define SECONDS_PER_DAY 86400 // 60 * 60 * 24
 #define	SECONDS_PER_HOUR 3600 // 60 * 60
 #define SECONDS_PER_MINUTE 60 // 60
+
+#define DAYS_PER_NORMAL_YEAR 365
+#define DAYS_PER_LEAP_YEAR   366
 
 volatile time_t systemTime = 0;
 
@@ -103,19 +105,33 @@ HumanTime getHumanTime(time_t timestamp) {
 	int minute = timestamp / SECONDS_PER_MINUTE % 60;
 	int hour = timestamp / SECONDS_PER_HOUR % 24;
 
-	int yearsSinceEpoch = timestamp / SECONDS_PER_YEAR;
 	int daysSinceEpoch = timestamp / SECONDS_PER_DAY;
 
-	int dayOfYear = daysSinceEpoch - (yearsSinceEpoch * SECONDS_PER_YEAR / SECONDS_PER_DAY);
+	
+	int dayOfYear = 0;
+	int year = 1970;
+	int remainingDays = daysSinceEpoch;
+	while(true) {
+		bool leap = isLeapYear(year);
+		if(leap && remainingDays >= DAYS_PER_LEAP_YEAR) {
+				remainingDays -= DAYS_PER_LEAP_YEAR;
+				year++;
+		} else if (!leap && remainingDays >= DAYS_PER_NORMAL_YEAR) {
+				remainingDays -= DAYS_PER_NORMAL_YEAR;
+				year++;
+		} else {
+			dayOfYear = remainingDays;
+			break;
+		}
+	}
 
-	int year =  yearsSinceEpoch + 1970;
 	bool leap = isLeapYear(year);
 
-	int dayOfWeek = (daysSinceEpoch + 4) % 7;
+	int dayOfWeek = (daysSinceEpoch + 3) % 7 + 1;
 
 	int month = 0;
 	int dayOfMonth = dayOfYear;
-	for (; daysPerMonth[leap][month] < dayOfMonth; month++) {
+	for (; daysPerMonth[leap][month] <= dayOfMonth; month++) {
 		dayOfMonth -= daysPerMonth[leap][month];
 	}
 	month++;
@@ -124,7 +140,7 @@ HumanTime getHumanTime(time_t timestamp) {
 	returnTime.seconds = second;
 	returnTime.minutes = minute;
 	returnTime.hours = hour;
-	returnTime.day = dayOfYear;
+	returnTime.day = dayOfMonth;
 	returnTime.weekday = dayOfWeek;
 	returnTime.month = month;
 	returnTime.year = year;
