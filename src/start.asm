@@ -1,8 +1,4 @@
 [BITS 32]
-global start
-start:
-	mov esp, _sys_stack
-	jmp stublet
 
 ALIGN 4
 mboot:
@@ -13,16 +9,16 @@ mboot:
 	MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002 ; Multiboot Magic value
 	MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_VIDEO_ENBABLE | MULTIBOOT_AOUT_KLUDGE
 	MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-	EXTERN code, bss, end
+	EXTERN text, bss, KERNEL_END, KERNEL_START
 
 	dd MULTIBOOT_HEADER_MAGIC
 	dd MULTIBOOT_HEADER_FLAGS
 	dd MULTIBOOT_CHECKSUM
 
 	dd mboot
-	dd code
+	dd text
 	dd bss
-	dd end
+	dd KERNEL_END
 	dd start
 
 	dd 0 ; Mode type
@@ -30,7 +26,9 @@ mboot:
 	dd 600 ; height
 	dd 32 ; depth
 
-stublet:
+global start
+start:
+	mov esp, _sys_stack
 	push ebx
 	push eax
 	extern kmain

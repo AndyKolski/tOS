@@ -9,10 +9,10 @@
 void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint32 *kmain) {
 	multiboot_memory_map_t* mmap_entry = mmap_addr;
 
-	extern void* __START_OF_KERNEL;
-	extern void* __END_OF_KERNEL;
-	void* startOfKernel = &__START_OF_KERNEL; 
-	void* endOfKernel = &__END_OF_KERNEL;
+	extern void* KERNEL_START;
+	extern void* KERNEL_END;
+	void* startOfKernel = &KERNEL_START; 
+	void* endOfKernel = &KERNEL_END;
 	uint64 sizeOfKernel = endOfKernel - startOfKernel;
 
 	uint64 totalMem = 0;
