@@ -9,8 +9,8 @@
 #include <string.h>
 #include <system.h>
 
-// TODO: The VESA framebuffer needs to be double-buffered, and it needs a 
-// cursor, among other fixes.
+ // TODO: The VESA framebuffer needs to be double-buffered, and it needs a 
+ // cursor, among other fixes.
 
 uint32 *ptr; // pointer to the graphical framebuffer
 uint16 *basicPtr; // pointer to the text console
