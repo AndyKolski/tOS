@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <system.h>
-//#include <Duck.h>
 
 uint32 *ptr; // pointer to the graphical framebuffer
 uint16 *basicPtr; // pointer to the text console
@@ -158,15 +157,6 @@ void clearScreen() {
 	fillScreen(GColBLACK);
 	cursor_pos_updated();
 }
-// void drawDuck(uint32 dx, uint32 dy) {
-// 	//640x426x32
-// 	uint32 *duck_map_32 = &duck_map;
-// 	for (int y = 0; y < 426; y++) {
-// 		for (int x = 0; x < 640; x++) {
-// 			ptr[(x+dx) + (y+dy) * framebuffer_pitch] = duck_map_32[x + y * 640];
-// 		}
-// 	}
-// }
 
 void badPlaceChar(kchar ltr, uint32 x, uint32 y, color_t c) {
 	for (uint8 py = 0; py < fontHeight; ++py) {
