@@ -23,12 +23,12 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 	void* largestContinuousMemLocation = 0;
 
 	// puts("Memory map:\n");
-	while(mmap_entry < (mmap_addr + mmap_length)) {
+	while(mmap_entry < (multiboot_memory_map_t*)((void*)mmap_addr + mmap_length)) {
 		kchar type[32] = {0};
 		if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			strcpy(type, "MEM_AVAILABLE");
 			totalMem += mmap_entry->len;
-			if (mmap_entry->addr > 0xffffffff) {
+			if (mmap_entry->addr + mmap_entry->len > 0xffffffff) {
 				strcat(type, " - past 32 bits, not marking as available");
 			} else {
 				if (mmap_entry->len > largestContinuousMemSize) {
