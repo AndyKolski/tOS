@@ -83,3 +83,7 @@ void _assert(kchar *file, uint32 line, kchar *msg, bool conf) {
 		halt();
 	}
 }
+void _panic(kchar *file, uint32 line, kchar *msg) {
+	printf("\n [!!!] Kernel panic at %s:%i - %s\n", file, line, msg);
+	halt();
+}

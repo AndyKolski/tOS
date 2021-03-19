@@ -1,6 +1,6 @@
 NAME=tOS
 
-_TARGETS=start.o main.o libs.o gdt.o idt.o isrs.o irq.o keyboard.o display.o memory.o pcspeaker.o pit.o serial.o io.o stdio.o string.o mouse.o rtc.o time.o
+_TARGETS=start.o main.o libs.o gdt.o idt.o isrs.o irq.o keyboard.o display.o memory.o pcspeaker.o pit.o serial.o io.o stdio.o string.o mouse.o rtc.o time.o paging.o
 TARGETS=$(patsubst %,out/obj/%,$(_TARGETS))
 
 CC = i686-elf-gcc

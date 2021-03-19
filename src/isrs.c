@@ -1,4 +1,5 @@
 #include <idt.h>
+#include <isrs.h>
 #include <libs.h>
 #include <stdio.h>
 #include <system.h>
@@ -88,8 +89,7 @@ void isrs_install()
 *  corresponds to each and every exception. We get the correct
 *  message by accessing like:
 *  exception_message[interrupt_number] */
-char *exception_messages[] =
-{
+char *exceptionMessages[] = {
     "Division by Zero Exception",
     "Debug Exception",
     "Non Maskable Interrupt Exception",
@@ -124,25 +124,39 @@ char *exception_messages[] =
     "Reserved Exception"
 };
 
+char *pagingMessages[] = {
+"Supervisory process tried to read a non-present page entry",
+"Supervisory process tried to read a page and caused a protection fault",
+"Supervisory process tried to write to a non-present page entry",
+"Supervisory process tried to write a page and caused a protection fault",
+"User process tried to read a non-present page entry",
+"User process tried to read a page and caused a protection fault",
+"User process tried to write to a non-present page entry",
+"User process tried to write a page and caused a protection fault"
+};
+
 /* All of our Exception handling Interrupt Service Routines will
 *  point to this function. This will tell us what exception has
 *  happened! Right now, we simply halt the system by hitting an
 *  endless loop. All ISRs disable interrupts while they are being
 *  serviced as a 'locking' mechanism to prevent an IRQ from
 *  happening and messing up kernel data structures */
-void fault_handler(struct regs *r)
-{
+void fault_handler(struct regs *r) {
     /* Is this a fault whose number is from 0 to 31? */
-    if (r->int_no < 32)
-    {
+    if (r->int_no < 32) {
         /* Display the description for the Exception that occurred.
         *  In this tutorial, we will simply halt the system using an
         *  infinite loop */
         printf("\n [!!!] %s - Int: %i ErrCode: 0x%08x\n\
     EDI=0x%08x ESI=0x%08x EBP=0x%08x EBX=0x%08x EDX=0x%08x ECX=0x%08x EAX=0x%08x\n\
-    EIP=0x%08x  CS=0x%08x EFLAGS=0x%08x", \
-    exception_messages[r->int_no], r->int_no, r->err_code, r->edi, r->esi, r->ebp, r->ebx, r->edx, r->ecx, r->eax, r->eip, r->cs, r->eflags);
-        for (;;);
+    EIP=0x%08x  CS=0x%08x EFLAGS=0x%08x\n", \
+    exceptionMessages[r->int_no], r->int_no, r->err_code, r->edi, r->esi, r->ebp, r->ebx, r->edx, r->ecx, r->eax, r->eip, r->cs, r->eflags);
+
+        if (r->int_no == E_PAGE_FAULT) {
+            printf("    %s\n", pagingMessages[r->err_code & 0x7]);
+        }
+
+        halt();
     }
 
 }

@@ -5,6 +5,9 @@
 #include <string.h>
 #include <system.h>
 
+void* freememStart;
+void* freememEnd;
+void* placementAddress;
 
 void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint32 *kmain) {
 	multiboot_memory_map_t* mmap_entry = mmap_addr;
@@ -62,8 +65,39 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 	
 	printf("Kernel is loaded at start of largest memory area: %s\n", largestContinuousMemLocation == startOfKernel ? "true" : "false");
 	if (largestContinuousMemLocation == startOfKernel) {
-		printf("Start of free memory: 0x%08x\n", endOfKernel);
+		freememStart = endOfKernel;
+		freememEnd = largestContinuousMemLocation + largestContinuousMemSize - sizeOfKernel;
+	} else {
+		freememStart = largestContinuousMemLocation;
+		freememEnd = largestContinuousMemLocation + largestContinuousMemSize;
 	}
+	placementAddress = freememStart;
+	printf("Start of free memory: 0x%08x\n", freememStart);
+}
+
+ // TODO: This is a terrible way to do this. It does not (and cannot) support 
+ // free(). It needs to be rewritten at some point. I just needed basic 
+ // functionality and didn't feel like properly implementing it right now
+
+void *kmalloc(size_t size) {
+	void* tmp = placementAddress;
+	placementAddress += size;
+	if (placementAddress > freememEnd) {
+		panic("Out of memory!");
+	}
+	return tmp;
+}
+
+void *kmallocAlligned(size_t size, uint32 alignment) {
+	if ((uintptr_t)placementAddress % alignment != 0) {
+		placementAddress += alignment - ((uintptr_t)placementAddress%alignment);
+	}
+	void* tmp = placementAddress;
+	placementAddress += size;
+	if (placementAddress > freememEnd) {
+		panic("Out of memory!");
+	}
+	return tmp;
 }
 
 //unsigned char *mmap = mbi->mmap_addr; 

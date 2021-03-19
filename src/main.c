@@ -8,6 +8,7 @@
 #include <memory.h>
 #include <mouse.h>
 #include <multiboot.h>
+#include <paging.h>
 #include <serial.h>
 #include <stdio.h>
 #include <system.h>
@@ -38,6 +39,10 @@ int kmain(unsigned long magic, unsigned long addr) {
 	irq_install();
 	puts("Initializing Time...\n");
 	initTime();
+	puts("Initializing Memory Management...\n");
+	install_memory((multiboot_memory_map_t*) mbi->mmap_addr, mbi->mmap_length, (void*) kmain);
+	puts("Enabling Paging... \n");
+	install_paging();
 	puts("Setting up Mouse Controller...\n");
 	mouse_install();
 	puts("Setting up Keyboard Controller...\n");
@@ -45,11 +50,11 @@ int kmain(unsigned long magic, unsigned long addr) {
 	puts("Setting Interrupt Flag...\n");
 	__asm__ __volatile__ ("sti"); 
 	printf("Testing printf: char: %c, string: %s, int: %i, negative int: %i, hex: 0x%x, hex 2: 0x%x, float: %f\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe, 0.123);
-	puts("Initializing Memory Manager\n");
-	install_memory((multiboot_memory_map_t*) mbi->mmap_addr, mbi->mmap_length, (void*) kmain);
 
-	puts("Done.\n");
+	printf("OK\n");
 	
-	while (true) {}
+	while (true) {
+		__asm__ volatile ("hlt"); // nothing to do, so we halt the processor until something needs to happen, which we deal with, and then halt again
+	}
 	return 0;
 }

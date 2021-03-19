@@ -490,7 +490,24 @@ irq_common_stub:
 	add esp, 8
 	iret
 
+global enablePaging
+extern PageDirectoryTable
+enablePaging:
+	pusha
+	mov eax, PageDirectoryTable
+    mov cr3, eax
+
+    mov ebx, cr4        ; read current cr4
+    or  ebx, 0x00000010 ; set PSE
+    mov cr4, ebx        ; update cr4
+
+    mov ebx, cr0        ; read current cr0
+    or  ebx, 0x80004000 ; set PG and WP
+    mov cr0, ebx        ; update cr0
+    popa
+	ret
+
 SECTION .bss
 	;resb 8192
-	resb 0x100000
+	resb 0x10000
 _sys_stack:

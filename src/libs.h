@@ -17,3 +17,6 @@ void reboot();
 void _assert(kchar *file, uint32 line, kchar *msg, bool conf);
 #define assert(conf, msg) _assert(__FILE__, __LINE__, msg, conf)
 #define assertf(msg) _assert(__FILE__, __LINE__, msg, false)
+
+void _panic(kchar *file, uint32 line, kchar *msg);
+#define panic(msg) _panic(__FILE__, __LINE__, msg)

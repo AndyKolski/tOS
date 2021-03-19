@@ -3,12 +3,24 @@
 #include <stddef.h>
 #include <string.h>
 
+// inline void *memcpy(void *dest, const void *src, size_t n) {
+//     char *dp = dest;
+//     const char *sp = src;
+//     while (n--)
+//         *dp++ = *sp++;
+//     return dest;
+// }
+
 inline void *memcpy(void *dest, const void *src, size_t n) {
-    char *dp = dest;
-    const char *sp = src;
-    while (n--)
-        *dp++ = *sp++;
-    return dest;
+  asm volatile ("rep movsb"
+                : "=D" (dest),
+                  "=S" (src),
+                  "=c" (n)
+                : "0" (dest),
+                  "1" (src),
+                  "2" (n)
+                : "memory");
+  return dest;
 }
 
 void *memset(void *s, int c, size_t n) {
