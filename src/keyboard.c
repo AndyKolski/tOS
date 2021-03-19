@@ -442,6 +442,10 @@ void setKeyDownState(uint8 keyId, bool newState) {
 	keyPressStates[keyId] = newState;
 }
 
+// TODO: Implement a way for functions (and eventually programs) to wait for
+// and read key state changes/presses.
+
+
 // void readLine(kchar *str, uint32 length) {
 // 	uint32 i = 0;
 // 	while (i < length-1) {

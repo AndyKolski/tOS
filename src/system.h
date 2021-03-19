@@ -13,6 +13,9 @@ typedef int16_t			int16;
 typedef int32_t			int32;
 typedef int64_t			int64;
 
+// TODO: At some point it would be good to transition to using uint32 for chars,
+// to allow for easier Unicode support in the future.
+
 typedef char kchar;
 
 /* This defines what the stack looks like after an ISR was running */

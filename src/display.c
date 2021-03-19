@@ -9,6 +9,9 @@
 #include <string.h>
 #include <system.h>
 
+// TODO: The VESA framebuffer needs to be double-buffered, and it needs a 
+// cursor, among other fixes.
+
 uint32 *ptr; // pointer to the graphical framebuffer
 uint16 *basicPtr; // pointer to the text console
 
@@ -135,6 +138,7 @@ inline void setPixel(uint32 x, uint32 y, color_t c) {
 	// ptr[p+2] = c >> 16;
 	return;
 }
+
 void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
 	int s = 0;
 	for (uint32 fy = y; fy < h+y; ++fy) {
@@ -151,12 +155,16 @@ void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
 void fillScreen(color_t c) {
 	fillRect(0, 0, framebuffer_width, framebuffer_height, c);
 }
+
 void clearScreen() {
 	cursorx = 0; 
 	cursory = 0; 
 	fillScreen(GColBLACK);
 	cursor_pos_updated();
 }
+
+ // TODO: Better optimize this function. It works, but could be made much more
+ // efficient.
 
 void badPlaceChar(kchar ltr, uint32 x, uint32 y, color_t c) {
 	for (uint8 py = 0; py < fontHeight; ++py) {

@@ -77,7 +77,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 
  // TODO: This is a terrible way to do this. It does not (and cannot) support 
  // free(). It needs to be rewritten at some point. I just needed basic 
- // functionality and didn't feel like properly implementing it right now
+ // functionality and didn't feel like properly implementing it right now.
 
 void *kmalloc(size_t size) {
 	void* tmp = placementAddress;
