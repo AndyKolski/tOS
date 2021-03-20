@@ -110,7 +110,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 	}
 	printf("Start of free memory: 0x%08x\n", freememStart);
 
-	// TODO: use more than just the continuous memory starting at 0x00100000
+	// TODO: Use more than just the continuous memory starting at 0x00100000
 
 	for (uint32 i = 0; i < HEAP_MANAGER_ARRAY_SIZE; ++i) {
 		bool isUsable = false;
@@ -169,7 +169,9 @@ void *kmalloc(size_t size) {
 			}
 		}
 	}
-	// TODO: implement OOM killer & memory defragmenter at some point
+	
+	// TODO: Implement OOM killer & memory defragmenter at some point.
+
 	panic("Out of memory!");
 	return 0;
 }
