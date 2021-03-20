@@ -7,7 +7,40 @@
 
 void* freememStart;
 void* freememEnd;
-void* placementAddress;
+
+uint32 firstUsablePage = 0;
+
+typedef struct HeapManagerEntry {
+	uint32 inUse		: 1;
+	uint32 isHead		: 1;
+	uint32 isUsable		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	// uint32 attr		: 1;
+	uint32 length		: 20;
+} HeapManagerEntry;
+
+C_ASSERT(sizeof(HeapManagerEntry) == 4);
+
+#define PAGE_SIZE 4096
+#define HEAP_MANAGER_ARRAY_SIZE 1048576 // 1048576 = 2^32 / PAGE_SIZE = 2^20
+
+HeapManagerEntry (*heapMannagerArray)[HEAP_MANAGER_ARRAY_SIZE];
+
+HeapManagerEntry createEntry(uint32 length, uint32 inUse, uint32 isHead, uint32 isUsable) {
+	HeapManagerEntry new;
+	new.length = length;
+	new.inUse = inUse;
+	new.isHead = isHead;
+	new.isUsable = isUsable;
+	return new;
+}
 
 void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint32 *kmain) {
 	multiboot_memory_map_t* mmap_entry = mmap_addr;
@@ -64,40 +97,117 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 	printf("Kernel start: 0x%08x end: 0x%08x len: 0x%x (%u KiB)\n", (uint32)startOfKernel, (uint32)endOfKernel, (uint32)sizeOfKernel, (uint32)(sizeOfKernel/1024));
 	
 	printf("Kernel is loaded at start of largest memory area: %s\n", largestContinuousMemLocation == startOfKernel ? "true" : "false");
+
+
 	if (largestContinuousMemLocation == startOfKernel) {
-		freememStart = endOfKernel;
-		freememEnd = largestContinuousMemLocation + largestContinuousMemSize - sizeOfKernel;
+		heapMannagerArray = endOfKernel;
+		freememStart = endOfKernel + sizeof(*heapMannagerArray);
+		freememEnd = largestContinuousMemLocation + largestContinuousMemSize - sizeOfKernel - sizeof(*heapMannagerArray);
 	} else {
-		freememStart = largestContinuousMemLocation;
-		freememEnd = largestContinuousMemLocation + largestContinuousMemSize;
+		heapMannagerArray = largestContinuousMemLocation;
+		freememStart = largestContinuousMemLocation + sizeof(*heapMannagerArray);
+		freememEnd = largestContinuousMemLocation + largestContinuousMemSize - sizeof(*heapMannagerArray);
 	}
-	placementAddress = freememStart;
 	printf("Start of free memory: 0x%08x\n", freememStart);
+
+	// TODO: use more than just the continuous memory starting at 0x00100000
+
+	for (uint32 i = 0; i < HEAP_MANAGER_ARRAY_SIZE; ++i) {
+		bool isUsable = false;
+		if ((void*)(i * PAGE_SIZE) >= freememStart && (void*)(((i+1) * PAGE_SIZE)-1) <= freememEnd) {
+			isUsable = true;
+			if (firstUsablePage == 0) {
+				firstUsablePage = i;
+			}
+		}
+		(*heapMannagerArray)[i] = createEntry(0, 0, 0, isUsable);
+	}
 }
 
- // TODO: This is a terrible way to do this. It does not (and cannot) support 
- // free(). It needs to be rewritten at some point. I just needed basic 
- // functionality and didn't feel like properly implementing it right now.
+uint32 intdivceil(uint32 a, uint32 b) { // calculates ceil(a/b) without using any floating point math
+	if (a%b == 0) {
+		return a/b;
+	} else {
+		return a/b + 1;
+	}
+}
+
 
 void *kmalloc(size_t size) {
-	void* tmp = placementAddress;
-	placementAddress += size;
-	if (placementAddress > freememEnd) {
-		panic("Out of memory!");
+	uint32 pagesRequired = intdivceil(size, PAGE_SIZE);
+	for (uint32 i = firstUsablePage; i < HEAP_MANAGER_ARRAY_SIZE-1; ++i) {
+		HeapManagerEntry current = (*heapMannagerArray)[i];
+		if (current.isUsable && !current.inUse) {
+			if (pagesRequired == 1) {
+				current.inUse = true;
+				current.isHead = true;
+				current.length = pagesRequired;
+				(*heapMannagerArray)[i] = current;
+				return (void*) (i*PAGE_SIZE);
+			} else {
+				bool cantUse = false;
+				for (uint32 o = 1; o < pagesRequired; ++o) {
+					HeapManagerEntry test = (*heapMannagerArray)[i+o];
+					if (!test.isUsable || test.inUse) {
+						cantUse = true;
+					}
+				}
+				if (!cantUse) {
+					for (uint32 o = 1; o < pagesRequired; ++o) {
+						HeapManagerEntry test = (*heapMannagerArray)[i+o];
+						test.inUse = true;
+						test.isHead = false;
+						test.length = 0;
+						(*heapMannagerArray)[i+o] = test;
+					}
+					current.inUse = true;
+					current.isHead = true;
+					current.length = pagesRequired;
+					(*heapMannagerArray)[i] = current;
+					return (void*) (i*PAGE_SIZE);
+				}
+			}
+		}
 	}
-	return tmp;
+	// TODO: implement OOM killer & memory defragmenter at some point
+	panic("Out of memory!");
+	return 0;
 }
 
-void *kmallocAlligned(size_t size, uint32 alignment) {
-	if ((uintptr_t)placementAddress % alignment != 0) {
-		placementAddress += alignment - ((uintptr_t)placementAddress%alignment);
+void kfree(void *ptr) {
+	assert((uintptr_t)ptr%PAGE_SIZE == 0, "Attempt to kfree() invalid pointer!");
+	
+	if ((uintptr_t)ptr == 0) {
+		return;
 	}
-	void* tmp = placementAddress;
-	placementAddress += size;
-	if (placementAddress > freememEnd) {
-		panic("Out of memory!");
+
+	uint32 headIndex = (uintptr_t)ptr/PAGE_SIZE;
+	HeapManagerEntry current = (*heapMannagerArray)[headIndex];
+	
+	if(!current.inUse || !current.isHead) {
+		assertf("Attempt to kfree() invalid pointer!");
 	}
-	return tmp;
+
+	if (current.length == 1) {
+		current.inUse = false;
+		current.isHead = false;
+		current.length = 0;
+		(*heapMannagerArray)[headIndex] = current;
+		return;
+	} else {
+		for (uint32 i = 1; i < current.length; ++i) {
+			HeapManagerEntry test = (*heapMannagerArray)[headIndex+i];
+			test.inUse = false;
+			test.isHead = false;
+			test.length = 0;
+			(*heapMannagerArray)[headIndex+i] = test;
+		}
+		current.inUse = false;
+		current.isHead = false;
+		current.length = 0;
+		(*heapMannagerArray)[headIndex] = current;
+		return;
+	}
 }
 
 //unsigned char *mmap = mbi->mmap_addr; 
