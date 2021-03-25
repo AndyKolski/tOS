@@ -51,10 +51,18 @@ int itoa(int64 value, char *sp, int radix) {
 	return len;
 }
 
-int isDigit (char c) {
-    if ((c>='0') && (c<='9')) return 1;
-    return 0;
+bool isDigit(kchar c) {
+    return (c >= '0') && (c <= '9');
 }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
+
+bool isPrint(kchar c) {
+	return (c >= 0x20) && (c <= 0x7f); // 0x20 = 32, 0x7f = 127
+}
+
+#pragma GCC diagnostic pop
 
 uint8 bcdToDecimal(uint8 bcd) {
     assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nibble is valid

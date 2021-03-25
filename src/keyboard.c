@@ -5,6 +5,7 @@
 #include <libs.h>
 #include <stdio.h>
 #include <system.h>
+#include <time.h>
 
 #define IRQ_KEYBOARD 1
 #define I8042_BUFFER 0x60
@@ -31,6 +32,12 @@ typedef struct lockState {
 	bool ScrollLock;
 } lockState;
 
+volatile bool terminalEcho = true;
+
+#define KEYBOARD_BUFFER_SIZE 100
+
+volatile kchar keyboardBuffer[KEYBOARD_BUFFER_SIZE];
+volatile uint32 bufferOffset = 0;
 
 keyPressEventData scancodeLookup[255] = {
 //    ┌ ASCII form
@@ -309,6 +316,36 @@ keyPressEventData e0ScancodeLookup[255] = {
 	{ 0,   0,  0, 0, 0, 0, KEY_Invalid} 		// 0x7F
 };
 
+inline uint32 bufferOffsetCalc(uint32 in) {
+    return (in + bufferOffset) % KEYBOARD_BUFFER_SIZE;
+}
+
+void addCharToBuffer(kchar c) {
+    bufferOffset += 1;
+    if (bufferOffset == KEYBOARD_BUFFER_SIZE) {
+        bufferOffset = 0;
+    }
+    keyboardBuffer[bufferOffsetCalc(KEYBOARD_BUFFER_SIZE-1)] = c;
+}
+
+void clearBuffer() {
+	for (uint32 i = 0; i < KEYBOARD_BUFFER_SIZE; ++i) {
+		keyboardBuffer[i] = 0;
+	}
+	bufferOffset = 0;
+}
+
+kchar getCharFromBuffer() {
+    for (uint32 i = 0; i < KEYBOARD_BUFFER_SIZE; ++i) {
+        kchar read = keyboardBuffer[bufferOffsetCalc(i)];
+        if (read != 0) {
+            keyboardBuffer[bufferOffsetCalc(i)] = 0;
+            return read;
+        }
+    }
+    return 0;
+}
+
 volatile bool e0Prefix = false;
 volatile bool e1Prefix = false;
 
@@ -318,16 +355,12 @@ volatile lockState lockStates = {false};
 
 volatile uint8 lastIn = 0;
 
-volatile bool isPendingKeyEvent = false;
-volatile kchar pendingKeyEvent = 0;
-
 void keyboard_handler(struct regs *r __attribute__((__unused__))) {
-	while (true) {
+	// while (true) {
 		uint8 status = inb(I8042_STATUS);
 	
 		if (!(((status & I8042_WHICH_BUFFER) == I8042_KEYBOARD_BUFFER) && (status & I8042_BUFFER_FULL))) {
 			return;
-
 		}
 		uint8 inByte = inb(I8042_BUFFER);
 		if (inByte == I8042_ACK) {
@@ -343,7 +376,6 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 		}
 		bool isKeyDownEvent = !(inByte & 0x80);
 		uint8 scancode = inByte & 0x7f;
-
 
 		keyPressEventData keyData = {0};
 
@@ -376,10 +408,12 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 
 		lastIn = inByte;
 
-		if (keyPressStates[KEY_LeftShift] && keyData.VKeyCode == KEY_Escape) {
+		setKeyDownState(keyData.VKeyCode, isKeyDownEvent);
+
+		if (keyPressStates[KEY_LeftShift] && keyPressStates[KEY_Escape]) {
 			reboot();
 		}
-		if (keyPressStates[KEY_LeftControl] && keyPressStates[KEY_LeftAlt] && keyData.VKeyCode == KEY_C) {
+		if (keyPressStates[KEY_LeftControl] && keyPressStates[KEY_LeftAlt] && keyPressStates[KEY_C]) {
 			clearScreen();
 		}
 
@@ -387,8 +421,6 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 			return;
 			//printf("%x (%x) %s %s %i %c\n", scancode, inByte, isKeyDownEvent ? "down" : "up", e0Prefix ? "true" : "false", keyData.VKeyCode, keyData.ASCII);
 		}
-
-		setKeyDownState(keyData.VKeyCode, isKeyDownEvent);
 
 		if (keyData.VKeyCode == KEY_Break) { // Break doesn't have an up code apparently
 			setKeyDownState(KEY_Break, false);
@@ -398,18 +430,24 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 			// printf("Id: %i (%s) ", keyData.VKeyCode, "");
 			
 			if (keyData.IsPrintable) {
-				if ((lockStates.CapsLock || keyPressStates[KEY_LeftShift] || keyPressStates[KEY_RightShift]) && keyData.CanUppercase) {
-					putc(keyData.UpperASCII);
-					isPendingKeyEvent = true;
-					pendingKeyEvent = keyData.UpperASCII;
+				if (XOR(lockStates.CapsLock, keyPressStates[KEY_LeftShift] || keyPressStates[KEY_RightShift]) && keyData.CanUppercase) {
+					addCharToBuffer(keyData.UpperASCII);
+					if (terminalEcho) {
+						putc(keyData.UpperASCII);
+					}
 				} else {
-					putc(keyData.ASCII);
-					isPendingKeyEvent = true;
-					pendingKeyEvent = keyData.ASCII;
+					addCharToBuffer(keyData.ASCII);
+					if (terminalEcho) {
+						putc(keyData.ASCII);
+					}
 				}
 			} else if (keyData.VKeyCode == KEY_Backspace) {
-				termBackspace();
+				addCharToBuffer('\b');
+				if (terminalEcho) {
+					termBackspace();
+				}
 			}
+
 			if (keyData.VKeyCode == KEY_CapsLock) {
 				lockStates.CapsLock = !lockStates.CapsLock;
 			}
@@ -424,7 +462,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 
 		e0Prefix = false;
 		return;
-	}
+	// }
 }
 
 void updateLEDs() {
@@ -442,29 +480,29 @@ void setKeyDownState(uint8 keyId, bool newState) {
 	keyPressStates[keyId] = newState;
 }
 
- // TODO: Implement a way for functions (and eventually programs) to wait for
- // and read key state changes/presses.
+ // TODO: Implement a better way for functions (and eventually programs) to 
+ // wait for and read key state changes/presses.
 
-
-// void readLine(kchar *str, uint32 length) {
-// 	uint32 i = 0;
-// 	while (i < length-1) {
-// 		kchar last = readChar();
-// 		if (last != '\n') {
-// 			str[i] = last;
-// 		} else {
-// 			break;
-// 		}
-// 		i++;
-// 	}
-// 	str[i+1] = 0; 
-// }
+void clearKeyboardBuffer() {
+	clearBuffer();
+}
 
 kchar readChar() {
-	isPendingKeyEvent = false;
-	while(!isPendingKeyEvent) {}
-	return pendingKeyEvent;
-	isPendingKeyEvent = false;
+	while (true) {
+		kchar read = getCharFromBuffer();
+		if (read != 0) {
+			return read;
+		}
+		wait(1);
+	}
+}
+
+void setTerminalEcho(bool new) {
+	terminalEcho = new;
+}
+
+bool getTerminalEcho() {
+	return terminalEcho;
 }
 
 void keyboard_install() {

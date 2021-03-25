@@ -7,6 +7,10 @@ bool isKeyDown(uint8 keyId);
 void setKeyDownState(uint8 keyId, bool newState);
 void updateLEDs();
 void setKeyboardLEDs(uint8 ledstatus);
+kchar readChar();
+void setTerminalEcho(bool new);
+bool getTerminalEcho();
+void clearKeyboardBuffer();
 
 #define KEY_Invalid 0
 #define KEY_Mouse_Left 1

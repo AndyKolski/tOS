@@ -159,6 +159,8 @@ uint64 getUptimeMs() {
 
 void wait(uint64 ms) {
     uint64 eticks = PIT_ticks + ((ms*PIT_tps)/1000);
-    while(PIT_ticks < eticks) {}
+    while(PIT_ticks < eticks) {
+    	__asm__ volatile ("hlt");
+    }
     return;
 }

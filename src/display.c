@@ -274,6 +274,7 @@ void putc(kchar chr) {
 			if (cursory >= terminalHeight) {
 				legacyScrollTerminal();
 			}
+			cursor_pos_updated();
 			return;
 		}
 		basicPtr[cursory * terminalWidth + cursorx] = chr | (15 | 0 << 4) << 8;

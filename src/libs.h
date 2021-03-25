@@ -6,7 +6,9 @@ void reverse(char s[]);
 
 int itoa(int64 value, char *sp, int radix);
 
-int isDigit (char c);
+bool isDigit(kchar c);
+
+bool isPrint(kchar c);
 
 uint8 bcdToDecimal(uint8 bcd);
 

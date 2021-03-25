@@ -1,5 +1,6 @@
 #include <display.h>
 #include <libs.h>
+#include <memory.h>
 #include <multiboot.h>
 #include <stdio.h>
 #include <string.h>
@@ -42,7 +43,7 @@ HeapManagerEntry createEntry(uint32 length, uint32 inUse, uint32 isHead, uint32 
 	return new;
 }
 
-void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint32 *kmain) {
+void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 	multiboot_memory_map_t* mmap_entry = mmap_addr;
 
 	extern void* KERNEL_START;
@@ -83,21 +84,17 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 		} else {
 			strcpy(type, "MEM_RESERVED_UNKNOWN");
 		}
-		// printf("    ENTRY: address: 0x%08x length: 0x%08x (%5u %s) type: %s\n",
-		// 	mmap_entry->addr > 0xffffffff ? 0 : (uint32)mmap_entry->addr,
-		// 	mmap_entry->len > 0xffffffff ? 0 : (uint32)mmap_entry->len,
-		// 	mmap_entry->len/1024 > 10240 ? (uint32)(mmap_entry->len/1024/1024) : (uint32)(mmap_entry->len/1024),
+		// printf("    ENTRY: address: 0x%08qx length: 0x%08qx (%5qu %s) type: %s\n",
+		// 	mmap_entry->addr,
+		// 	mmap_entry->len,
+		// 	mmap_entry->len/1024 > 10240 ? (mmap_entry->len/1024/1024) : (mmap_entry->len/1024),
 		// 	mmap_entry->len/1024 > 10240 ? "MiB" : "KiB",
 		// 	type);
 		mmap_entry = (multiboot_memory_map_t*) (mmap_entry + 1);
 	}
-	printf("Total available memory: %qu B (%u KiB / %u MiB / %u GiB)\n", totalMem, (uint32)(totalMem/1024), (uint32)((totalMem/1024+10)/1024), (uint32)((totalMem/1024/1024+10)/1024));
-	printf("Longest continuous memory area: 0x%08x - size: %qu B (%u KiB / %u MiB / %u GiB)\n", (uint32)largestContinuousMemLocation, largestContinuousMemSize, (uint32)(largestContinuousMemSize/1024), (uint32)((largestContinuousMemSize/1024+10)/1024), (uint32)((largestContinuousMemSize/1024/1024+10)/1024));
-	printf("kmain function location: 0x%08x\n", &kmain);
-	printf("Kernel start: 0x%08x end: 0x%08x len: 0x%x (%u KiB)\n", (uint32)startOfKernel, (uint32)endOfKernel, (uint32)sizeOfKernel, (uint32)(sizeOfKernel/1024));
-	
-	printf("Kernel is loaded at start of largest memory area: %s\n", largestContinuousMemLocation == startOfKernel ? "true" : "false");
-
+	printf("Total available memory: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", totalMem, (totalMem/1024), ((totalMem/1024+10)/1024), ((totalMem/1024/1024+10)/1024));
+	printf("Longest continuous memory area: 0x%08qx - size: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", (uint64)(uint32)largestContinuousMemLocation, largestContinuousMemSize, (largestContinuousMemSize/1024), ((largestContinuousMemSize/1024+10)/1024), ((largestContinuousMemSize/1024/1024+10)/1024));
+	printf("Kernel start: 0x%08qx end: 0x%08qx len: 0x%qx (%qu KiB) loaded at start of largest memory area: %s\n", (uint64)(uint32)startOfKernel, (uint64)(uint32)endOfKernel, sizeOfKernel, (sizeOfKernel/1024), largestContinuousMemLocation == startOfKernel ? "true" : "false");
 
 	if (largestContinuousMemLocation == startOfKernel) {
 		heapMannagerArray = endOfKernel;
@@ -108,7 +105,6 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 		freememStart = largestContinuousMemLocation + sizeof(*heapMannagerArray);
 		freememEnd = largestContinuousMemLocation + largestContinuousMemSize - sizeof(*heapMannagerArray);
 	}
-	printf("Start of free memory: 0x%08x\n", freememStart);
 
 	// TODO: Use more than just the continuous memory starting at 0x00100000
 
@@ -122,6 +118,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length, uint3
 		}
 		(*heapMannagerArray)[i] = createEntry(0, 0, 0, isUsable);
 	}
+	printf("Start of free memory: 0x%08x, %u MiB free\n", freememStart, bytesFree()/1024/1024);
 }
 
 uint32 intdivceil(uint32 a, uint32 b) { // calculates ceil(a/b) without using any floating point math
@@ -132,6 +129,16 @@ uint32 intdivceil(uint32 a, uint32 b) { // calculates ceil(a/b) without using an
 	}
 }
 
+uint32 bytesFree() {
+	uint32 freeBytes = 0;
+	for (uint32 i = firstUsablePage; i < HEAP_MANAGER_ARRAY_SIZE-1; ++i) {
+		HeapManagerEntry current = (*heapMannagerArray)[i];
+		if (current.isUsable && !current.inUse) {
+			freeBytes += PAGE_SIZE;
+		}
+	}
+	return freeBytes;
+}
 
 void *kmalloc(size_t size) {
 	uint32 pagesRequired = intdivceil(size, PAGE_SIZE);

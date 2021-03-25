@@ -40,7 +40,7 @@ int kmain(unsigned long magic, unsigned long addr) {
 	puts("Initializing Time...\n");
 	initTime();
 	puts("Initializing Memory Management...\n");
-	install_memory((multiboot_memory_map_t*) mbi->mmap_addr, mbi->mmap_length, (void*) kmain);
+	install_memory((multiboot_memory_map_t*) mbi->mmap_addr, mbi->mmap_length);
 	puts("Enabling Paging... \n");
 	install_paging();
 	puts("Setting up Mouse Controller...\n");
