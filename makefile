@@ -8,7 +8,7 @@ LD = i686-elf-gcc
 AS = nasm
 
 # -Wall: enable all warnings, -Wextra: enable extra warnings, -Werror: treat warnings as errors -I: set include path -c: disable linking -std=gnu99: use GNU C99 standard for compilation -g: include debug symbols -Og: optimize for debug
-CFLAGS = -Wall -Wextra -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wshadow -Werror -I src -c -ffreestanding -std=gnu99 -g -Og
+CFLAGS = -Wall -Wextra -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wshadow -Werror -fstack-protector-strong -I src -c -ffreestanding -std=gnu99 -g -Og
 # -ffreestanding: assume non-hosted environment -nostdlib: don't include standard libraries -lgcc: link libgcc
 LDFLAGS = -ffreestanding -nostdlib -lgcc
 ASFLAGS = -felf

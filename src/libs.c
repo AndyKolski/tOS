@@ -91,7 +91,18 @@ void _assert(kchar *file, uint32 line, kchar *msg, bool conf) {
 		halt();
 	}
 }
+
 void _panic(kchar *file, uint32 line, kchar *msg) {
 	printf("\n [!!!] Kernel panic at %s:%i - %s\n", file, line, msg);
 	halt();
+}
+
+void panicNoLineNumber(kchar *msg) {
+	printf("\n [!!!] Kernel panic - %s\n", msg);
+	halt();
+}
+
+uintptr_t __stack_chk_guard = 0x681a7261; // Random number, picked using random.org
+void __stack_chk_fail(void) {
+	panicNoLineNumber("Stack smashing detected!");	
 }
