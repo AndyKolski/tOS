@@ -316,16 +316,15 @@ keyPressEventData e0ScancodeLookup[255] = {
 	{ 0,   0,  0, 0, 0, 0, KEY_Invalid} 		// 0x7F
 };
 
-inline uint32 bufferOffsetCalc(uint32 in) {
-    return (in + bufferOffset) % KEYBOARD_BUFFER_SIZE;
-}
+#define BUFFER_CALC_OFFSET(in) ((in + bufferOffset) % KEYBOARD_BUFFER_SIZE)
+
 
 void addCharToBuffer(kchar c) {
     bufferOffset += 1;
     if (bufferOffset == KEYBOARD_BUFFER_SIZE) {
         bufferOffset = 0;
     }
-    keyboardBuffer[bufferOffsetCalc(KEYBOARD_BUFFER_SIZE-1)] = c;
+    keyboardBuffer[BUFFER_CALC_OFFSET(KEYBOARD_BUFFER_SIZE-1)] = c;
 }
 
 void clearBuffer() {
@@ -337,9 +336,9 @@ void clearBuffer() {
 
 kchar getCharFromBuffer() {
     for (uint32 i = 0; i < KEYBOARD_BUFFER_SIZE; ++i) {
-        kchar read = keyboardBuffer[bufferOffsetCalc(i)];
+        kchar read = keyboardBuffer[BUFFER_CALC_OFFSET(i)];
         if (read != 0) {
-            keyboardBuffer[bufferOffsetCalc(i)] = 0;
+            keyboardBuffer[BUFFER_CALC_OFFSET(i)] = 0;
             return read;
         }
     }
