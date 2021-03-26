@@ -58,7 +58,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 
 	// puts("Memory map:\n");
 	while(mmap_entry < (multiboot_memory_map_t*)((void*)mmap_addr + mmap_length)) {
-		kchar type[32] = {0};
+		kchar type[75] = {0};
 		if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			strcpy(type, "MEM_AVAILABLE");
 			totalMem += mmap_entry->len;
@@ -67,10 +67,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 			} else {
 				if (mmap_entry->len > largestContinuousMemSize) {
 					largestContinuousMemSize = mmap_entry->len;
-					#pragma GCC diagnostic push
-					#pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
-						largestContinuousMemLocation = (void*)mmap_entry->addr;
-					#pragma GCC diagnostic pop
+					largestContinuousMemLocation = (void*)(uint32)mmap_entry->addr;
 				}
 			}
 		} else if (mmap_entry->type == MULTIBOOT_MEMORY_RESERVED) {

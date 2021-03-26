@@ -6,9 +6,15 @@ TARGETS=$(patsubst %,out/obj/%,$(_TARGETS))
 CC = i686-elf-gcc
 LD = i686-elf-gcc
 AS = nasm
+QEMU = qemu-system-i386
+
+QEMUARGS = -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime#-serial file:serial.log
+QEMUDEBUG = -s -S
 
 #-c: Compile only, disable linking -ffreestanding: Assume non-hosted environment, -fstack-protector-strong: enable stack-smashing detection,
 #-I src: Set include path, -std=gnu99: Use GNU C99 standard for compilation, -W*: Enable various warnings, -g: include debug symbols, -Og, optimize for debugging
+COPT = -g\
+-Og
 CFLAGS = -c\
 -ffreestanding\
 -fstack-protector-strong\
@@ -24,8 +30,8 @@ CFLAGS = -c\
 -Wshadow\
 -Wsign-conversion\
 -Werror\
--g\
--Og
+$(COPT)
+
 
 # -nostdlib: don't include standard libraries -lgcc: link libgcc
 LDFLAGS = -nostdlib -lgcc
@@ -66,9 +72,9 @@ out/$(NAME).iso: isodir/boot/grub out/$(NAME).bin
 
 
 run: out/$(NAME).iso
-	@qemu-system-i386 -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime #-serial file:serial.log 
+	@$(QEMU) $(QEMUARGS)
 
 debug: out/$(NAME).iso
-	gnome-terminal -e "qemu-system-i386 -s -S -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime" #-serial file:serial.log 
+	x-terminal-emulator -e "$(QEMU) $(QEMUDEBUG) $(QEMUARGS)"
 	gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234" 
 

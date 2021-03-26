@@ -34,10 +34,7 @@ color_t backgroundColor = GColBLACK;
 void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb_bpp, uint32 fb_pitch, bool useLegacy) {
 	FBScreen = !useLegacy;
 	if (FBScreen) {
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
-		ptr = (uint32 *)(uint64*)fb_addr; // this line causes a GCC warning, but AFAIK it cannot be fixed, so we disable it
-		#pragma GCC diagnostic pop
+		ptr = (uint32*)(uint32)fb_addr;
 		
 		framebuffer_width = fb_width;
 		framebuffer_height = fb_height;
