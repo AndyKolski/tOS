@@ -21,12 +21,12 @@ void PIT_handler(struct regs *r __attribute__((__unused__))) {
 	PIT_Tick();
 }
 
-void PIT_Install(int freq) {
+void PIT_Install(uint32 freq) {
 	setPITRate(freq);
     irq_install_handler(0, PIT_handler);
 }
 
-void setPITRate(int freq) {
-    printf("Setting PIT to %i Hz...\n", freq);
+void setPITRate(uint32 freq) {
+    printf("Setting PIT to %lu Hz...\n", freq);
     configurePIT(TIMER0_SELECT, TIMER0_CTL, freq, MODE_SQUARE_WAVE);
 }

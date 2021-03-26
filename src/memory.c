@@ -50,7 +50,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 	extern void* KERNEL_END;
 	void* startOfKernel = &KERNEL_START; 
 	void* endOfKernel = &KERNEL_END;
-	uint64 sizeOfKernel = endOfKernel - startOfKernel;
+	uint64 sizeOfKernel = (uint64)(endOfKernel - startOfKernel);
 
 	uint64 totalMem = 0;
 	uint64 largestContinuousMemSize = 0;
@@ -118,7 +118,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 		}
 		(*heapMannagerArray)[i] = createEntry(0, 0, 0, isUsable);
 	}
-	printf("Start of free memory: 0x%08x, %u MiB free\n", freememStart, bytesFree()/1024/1024);
+	printf("Start of free memory: 0x%08lx, %lu MiB free\n", (uint32)freememStart, bytesFree()/1024/1024);
 }
 
 uint32 intdivceil(uint32 a, uint32 b) { // calculates ceil(a/b) without using any floating point math

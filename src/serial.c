@@ -17,7 +17,7 @@ char read_serial() {
 	if (!IS_SERIAL_ENABLED) {return 0;}
 	while (serial_received() == 0) {} //wait until we get something
  
-	return inb(PORT);
+	return (char)inb(PORT);
 }
 
 int is_transmit_empty() {
@@ -29,7 +29,7 @@ void serial_putc(char chr) {
 	if (!IS_SERIAL_ENABLED) {return;}
 	while (is_transmit_empty() == 0) {} //wait until the buffer is empty
  
-	outb(PORT, chr);
+	outb(PORT, (uint8)chr);
 }
 
 void serial_puts(char *text) {

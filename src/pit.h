@@ -21,4 +21,4 @@ void configurePIT(uint8 timerSelect, uint8 timerCTL, uint32 freq, uint8 mode);
 
 void PIT_Install();
 
-void setPITRate(int freq);
+void setPITRate(uint32 freq);

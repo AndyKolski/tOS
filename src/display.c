@@ -48,7 +48,7 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 		terminalHeight = framebuffer_height/(fontHeight+1);
 
 		fillScreen(backgroundColor);
-		printf("Created console with size %ix%i (%ipx x %ipx @ %ibpp) at 0x%x\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr);
+		printf("Created console with size %lux%lu (%lupx x %lupx @ %ibpp) at 0x%lx\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr);
 	} else {
 		basicPtr = (uint16*) 0x000b8000;
 		terminalWidth = 80;
@@ -58,11 +58,11 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 				basicPtr[y * 80 + x] = ' ' | (15 | 0 << 4) << 8;
 			}
 		}
-		printf("Created console with size %ix%i (--px x --px @ --bpp)\n", terminalWidth, terminalHeight);
+		printf("Created console with size %lux%lu (--px x --px @ --bpp)\n", terminalWidth, terminalHeight);
 	}}
 
 color_t colorFromRGB(uint8 r, uint8 g, uint8 b) {
-	return b|(g<<8)|(r<<16);
+	return (color_t)(b|(g<<8)|(r<<16));
 }
 
 color_t _colorFromHSV(uint8 h, uint8 s, uint8 v) {
@@ -140,7 +140,7 @@ inline void setPixel(uint32 x, uint32 y, color_t c) {
 }
 
 void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
-	int s = 0;
+	uint32 s = 0;
 	for (uint32 fy = y; fy < h+y; ++fy) {
 		uint32 offset = fy * framebuffer_pitch;
 		for (uint32 fx = x; fx < w+x; ++fx) {

@@ -137,8 +137,8 @@ MouseEvent parseMouseData() {
 		event.dZ = mouseBuffer[3] & 0x0f;
 	}
 
-	event.dX = mouseBuffer[1];
-	event.dY = mouseBuffer[2];
+	event.dX = (int8)mouseBuffer[1];
+	event.dY = (int8)mouseBuffer[2];
 
 	if (event.dX && mouseBuffer[0] & XS) {
 		event.dX -= 0x100;

@@ -22,12 +22,12 @@ int kmain(unsigned long magic, unsigned long addr) {
 	puts("Setting up basic serial interface (COM 1)...\n");
 	init_serial();
 	
-	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%x\n", mbi->boot_loader_name, mbi->framebuffer_type, mbi-> cmdline, magic);
+	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%lx\n", (char*)mbi->boot_loader_name, mbi->framebuffer_type, (char*)mbi->cmdline, magic);
 
 	printf("t/OS test build, compiled on %s at %s\n", __DATE__, __TIME__);
 
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-		printf("Warning: Boot magic value is 0x%x instead of the expected value: 0x%x\n", magic, MULTIBOOT_BOOTLOADER_MAGIC);
+		printf("Warning: Boot magic value is 0x%lx instead of the expected value: 0x%x\n", magic, MULTIBOOT_BOOTLOADER_MAGIC);
 	}
 	puts("Installing GDT...\n");
 	gdt_install();

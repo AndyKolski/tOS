@@ -62,5 +62,5 @@ char *strcpy(char *dest, const char* src)
 size_t strlen(const kchar *s) {
     const char *p = s;
     while (*s) ++s;
-    return s - p;
+    return (uint32) (s - p);
 }

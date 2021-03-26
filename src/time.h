@@ -14,7 +14,7 @@ typedef struct HumanTime {
 
 typedef int64 time_t;
 
-bool isLeapYear(int year);
+bool isLeapYear(uint32 year);
 
 void setTime(time_t time);
 

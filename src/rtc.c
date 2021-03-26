@@ -85,7 +85,7 @@ void RTC_install() {
 		hours = (hours & 0x7f) + 12;
 	}
 
-	year = (century * 100) + halfYear;
+	year = (uint32)(century * 100) + halfYear;
 
 	HumanTime time = {0};
 

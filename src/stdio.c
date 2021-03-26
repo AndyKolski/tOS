@@ -73,12 +73,12 @@ char* __int_str(intmax_t i, char b[], int base, bool plusSignIfNeeded, bool spac
     return b;
 }
  
-void displayCharacter(char c, int* a) {
+void displayCharacter(char c, int32* a) {
     putc(c);
     *a += 1;
 }
  
-void displayString(char* c, int* a) {
+void displayString(char* c, int32* a) {
     for (int i = 0; c[i]; ++i) {
         displayCharacter(c[i], a);
     }
@@ -87,7 +87,7 @@ void displayString(char* c, int* a) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough=" // this section causes GCC warnings. We disable them 
 int vprintf (const char* format, va_list list) {
-    int chars        = 0;
+    int32 chars        = 0;
     char intStrBuffer[256] = {0};
  
     for (int i = 0; format[i]; ++i) {
@@ -242,14 +242,14 @@ int vprintf (const char* format, va_list list) {
                         case 'q':
                         {
                             unsigned long long integer = va_arg(list, unsigned long long);
-                            __int_str(integer, intStrBuffer, base, plusSign, spaceNoSign, lengthSpec, leftJustify, zeroPad);
+                            __int_str((int64)integer, intStrBuffer, base, plusSign, spaceNoSign, lengthSpec, leftJustify, zeroPad);
                             displayString(intStrBuffer, &chars);
                             break;
                         }
                         case 'j':
                         {
                             uintmax_t integer = va_arg(list, uintmax_t);
-                            __int_str(integer, intStrBuffer, base, plusSign, spaceNoSign, lengthSpec, leftJustify, zeroPad);
+                            __int_str((int64)integer, intStrBuffer, base, plusSign, spaceNoSign, lengthSpec, leftJustify, zeroPad);
                             displayString(intStrBuffer, &chars);
                             break;
                         }
@@ -382,7 +382,7 @@ int vprintf (const char* format, va_list list) {
                             *(va_arg(list, intmax_t*)) = chars;
                             break;
                         case 'z':
-                            *(va_arg(list, size_t*)) = chars;
+                            *(va_arg(list, size_t*)) = (uint32)chars;
                             break;
                         case 't':
                             *(va_arg(list, ptrdiff_t*)) = chars;
@@ -472,7 +472,7 @@ int vprintf (const char* format, va_list list) {
  
 #pragma GCC diagnostic pop
 
-__attribute__ ((format (printf, 1, 2))) int printf (const char* format, ...) {
+int printf (const char* format, ...) {
     va_list list;
     va_start (list, format);
     int i = vprintf (format, list);

@@ -27,7 +27,7 @@ volatile uint32 RTC_tps = 0;
 volatile uint64 PIT_ticks = 0;
 volatile uint32 PIT_tps = 0;
 
-bool isLeapYear(int year) {
+bool isLeapYear(uint32 year) {
 	return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
 }
 
@@ -35,7 +35,7 @@ void setTime(time_t time) {
 	systemTime = time;
 	puts("Set system time to: ");
 	printHumanTime(time);
-	printf(" (%i)\n", time);
+	printf(" (%qu)\n", time);
 }
 
 inline void PIT_Tick() {
@@ -63,7 +63,7 @@ void initTime() {
 
 void printHumanTime(time_t time) {
 	HumanTime hTime = getHumanTime(time);
-	printf("%s, %s %i %i %i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
+	printf("%s, %s %i %lu %i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
 }
 
 time_t getTimeFromHuman(HumanTime time) {
@@ -109,7 +109,7 @@ HumanTime getHumanTime(time_t timestamp) {
 
 	
 	int dayOfYear = 0;
-	int year = 1970;
+	uint32 year = 1970;
 	int remainingDays = daysSinceEpoch;
 	while(true) {
 		bool leap = isLeapYear(year);

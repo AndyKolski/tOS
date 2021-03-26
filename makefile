@@ -1,16 +1,34 @@
 NAME=tOS
 
-_TARGETS=start.o main.o libs.o gdt.o idt.o isrs.o irq.o keyboard.o display.o memory.o pcspeaker.o pit.o serial.o io.o stdio.o string.o mouse.o rtc.o time.o paging.o
+_TARGETS=start.o display.o gdt.o idt.o io.o irq.o isrs.o keyboard.o libs.o main.o memory.o mouse.o paging.o pcspeaker.o pit.o rtc.o serial.o stdio.o string.o time.o
 TARGETS=$(patsubst %,out/obj/%,$(_TARGETS))
 
 CC = i686-elf-gcc
 LD = i686-elf-gcc
 AS = nasm
 
-# -Wall: enable all warnings, -Wextra: enable extra warnings, -Werror: treat warnings as errors -I: set include path -c: disable linking -std=gnu99: use GNU C99 standard for compilation -g: include debug symbols -Og: optimize for debug
-CFLAGS = -Wall -Wextra -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wshadow -Werror -fstack-protector-strong -I src -c -ffreestanding -std=gnu99 -g -Og
-# -ffreestanding: assume non-hosted environment -nostdlib: don't include standard libraries -lgcc: link libgcc
-LDFLAGS = -ffreestanding -nostdlib -lgcc
+#-c: Compile only, disable linking -ffreestanding: Assume non-hosted environment, -fstack-protector-strong: enable stack-smashing detection,
+#-I src: Set include path, -std=gnu99: Use GNU C99 standard for compilation, -W*: Enable various warnings, -g: include debug symbols, -Og, optimize for debugging
+CFLAGS = -c\
+-ffreestanding\
+-fstack-protector-strong\
+-I src\
+-std=gnu99\
+-Wall\
+-Wextra\
+-Wduplicated-branches\
+-Wduplicated-cond\
+-Wlogical-op\
+-Wnull-dereference\
+-Wredundant-decls\
+-Wshadow\
+-Wsign-conversion\
+-Werror\
+-g\
+-Og
+
+# -nostdlib: don't include standard libraries -lgcc: link libgcc
+LDFLAGS = -nostdlib -lgcc
 ASFLAGS = -felf
 
 .PHONY: all iso clean run debug

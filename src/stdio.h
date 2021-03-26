@@ -3,4 +3,4 @@
 #pragma once
 
 void puts(kchar *text);
-int printf (const char* format, ...);
+__attribute__ ((format (printf, 1, 2))) int printf (const char* format, ...);

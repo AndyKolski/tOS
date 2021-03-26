@@ -5,51 +5,52 @@
 #include <string.h>
 #include <system.h>
 
-void reverse(char s[]) {
-	 int i, j;
-	 char c;
+// void reverse(char s[]) {
+// 	 uint32 i, j;
+// 	 char c;
  
-	 for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
-		 c = s[i];
-		 s[i] = s[j];
-		 s[j] = c;
-	 }
- }
+// 	 for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+// 		 c = s[i];
+// 		 s[i] = s[j];
+// 		 s[j] = c;
+// 	 }
+//  }
 
-int itoa(int64 value, char *sp, int radix) {
-	char tmp[66];
-	char *tp = tmp;
-	int i;
-	uint64 v;
-	int sign = (radix == 10 && value < 0);    
-	if (sign)
-		v = -value;
-	else
-		v = (uint64)value;
+// int itoa(int value, char *sp, int radix) {
+//     char tmp[32];// be careful with the length of the buffer
+//     char *tp = tmp;
+//     int i;
+//     unsigned v;
 
-	while (v || tp == tmp)
-	{
-		i = v % radix;
-		v /= radix; // v/=radix uses less CPU clocks than v=v/radix does
-		if (i < 10) 
-		  *tp++ = i+'0';
-		else
-		  *tp++ = i + 'A' - 10;
-	}
+//     int sign = (radix == 10 && value < 0);    
+//     if (sign)
+//         v = -value;
+//     else
+//         v = (unsigned)value;
 
-	int len = tp - tmp;
+//     while (v || tp == tmp)
+//     {
+//         i = v % radix;
+//         v /= radix; // v/=radix uses less CPU clocks than v=v/radix does
+//         if (i < 10)
+//           *tp++ = i+'0';
+//         else
+//           *tp++ = i + 'a' - 10;
+//     }
 
-	if (sign) 
-	{
-		*sp++ = '-';
-		len++;
-	}
+//     int len = tp - tmp;
 
-	while (tp > tmp)
-		*sp++ = *--tp;
+//     if (sign) 
+//     {
+//         *sp++ = '-';
+//         len++;
+//     }
 
-	return len;
-}
+//     while (tp > tmp)
+//         *sp++ = *--tp;
+
+//     return len;
+// }
 
 bool isDigit(kchar c) {
     return (c >= '0') && (c <= '9');
@@ -87,13 +88,13 @@ void reboot() {
 
 void _assert(kchar *file, uint32 line, kchar *msg, bool conf) {
 	if (!conf) {
-		printf("\n [!!!] Assertion failed at %s:%i - %s\n", file, line, msg);
+		printf("\n [!!!] Assertion failed at %s:%lu - %s\n", file, line, msg);
 		halt();
 	}
 }
 
 void _panic(kchar *file, uint32 line, kchar *msg) {
-	printf("\n [!!!] Kernel panic at %s:%i - %s\n", file, line, msg);
+	printf("\n [!!!] Kernel panic at %s:%lu - %s\n", file, line, msg);
 	halt();
 }
 

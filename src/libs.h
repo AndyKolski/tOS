@@ -2,9 +2,9 @@
 
 #pragma once
 
-void reverse(char s[]);
+// void reverse(char s[]);
 
-int itoa(int64 value, char *sp, int radix);
+// int itoa(int64 value, char *sp, int radix);
 
 bool isDigit(kchar c);
 
