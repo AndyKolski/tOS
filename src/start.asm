@@ -31,6 +31,7 @@ start:
 	mov esp, _sys_stack
 	push ebx
 	push eax
+	fninit
 	extern kmain
 	call kmain
 	jmp $
