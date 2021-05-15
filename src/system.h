@@ -20,6 +20,10 @@ typedef char kchar;
 
 #define XOR(A, B) (((A) || (B)) && !((A) && (B)))
 
+#define KiB (1024)
+#define MiB (KiB * 1024)
+#define GiB (MiB * 1024)
+
 /* This defines what the stack looks like after an ISR was running */
 struct regs {
     unsigned int gs, fs, es, ds;      /* pushed the segs last */

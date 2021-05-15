@@ -131,7 +131,11 @@ void init_serial() {
 			usePort = i+1;
 		}
 	}
-	printf("Using serial port: %i\n", usePort);
+	if (usePort == 0) {
+    	puts("No serial port present or detected\n");
+	} else {
+		printf("Using serial port: %i\n", usePort);
+	}
 	irq_install_handler(4, serial_handler);
 	irq_install_handler(3, serial_handler);
 }
