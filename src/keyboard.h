@@ -5,6 +5,7 @@
 void keyboard_install();
 bool isKeyDown(uint8 keyId);
 void setKeyDownState(uint8 keyId, bool newState);
+void keyboardKeyPress(char key);
 void updateLEDs();
 void setKeyboardLEDs(uint8 ledstatus);
 kchar readChar();

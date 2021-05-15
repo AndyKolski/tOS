@@ -464,6 +464,13 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 	// }
 }
 
+void keyboardKeyPress(char key) {
+	addCharToBuffer(key);
+	if (terminalEcho) {
+		putc(key);
+	}
+}
+
 void updateLEDs() {
 	setKeyboardLEDs((lockStates.ScrollLock) | (lockStates.NumLock << 1) | (lockStates.CapsLock << 2));
 }
