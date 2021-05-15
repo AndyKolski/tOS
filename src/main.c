@@ -19,7 +19,7 @@ int kmain(unsigned long magic, unsigned long addr) {
 
 	install_display(mbi->framebuffer_addr, mbi->framebuffer_width, mbi->framebuffer_height, mbi->framebuffer_bpp, mbi->framebuffer_pitch, mbi->framebuffer_type == 1 ? false : true);
 
-	puts("Setting up basic serial interface (COM 1)...\n");
+	puts("Setting up serial interface...\n");
 	init_serial();
 	
 	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%lx\n", (char*)mbi->boot_loader_name, mbi->framebuffer_type, (char*)mbi->cmdline, magic);
