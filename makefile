@@ -68,7 +68,7 @@ out/$(NAME).iso: isodir/boot/grub out/$(NAME).bin
 	@echo 'Packing into ISO...'
 	@cp out/$(NAME).bin isodir/boot/$(NAME).bin
 	@echo 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot /boot/$(NAME).bin Hello\n}' > isodir/boot/grub/grub.cfg
-	grub-mkrescue -o out/$(NAME).iso isodir --compress gz --quiet
+	grub-mkrescue -o out/$(NAME).iso isodir --compress gz --quiet -volid "$(NAME) Boot Disk"
 
 
 run: out/$(NAME).iso
