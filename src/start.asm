@@ -503,7 +503,7 @@ enablePaging:
     mov cr4, ebx        ; update cr4
 
     mov ebx, cr0        ; read current cr0
-    or  ebx, 0x80004000 ; set PG and WP
+    or  ebx, 0x80010000 ; set PG and WP
     mov cr0, ebx        ; update cr0
     popa
 	ret
