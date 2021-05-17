@@ -1,4 +1,4 @@
-#include <libs.h>
+#include <ctype.h>
 #include <display.h>
 #include <stddef.h>
 #include <string.h>

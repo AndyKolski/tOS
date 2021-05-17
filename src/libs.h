@@ -6,10 +6,6 @@
 
 // int itoa(int64 value, char *sp, int radix);
 
-bool isDigit(kchar c);
-
-bool isPrint(kchar c);
-
 uint8 bcdToDecimal(uint8 bcd);
 
 void halt();

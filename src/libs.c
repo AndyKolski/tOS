@@ -52,19 +52,6 @@
 //     return len;
 // }
 
-bool isDigit(kchar c) {
-    return (c >= '0') && (c <= '9');
-}
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-
-bool isPrint(kchar c) {
-	return (c >= 0x20) && (c <= 0x7f); // 0x20 = 32, 0x7f = 127
-}
-
-#pragma GCC diagnostic pop
-
 uint8 bcdToDecimal(uint8 bcd) {
     assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nibble is valid
     assert((bcd & 0x0F) < 10, "invalid BCD conversion");         // Less significant nibble is valid
