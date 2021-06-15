@@ -54,12 +54,85 @@ gdt_flush:
 flush2:
 	ret               ; Returns back to the C code!
 
+global flush_tss
+flush_tss:
+	mov ax, (5 * 8) | 3 ; fifth 8-byte selector. Or with 3 to set the RPL (requested privilege level).
+	ltr ax
+	ret
+
 global idt_load
 extern idtp
 idt_load:
 	lidt [idtp]
 	ret
 
+global get_esp
+get_esp: 
+	push ebp
+	mov ebp, esp
+
+	mov eax, esp
+
+	leave
+	ret
+
+extern syscall
+global user_syscall
+user_syscall:
+	cli
+
+	push    ebp       
+	mov     ebp, esp  
+
+	push eax
+	push ebx
+	call syscall
+
+	add     esp, 8
+	mov     esp, ebp
+	pop     ebp
+
+	iret
+
+global test_user_function
+test_user_function: 
+	
+	mov eax, 1
+	mov ebx, ULS
+	int 80h
+
+	mov eax, 4
+	int 80h
+	
+	mov ebx, eax
+	mov eax, 2
+	int 80h
+
+
+	jmp $
+
+ULS:
+db "Hello from userland! The current uptime in ms is: ", 0
+
+
+global jump_usermode
+jump_usermode:
+	push ebp
+    mov  ebp, esp
+	mov ax, (4 * 8) | 3 ; ring 3 data with bottom 2 bits set for ring 3
+	mov ds, ax
+	mov es, ax 
+	mov fs, ax 
+	mov gs, ax ; SS is handled by iret
+ 
+	; set up the stack frame iret expects
+	mov eax, esp
+	push (4 * 8) | 3 ; data selector
+	push eax ; current esp
+	pushf ; eflags
+	push (3 * 8) | 3 ; code selector (ring 3 code with bottom 2 bits set for ring 3)
+	push dword [ebp+8] ; instruction address to return to
+	iret
 
 
 ; In just a few pages in this tutorial, we will add our Interrupt

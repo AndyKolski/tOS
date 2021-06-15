@@ -11,8 +11,10 @@
 #include <paging.h>
 #include <serial.h>
 #include <stdio.h>
+#include <syscall.h>
 #include <system.h>
 #include <time.h>
+#include <userland.h>
 
 int kmain(unsigned long magic, unsigned long addr) {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
@@ -35,6 +37,8 @@ int kmain(unsigned long magic, unsigned long addr) {
 	idt_install();
 	puts("Installing ISRs...\n");
 	isrs_install();
+	puts("Installing syscall handler...\n");
+	install_syscall();
 	puts("Installing IRQs...\n");
 	irq_install();
 	puts("Initializing Time...\n");
@@ -51,7 +55,10 @@ int kmain(unsigned long magic, unsigned long addr) {
 	__asm__ __volatile__ ("sti"); 
 	printf("Testing printf: char: %c, string: %s, int: %i, negative int: %i, hex: 0x%x, hex 2: 0x%x, float: %f\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe, 0.123);
 
-	printf("OK\n");
+	puts("OK. Jumping to userland (Ring 3)\n");
+
+	start_userland();
+
 	
 	while (true) {
 		__asm__ volatile ("hlt"); // nothing to do, so we halt the processor until something needs to happen, which we deal with, and then halt again

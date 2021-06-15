@@ -52,7 +52,7 @@ void install_paging() {
 		for (uint32 i = 0; i < 1024; ++i) {
 		// printf("%04i: %08x - %08x\n", i, i<<22, ((i+1)<<22)-1);
 							// present rw user writeThrough cacheDisabled 		size available address
-		PageDirectoryTable[i] = createPageDirectoryEntry(1, 1, 0, 1, 1, 	1, 0, i);
+		PageDirectoryTable[i] = createPageDirectoryEntry(1, 1, 1, 1, 1, 	1, 0, i);
 	}
 
 	enablePaging();

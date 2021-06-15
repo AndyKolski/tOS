@@ -2,14 +2,15 @@
 #include <string.h>
 #include <system.h>
 
-/* Defines an IDT entry */
-struct idt_entry
-{
-    unsigned short base_lo;
-    unsigned short sel;        /* Our kernel segment goes here! */
-    unsigned char always0;     /* This will ALWAYS be set to 0! */
-    unsigned char flags;       /* Set using the above table! */
-    unsigned short base_hi;
+struct gdt_entry_bits {
+    uint32 offset_low             : 16;
+    uint32 selector               : 16;
+    uint32 always0                :  8;
+    uint32 gateType               :  4; // readable for code, writable for data
+    uint32 storageSegment         :  1; // conforming for code, expand down for data
+    uint32 DPL                    :  2; // 1 for code, 0 for data
+    uint32 present                :  1; // should be 1 for everything but TSS and LDT
+    uint32 offset_high            :  16; // privilege level
 } __attribute__((packed));
 
 struct idt_ptr
@@ -18,41 +19,31 @@ struct idt_ptr
     unsigned int base;
 } __attribute__((packed));
 
-/* Declare an IDT of 256 entries. Although we will only use the
-*  first 32 entries in this tutorial, the rest exists as a bit
-*  of a trap. If any undefined IDT entry is hit, it normally
-*  will cause an "Unhandled Interrupt" exception. Any descriptor
-*  for which the 'presence' bit is cleared (0) will generate an
-*  "Unhandled Interrupt" exception */
-struct idt_entry idt[256] = {0};
+
+struct gdt_entry_bits idt[256] = {0};
 struct idt_ptr idtp;
 
-/* This exists in 'start.asm', and is used to load our IDT */
+
 extern void idt_load();
 
-/* Use this function to set an entry in the IDT. Alot simpler
-*  than twiddling with the GDT ;) */
-void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags)
-{
-    idt[num].base_lo = (base & 0xFFFF);
-    idt[num].base_hi = (base >> 16) & 0xFFFF;
-    idt[num].sel = sel;
-    idt[num].flags = flags;
+
+void idt_set_gate(uint8 num, uint32 base, uint16 selector, uint8 gate, bool storageSegment, uint8 minRing) {
+    idt[num].offset_low = (base & 0xFFFF);
+    idt[num].selector = selector;
     idt[num].always0 = 0;
+    idt[num].gateType = gate;
+    idt[num].storageSegment = storageSegment;
+    idt[num].DPL = minRing;
+    idt[num].present = 1;
+    idt[num].offset_high = (base >> 16) & 0xFFFF;
 }
 
-/* Installs the IDT */
+
+
 void idt_install()
 {
-    /* Sets the special IDT pointer up, just like in 'gdt.c' */
-    idtp.limit = (sizeof (struct idt_entry) * 256) - 1;
+    idtp.limit = (sizeof (struct gdt_entry_bits) * 256) - 1;
     idtp.base = (uint32) &idt;
 
-    /* Clear out the entire IDT, initializing it to zeros */
-    memset((void*)&idt, 0, sizeof(struct idt_entry) * 256);
-
-    /* Add any new ISRs to the IDT here using idt_set_gate */
-
-    /* Points the processor's internal register to the new IDT */
     idt_load();
 }
