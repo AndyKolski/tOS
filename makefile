@@ -30,7 +30,9 @@ CFLAGS = -c\
 -Wshadow\
 -Wsign-conversion\
 -Werror\
-$(COPT)
+$(COPT)\
+-DGIT_VERSION="\"$(shell git describe --dirty --always --tags)\""\
+-DCC_VERSION="\"$(shell $(CC) --version | head -n 1)\""
 
 
 # -nostdlib: don't include standard libraries -lgcc: link libgcc
