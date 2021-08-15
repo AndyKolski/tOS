@@ -16,20 +16,19 @@
 #include <time.h>
 #include <userland.h>
 
-int kmain(unsigned long magic, unsigned long addr) {
-	multiboot_info_t *mbi = (multiboot_info_t *) addr;
+int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 
-	install_display(mbi->framebuffer_addr, mbi->framebuffer_width, mbi->framebuffer_height, mbi->framebuffer_bpp, mbi->framebuffer_pitch, mbi->framebuffer_type == 1 ? false : true);
+	install_display(multibootInfo->framebuffer_addr, multibootInfo->framebuffer_width, multibootInfo->framebuffer_height, multibootInfo->framebuffer_bpp, multibootInfo->framebuffer_pitch, multibootInfo->framebuffer_type == 1 ? false : true);
 
 	puts("Setting up serial interface...\n");
 	init_serial();
 	
-	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%lx\n", (char*)mbi->boot_loader_name, mbi->framebuffer_type, (char*)mbi->cmdline, magic);
+	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%lx\n", (char*)multibootInfo->boot_loader_name, multibootInfo->framebuffer_type, (char*)multibootInfo->cmdline, bootloaderMagic);
 
 	printf("t/OS test build " GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " CC_VERSION  " \n");
 
-	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-		printf("Warning: Boot magic value is 0x%lx instead of the expected value: 0x%x\n", magic, MULTIBOOT_BOOTLOADER_MAGIC);
+	if (bootloaderMagic != MULTIBOOT_BOOTLOADER_MAGIC) {
+		printf("Warning: Bootloader magic value is 0x%lx instead of the expected value: 0x%x\n", bootloaderMagic, MULTIBOOT_BOOTLOADER_MAGIC);
 	}
 	puts("Installing GDT...\n");
 	gdt_install();
@@ -44,7 +43,7 @@ int kmain(unsigned long magic, unsigned long addr) {
 	puts("Initializing Time...\n");
 	initTime();
 	puts("Initializing Memory Management...\n");
-	install_memory((multiboot_memory_map_t*) mbi->mmap_addr, mbi->mmap_length);
+	install_memory((multiboot_memory_map_t*) multibootInfo->mmap_addr, multibootInfo->mmap_length);
 	puts("Enabling Paging... \n");
 	install_paging();
 	puts("Setting up Mouse Controller...\n");
