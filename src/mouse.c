@@ -109,10 +109,10 @@ typedef struct MouseEvent {
 	bool FifthButton;
 } MouseEvent;
 
-void centerMouseOnScreen() {
-	xPos = getScreenWidth() / 2;
-	yPos = getScreenHeight() / 2;
-}
+// void centerMouseOnScreen() {
+// 	xPos = getScreenWidth() / 2;
+// 	yPos = getScreenHeight() / 2;
+// }
 
 MouseEvent parseMouseData() {
 	MouseEvent event = {0};
@@ -233,7 +233,7 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 	return;
 }
 void mouse_install() {
-	centerMouseOnScreen();
+	// centerMouseOnScreen();
     wait_then_write(I8042_STATUS, 0xa8);
     mouse_write(PS2MOUSE_REQUEST_SINGLE_PACKET);
     uint8 maybe_ack = mouse_read();

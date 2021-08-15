@@ -17,7 +17,7 @@ uint16 *basicPtr; // pointer to the text console
 
 uint32 framebuffer_width = 0; // framebuffer width, in pixels
 uint32 framebuffer_height = 0; // framebuffer height, in pixels
-uint8 framebuffer_bpp = 0; // the number of bytes per pixel
+uint8 framebuffer_Bpp = 0; // the number of bytes per pixel
 uint32 framebuffer_pitch = 0; // the number of bytes between one pixel and the one directly below it
 
 uint32 terminalWidth = 0; // the width of the terminal, in characters
@@ -38,14 +38,14 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 		
 		framebuffer_width = fb_width;
 		framebuffer_height = fb_height;
-		framebuffer_bpp = fb_bpp/8/4;
+		framebuffer_Bpp = fb_bpp/8;
 		framebuffer_pitch = fb_pitch/4;
 
 		terminalWidth = framebuffer_width/(fontWidth+1);
 		terminalHeight = framebuffer_height/(fontHeight+1);
 
 		fillScreen(backgroundColor);
-		printf("Created console with size %lux%lu (%lupx x %lupx @ %ibpp) at 0x%lx\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr);
+		printf("Created console with size %lux%lu (%lupx x %lupx @ %ibpp) at 0x%lx (%lu KiB)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr, (framebuffer_width*framebuffer_height*framebuffer_Bpp)/KiB);
 	} else {
 		basicPtr = (uint16*) 0x000b8000;
 		terminalWidth = 80;
@@ -124,10 +124,10 @@ color_t _colorFromHSV(uint8 h, uint8 s, uint8 v) {
 
 inline void setPixel(uint32 x, uint32 y, color_t c) {
 	uint32 p;
-	if (framebuffer_bpp == 1 && framebuffer_pitch == framebuffer_width) { // slight optimization for most likely configuration
+	if (framebuffer_Bpp == 4 && framebuffer_pitch == framebuffer_width) { // slight optimization for most likely configuration
 		p = x + y * framebuffer_pitch;
 	} else {
-		p = x * framebuffer_bpp + y * framebuffer_pitch;	
+		p = x * (framebuffer_Bpp/4) + y * framebuffer_pitch;	
 	}
 	ptr[p] = c;
 	// ptr[p+0] = c | c >> 8 | c >> 16;  // kept in case needed later
@@ -141,7 +141,7 @@ void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
 	for (uint32 fy = y; fy < h+y; ++fy) {
 		uint32 offset = fy * framebuffer_pitch;
 		for (uint32 fx = x; fx < w+x; ++fx) {
-			s = fx*framebuffer_bpp + offset;
+			s = fx*(framebuffer_Bpp/4) + offset;
 			ptr[s] = c;
 		}
 		offset += framebuffer_pitch;
@@ -202,17 +202,17 @@ uint32 getStrWidth(kchar *str) {
 	return strlen(str) * (fontWidth+1);
 }
 
-int32 getScreenWidth() {
-	return (int32)framebuffer_width;
+uint32 getScreenWidth() {
+	return framebuffer_width;
 }
-int32 getScreenHeight() {
-	return (int32)framebuffer_height;
+uint32 getScreenHeight() {
+	return framebuffer_height;
 }
-int32 getTerminalWidth() {
-	return (int32)framebuffer_width/fontWidth;
+uint32 getTerminalWidth() {
+	return framebuffer_width/fontWidth;
 }
-int32 getTerminalHeight() {
-	return (int32)framebuffer_height/fontHeight;
+uint32 getTerminalHeight() {
+	return framebuffer_height/fontHeight;
 }
 
 void legacyScrollTerminal() {
@@ -225,7 +225,7 @@ void legacyScrollTerminal() {
 
 void scrollTerminal() {
 	for (uint32 i = 0; i < framebuffer_height/fontHeight; ++i) {
-		memcpy((uint8*)(ptr+i*framebuffer_pitch*fontHeight), (uint8*)(ptr+(i+1)*framebuffer_pitch*fontHeight), framebuffer_pitch*fontHeight*framebuffer_bpp*4);
+		memcpy((uint8*)(ptr+i*framebuffer_pitch*fontHeight), (uint8*)(ptr+(i+1)*framebuffer_pitch*fontHeight), framebuffer_pitch*fontHeight*framebuffer_Bpp);
 	}
 	fillRect(0, framebuffer_height-fontHeight, framebuffer_width, fontHeight, backgroundColor);
 	cursory--;

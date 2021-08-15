@@ -39,10 +39,10 @@ void cursor_pos_updated();
 
 uint32 getStrWidth(kchar *str);
 
-int32 getScreenWidth();
-int32 getScreenHeight();
-int32 getTerminalWidth();
-int32 getTerminalHeight();
+uint32 getScreenWidth();
+uint32 getScreenHeight();
+uint32 getTerminalWidth();
+uint32 getTerminalHeight();
 
 void legacyScrollTerminal();
 
