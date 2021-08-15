@@ -11,10 +11,8 @@
 #include <paging.h>
 #include <serial.h>
 #include <stdio.h>
-#include <syscall.h>
 #include <system.h>
 #include <time.h>
-#include <userland.h>
 
 int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 
@@ -36,8 +34,6 @@ int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 	idt_install();
 	puts("Installing ISRs...");
 	isrs_install();
-	puts("Installing syscall handler...");
-	install_syscall();
 	puts("Installing IRQs...");
 	irq_install();
 	puts("Initializing Time...");
@@ -54,9 +50,7 @@ int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 	__asm__ __volatile__ ("sti"); 
 	printf("Testing printf: char: %c, string: %s, int: %i, negative int: %i, hex: 0x%x, hex 2: 0x%x, float: %f\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe, 0.123);
 
-	puts("OK. Jumping to userland (Ring 3)");
-
-	start_userland();
+	puts("OK");
 
 	
 	while (true) {
