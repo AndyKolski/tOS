@@ -33,7 +33,7 @@ bool isLeapYear(uint32 year) {
 
 void setTime(time_t time) {
 	systemTime = time;
-	puts("Set system time to: ");
+	printf("Set system time to: ");
 	printHumanTime(time);
 	printf(" (%qu)\n", time);
 }
@@ -53,10 +53,10 @@ inline void RTC_Tick() {
 }
 
 void initTime() {
-	puts("Setting up PIT...\n");
+	puts("Setting up PIT...");
 	PIT_tps = 4096;
 	PIT_Install(PIT_tps);
-	puts("Setting up RTC...\n");
+	puts("Setting up RTC...");
 	RTC_tps = 1024;
 	RTC_install();
 }

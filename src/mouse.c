@@ -284,6 +284,6 @@ void mouse_install() {
 		irq_install_handler(12, mouse_handler);
     	printf("Detected mouse configuration - scroll wheel: %s, buttons: %i\n", (hasScrollWheel ? "true" : "false"), (hasFiveButtons ? 5 : 3));
     } else {
-    	puts("No mouse present or detected\n");
+    	puts("No mouse present or detected");
     }
 }

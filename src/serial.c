@@ -132,7 +132,7 @@ void init_serial() {
 		}
 	}
 	if (usePort == 0) {
-    	puts("No serial port present or detected\n");
+    	puts("No serial port present or detected");
 	} else {
 		printf("Using serial port: %i\n", usePort);
 	}

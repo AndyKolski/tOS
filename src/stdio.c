@@ -7,6 +7,7 @@ void puts(kchar *text) {
     for (uint32 i = 0; i < strlen(text); ++i) {
         putc(text[i]);
     }
+    putc('\n');
 }
 
 char* __int_str(intmax_t i, char b[], int base, bool plusSignIfNeeded, bool spaceSignIfNeeded,

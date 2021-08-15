@@ -56,7 +56,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 	uint64 largestContinuousMemSize = 0;
 	void* largestContinuousMemLocation = 0;
 
-	// puts("Memory map:\n");
+	// puts("Memory map:");
 	while(mmap_entry < (multiboot_memory_map_t*)((void*)mmap_addr + mmap_length)) {
 		kchar type[75] = {0};
 		if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
