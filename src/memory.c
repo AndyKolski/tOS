@@ -6,6 +6,16 @@
 #include <string.h>
 #include <system.h>
 
+uint32 intdivceil(uint32 a, uint32 b) { // calculates ceil(a/b) without using any floating point math
+	if (a%b == 0) {
+		return a/b;
+	} else {
+		return a/b + 1;
+	}
+}
+#define intdivround(a, b) ((a + (b / 2)) / b)
+// calculates round(a/b) without using any floating point math
+
 void* freememStart;
 void* freememEnd;
 
@@ -84,14 +94,14 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 		// printf("    ENTRY: address: 0x%08qx length: 0x%08qx (%5qu %s) type: %s\n",
 		// 	mmap_entry->addr,
 		// 	mmap_entry->len,
-		// 	mmap_entry->len/1024 > 10240 ? (mmap_entry->len/1024/1024) : (mmap_entry->len/1024),
-		// 	mmap_entry->len/1024 > 10240 ? "MiB" : "KiB",
+		// 	mmap_entry->len/KiB > 10240 ? (mmap_entry->len/MiB) : (mmap_entry->len/KiB),
+		// 	mmap_entry->len/KiB > 10240 ? "MiB" : "KiB",
 		// 	type);
 		mmap_entry = (multiboot_memory_map_t*) (mmap_entry + 1);
 	}
-	printf("Total available memory: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", totalMem, (totalMem/1024), ((totalMem/1024+10)/1024), ((totalMem/1024/1024+10)/1024));
-	printf("Longest continuous memory area: 0x%08qx - size: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", (uint64)(uint32)largestContinuousMemLocation, largestContinuousMemSize, (largestContinuousMemSize/1024), ((largestContinuousMemSize/1024+10)/1024), ((largestContinuousMemSize/1024/1024+10)/1024));
-	printf("Kernel start: 0x%08qx end: 0x%08qx len: 0x%qx (%qu KiB) loaded at start of largest memory area: %s\n", (uint64)(uint32)startOfKernel, (uint64)(uint32)endOfKernel, sizeOfKernel, (sizeOfKernel/1024), largestContinuousMemLocation == startOfKernel ? "true" : "false");
+	printf("Total available memory: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", totalMem, intdivround(totalMem,KiB), intdivround(totalMem,MiB), intdivround(totalMem,GiB));
+	printf("Longest continuous memory area: 0x%08qx - size: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", (uint64)(uint32)largestContinuousMemLocation, largestContinuousMemSize, intdivround(largestContinuousMemSize,KiB), intdivround(largestContinuousMemSize,MiB), intdivround(largestContinuousMemSize,GiB));
+	printf("Kernel start: 0x%08qx end: 0x%08qx len: 0x%qx (%qu KiB) loaded at start of largest memory area: %s\n", (uint64)(uint32)startOfKernel, (uint64)(uint32)endOfKernel, sizeOfKernel, intdivround(sizeOfKernel,KiB), largestContinuousMemLocation == startOfKernel ? "true" : "false");
 
 	if (largestContinuousMemLocation == startOfKernel) {
 		heapMannagerArray = endOfKernel;
@@ -115,15 +125,7 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 		}
 		(*heapMannagerArray)[i] = createEntry(0, 0, 0, isUsable);
 	}
-	printf("Start of free memory: 0x%08lx, %lu MiB free\n", (uint32)freememStart, bytesFree()/1024/1024);
-}
-
-uint32 intdivceil(uint32 a, uint32 b) { // calculates ceil(a/b) without using any floating point math
-	if (a%b == 0) {
-		return a/b;
-	} else {
-		return a/b + 1;
-	}
+	printf("Start of free memory: 0x%08lx, %lu MiB free\n", (uint32)freememStart, bytesFree()/MiB);
 }
 
 uint32 bytesFree() {
