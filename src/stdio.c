@@ -2,6 +2,7 @@
 #include <display.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdarg.h>
 
 void puts(kchar *text) {
     for (uint32 i = 0; i < strlen(text); ++i) {
