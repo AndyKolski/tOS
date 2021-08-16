@@ -68,35 +68,37 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 
 	// puts("Memory map:");
 	while(mmap_entry < (multiboot_memory_map_t*)((void*)mmap_addr + mmap_length)) {
-		kchar type[75] = {0};
+		// kchar type[75] = {0};
 		if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
-			strcpy(type, "MEM_AVAILABLE");
+			// strcpy(type, "MEM_AVAILABLE");
 			totalMem += mmap_entry->len;
 			if (mmap_entry->addr + mmap_entry->len > 0xffffffff) {
-				strcat(type, " - past 32 bits, not marking as available");
+				// strcat(type, " - past 32 bits, not marking as available");
 			} else {
 				if (mmap_entry->len > largestContinuousMemSize) {
 					largestContinuousMemSize = mmap_entry->len;
 					largestContinuousMemLocation = (void*)(uint32)mmap_entry->addr;
 				}
 			}
-		} else if (mmap_entry->type == MULTIBOOT_MEMORY_RESERVED) {
-			strcpy(type, "MEM_RESERVED");
-		} else if (mmap_entry->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
-			strcpy(type, "MEM_ACPI_RECLAIMABLE");
-		} else if (mmap_entry->type == MULTIBOOT_MEMORY_NVS) {
-			strcpy(type, "MEM_NVS");
-		} else if (mmap_entry->type == MULTIBOOT_MEMORY_BADRAM) {
-			strcpy(type, "MEM_BADRAM");
-		} else {
-			strcpy(type, "MEM_RESERVED_UNKNOWN");
+		// } else if (mmap_entry->type == MULTIBOOT_MEMORY_RESERVED) {
+			// strcpy(type, "MEM_RESERVED");
+		// } else if (mmap_entry->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
+			// strcpy(type, "MEM_ACPI_RECLAIMABLE");
+		// } else if (mmap_entry->type == MULTIBOOT_MEMORY_NVS) {
+			// strcpy(type, "MEM_NVS");
+		// } else if (mmap_entry->type == MULTIBOOT_MEMORY_BADRAM) {
+			// strcpy(type, "MEM_BADRAM");
+		// } else {
+			// strcpy(type, "MEM_RESERVED_UNKNOWN");
 		}
+
 		// printf("    ENTRY: address: 0x%08qx length: 0x%08qx (%5qu %s) type: %s\n",
 		// 	mmap_entry->addr,
 		// 	mmap_entry->len,
 		// 	mmap_entry->len/KiB > 10240 ? (mmap_entry->len/MiB) : (mmap_entry->len/KiB),
 		// 	mmap_entry->len/KiB > 10240 ? "MiB" : "KiB",
 		// 	type);
+		
 		mmap_entry = (multiboot_memory_map_t*) (mmap_entry + 1);
 	}
 	printf("Total available memory: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", totalMem, intdivround(totalMem,KiB), intdivround(totalMem,MiB), intdivround(totalMem,GiB));
