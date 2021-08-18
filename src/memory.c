@@ -184,6 +184,78 @@ void *kmalloc(size_t size) {
 	return 0;
 }
 
+void *krealloc(void *ptr, size_t new_size) {
+	assert((uintptr_t)ptr%PAGE_SIZE == 0, "Attempt to krealloc() invalid pointer!");
+
+	uint32 pagesRequired = intdivceil(new_size, PAGE_SIZE);
+	
+	if ((uintptr_t)ptr == 0) {
+		return 0;
+	}
+	
+	uint32 headIndex = (uintptr_t)ptr/PAGE_SIZE;
+
+	HeapManagerEntry current = (*heapMannagerArray)[headIndex];
+
+	if(!current.inUse || !current.isHead) {
+		assertf("Attempt to krealloc() invalid pointer!");
+	}
+
+	if (current.length == pagesRequired) {
+		return ptr;
+	}
+
+	if (current.length > pagesRequired) {
+		// the current allocation is larger than needed. We can just mark the unneeded pages as available and return
+		for (size_t i = pagesRequired; i < current.length; ++i) {
+			HeapManagerEntry test = (*heapMannagerArray)[headIndex+i];
+			test.inUse = false;
+			test.isHead = false;
+			test.length = 0;
+			(*heapMannagerArray)[headIndex+i] = test;
+		}
+		current.length = pagesRequired;
+		(*heapMannagerArray)[headIndex] = current;
+		return ptr;
+	}
+
+	if (current.length < pagesRequired) {
+		// the current allocation is smaller than needed. We either append more pages to the end of the current allocation, or we create a new allocation of the needed size
+
+
+		// check if we can expand the current allocation, and that the pages after it are free and available
+		for (uint32 o = 1; o < (pagesRequired-current.length); ++o) {
+			HeapManagerEntry test = (*heapMannagerArray)[headIndex+current.length+o-1];
+			if (!test.isUsable || test.inUse) {
+				// if there are not enough free pages after the original allocation, we create a new allocation, copy the data, and free the original allocation
+				void* newPtr = kmalloc(new_size);
+				if (newPtr == 0) {
+					return 0;
+				}
+				memcpy(newPtr, ptr, current.length/PAGE_SIZE);
+				kfree(ptr);
+				return newPtr;
+			}
+		}
+
+		// if there are enough free pages after the current allocation, we can mark them as being in use
+		for (uint32 o = 1; o < (pagesRequired-current.length); ++o) {
+			HeapManagerEntry test = (*heapMannagerArray)[headIndex+o];
+			test.inUse = true;
+			test.isHead = false;
+			test.length = 0;
+			(*heapMannagerArray)[headIndex+o] = test;
+		}
+		current.inUse = true;
+		current.isHead = true;
+		current.length = pagesRequired;
+		(*heapMannagerArray)[headIndex] = current;
+		return ptr;
+	}
+	assertf("This point should be unreachable"); // only happens if current.length is somehow not less than, greater then, or equal to pagesRequired
+	return 0;
+}
+
 void kfree(void *ptr) {
 	assert((uintptr_t)ptr%PAGE_SIZE == 0, "Attempt to kfree() invalid pointer!");
 	
