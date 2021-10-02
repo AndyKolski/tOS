@@ -3,8 +3,9 @@ NAME=tOS
 _TARGETS=start.o display.o gdt.o idt.o io.o irq.o isrs.o keyboard.o libs.o main.o memory.o mouse.o paging.o pcspeaker.o pit.o rtc.o serial.o stdio.o string.o time.o ctype.o
 TARGETS=$(patsubst %,out/obj/%,$(_TARGETS))
 
-CC = i686-elf-gcc
-LD = i686-elf-gcc
+CC = Toolchain/i686-elf-cross/bin/i686-elf-gcc
+LD = Toolchain/i686-elf-cross/bin/i686-elf-gcc
+
 AS = nasm
 QEMU = qemu-system-i386
 

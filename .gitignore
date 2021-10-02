@@ -2,3 +2,5 @@ out/*
 isodir/*
 serial.log
 OS.sublime*
+Toolchain/*
+!Toolchain/build.sh
