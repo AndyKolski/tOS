@@ -28,15 +28,16 @@ To build t/OS, you need to ensure that the following dependencies are installed.
 
 - curl
 - gcc
-- genisoimage
+- grub-common
 - make
 - nasm
 - qemu
+- xorriso
 - Probably a few other things that I have forgotten to write here.
 
 On Debian/Ubuntu, they can be installed with the following command:
 ```console
-sudo apt install curl gcc genisoimage make nasm qemu
+sudo apt install curl gcc grub-common make nasm qemu xorriso
 ```
 ### Toolchain
 You will also need to build the toolchain (cross-compiler). Thankfully, we have a script to do that for you.
