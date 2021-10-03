@@ -21,6 +21,8 @@ void* freememEnd;
 
 uint32 firstUsablePage = 0;
 
+bool isDynamicAllocationInitialized = false;
+
 typedef struct HeapManagerEntry {
 	uint32 inUse		: 1;
 	uint32 isHead		: 1;
@@ -127,10 +129,20 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 		}
 		(*heapMannagerArray)[i] = createEntry(0, 0, 0, isUsable);
 	}
+	isDynamicAllocationInitialized = true;
 	printf("Start of free memory: 0x%08lx, %lu MiB free\n", (uint32)freememStart, bytesFree()/MiB);
 }
 
+void dynamicAllocationInitializedCheck() {
+	if (!isDynamicAllocationInitialized) {
+		assertf("Tried to use dynamic memory allocation before it is initialized!");
+	} else {
+		return;
+	}
+}
+
 uint32 bytesFree() {
+	dynamicAllocationInitializedCheck();
 	uint32 freeBytes = 0;
 	for (uint32 i = firstUsablePage; i < HEAP_MANAGER_ARRAY_SIZE-1; ++i) {
 		HeapManagerEntry current = (*heapMannagerArray)[i];
@@ -142,6 +154,7 @@ uint32 bytesFree() {
 }
 
 void *kmalloc(size_t size) {
+	dynamicAllocationInitializedCheck();
 	uint32 pagesRequired = intdivceil(size, PAGE_SIZE);
 	for (uint32 i = firstUsablePage; i < HEAP_MANAGER_ARRAY_SIZE-1; ++i) {
 		HeapManagerEntry current = (*heapMannagerArray)[i];
@@ -185,6 +198,7 @@ void *kmalloc(size_t size) {
 }
 
 void *krealloc(void *ptr, size_t new_size) {
+	dynamicAllocationInitializedCheck();
 	assert((uintptr_t)ptr%PAGE_SIZE == 0, "Attempt to krealloc() invalid pointer!");
 
 	uint32 pagesRequired = intdivceil(new_size, PAGE_SIZE);
@@ -257,6 +271,7 @@ void *krealloc(void *ptr, size_t new_size) {
 }
 
 void kfree(void *ptr) {
+	dynamicAllocationInitializedCheck();
 	assert((uintptr_t)ptr%PAGE_SIZE == 0, "Attempt to kfree() invalid pointer!");
 	
 	if ((uintptr_t)ptr == 0) {
