@@ -1,6 +1,5 @@
 #include <io.h>
 #include <irq.h>
-#include <libs.h>
 #include <stdio.h>
 #include <system.h>
 #include <time.h>
@@ -20,6 +19,12 @@
 #define century_register 0x32
 #define status_register_a 0x0A
 #define status_register_b 0x0B
+
+uint8 bcdToDecimal(uint8 bcd) {
+    assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nibble is valid
+    assert((bcd & 0x0F) < 10, "invalid BCD conversion");         // Less significant nibble is valid
+    return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
+}
 
 bool NMIsEnabled = true;
 

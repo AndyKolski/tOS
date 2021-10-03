@@ -31,3 +31,17 @@ struct regs {
     unsigned int int_no, err_code;    /* our 'push byte #' and ecodes do this */
     unsigned int eip, cs, eflags, useresp, ss;   /* pushed by the processor automatically */ 
 };
+
+
+void halt();
+
+void reboot();
+
+#define C_ASSERT(e) typedef char __C_ASSERT__[(e)?1:-1]
+
+void _assert(kchar *file, uint32 line, kchar *msg, bool conf);
+#define assert(conf, msg) _assert(__FILE__, __LINE__, msg, conf)
+#define assertf(msg) _assert(__FILE__, __LINE__, msg, false)
+
+void _panic(kchar *file, uint32 line, kchar *msg);
+#define panic(msg) _panic(__FILE__, __LINE__, msg)

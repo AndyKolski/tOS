@@ -1,5 +1,4 @@
 #include <display.h>
-#include <libs.h>
 #include <memory.h>
 #include <multiboot.h>
 #include <stdio.h>

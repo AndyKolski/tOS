@@ -2,7 +2,6 @@
 #include <io.h>
 #include <irq.h>
 #include <keyboard.h>
-#include <libs.h>
 #include <stdio.h>
 #include <system.h>
 #include <time.h>

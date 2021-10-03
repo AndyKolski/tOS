@@ -1,6 +1,5 @@
 #include <idt.h>
 #include <isrs.h>
-#include <libs.h>
 #include <stdio.h>
 #include <system.h>
 
