@@ -11,6 +11,19 @@ void puts(kchar *text) {
     putc('\n');
 }
 
+// Note:
+// This printf implementation is based on one that was posted to the osdev.org wiki by user A22347
+// on September 19th, 2017. It is in the public domain, as anything posted to the wiki after 
+// June 6th, 2011 must use the Creative Commons CC0 designation, which places work into the public 
+// domain.
+
+// https://wiki.osdev.org/index.php?title=User:A22347/Printf
+
+// http://creativecommons.org/publicdomain/zero/1.0/
+
+// https://wiki.osdev.org/OSDev_Wiki:Copyrights
+// https://wiki.osdev.org/OSDev_Wiki:License
+
 char* __int_str(intmax_t i, char b[], int base, bool plusSignIfNeeded, bool spaceSignIfNeeded,
                 int paddingNo, bool justify, bool zeroPad) {
  
