@@ -26,17 +26,20 @@ To build t/OS, you need to have the following dependencies installed:
 - curl
 - gcc
 - grub-common
+- libgmp
+- libmpc
+- libmpfr
 - make
 - nasm
-- qemu
+- qemu-system-i386
 - xorriso
 
 On Debian/Ubuntu, you can install them all at once with this command:
 ```console
-sudo apt install curl gcc grub-common make nasm qemu xorriso
+sudo apt install build-essential curl grub-common libgmp-dev libmpc-dev libmpfr-dev nasm qemu-system-i386 xorriso
 ```
 
-I would be surprised if I haven't forgotten about at least a few dependencies, so if things aren't compiling correctly, this is probably a good place to start looking for solutions.
+I think this should be all of the dependencies, but if things aren't compiling correctly, this is probably a good place to start looking for solutions.
 
 ### Building the Toolchain
 You will also need to build the toolchain (cross-compiler), and thankfully, there is a script to do it for you.
