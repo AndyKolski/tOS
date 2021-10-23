@@ -16,6 +16,8 @@ echo PREFIX is "$PREFIX"
 MAKE="make"
 MD5SUM="md5sum"
 
+MAKEJOBS=$(nproc)
+
 BINUTILS_VERSION="2.37"
 BINUTILS_MD5SUM="1e55743d73c100b7a0d67ffb32398cdb"
 BINUTILS_NAME="binutils-$BINUTILS_VERSION"
@@ -87,21 +89,24 @@ export CXXFLAGS="-g0 -O2 -mtune=native"
 
 pushd "$DIR/Build/Binutils"
 	echo "Configuring Binutils..."
-	../../Tarballs/${BINUTILS_NAME}/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+	../../Tarballs/${BINUTILS_NAME}/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror > >(sed 's/^/[binutils conf]: /')
+
 	echo "Building Binutils..."
-	make -j 8
-	make install
+	make -j $MAKEJOBS > >(sed 's/^/[binutils build]: /')
+	make install > >(sed 's/^/[binutils install]: /')
 popd
 
 PATH="$PREFIX/bin:$PATH"
 
 pushd "$DIR/Build/gcc"
 	echo "Configuring GCC..."
-	../../Tarballs/${GCC_NAME}/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
-	make all-gcc -j 8
-	make all-target-libgcc -j 8
-	make install-gcc
-	make install-target-libgcc
+	../../Tarballs/${GCC_NAME}/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers > >(sed 's/^/[gcc conf]: /')
+	
+	echo "Building GCC..."
+	make all-gcc -j $MAKEJOBS  > >(sed 's/^/[gcc build]: /')
+	make all-target-libgcc -j $MAKEJOBS > >(sed 's/^/[libgcc build]: /')
+	make install-gcc > >(sed 's/^/[gcc install]: /')
+	make install-target-libgcc > >(sed 's/^/[libgcc install]: /')
 popd
 
 echo "Done. Toolchain should be functional"
