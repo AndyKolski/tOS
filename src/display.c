@@ -10,6 +10,9 @@
  // TODO: The VESA framebuffer needs to be double-buffered, and it needs a 
  // cursor, among other fixes.
 
+ // TODO: Lots of this code is old, badly written, and generally not great. I
+ // should rewrite a good portion of it at some point.
+
 uint32 *ptr; // pointer to the graphical framebuffer
 uint16 *basicPtr; // pointer to the text console
 
@@ -25,6 +28,8 @@ uint32 cursorx = 0; // the horizontal position of the cursor on the terminal, in
 uint32 cursory = 0; // the vertical position of the cursor on the terminal, in characters
 
 bool FBScreen = false; // is the display graphical or a text console
+
+bool isDisplayInitialized = false;
 
 color_t textColor = GColWHITE;
 color_t backgroundColor = GColBLACK;
@@ -42,6 +47,7 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 		terminalWidth = framebuffer_width/(fontWidth+1);
 		terminalHeight = framebuffer_height/(fontHeight+1);
 
+		isDisplayInitialized = true;
 		fillScreen(backgroundColor);
 		printf("Created console with size %lux%lu (%lupx x %lupx @ %ibpp) at 0x%lx (%lu KiB)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr, (framebuffer_width*framebuffer_height*framebuffer_Bpp)/KiB);
 	} else {
@@ -53,6 +59,7 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 				basicPtr[y * 80 + x] = ' ' | (15 | 0 << 4) << 8;
 			}
 		}
+		isDisplayInitialized = true;
 		printf("Created console with size %lux%lu (--px x --px @ --bpp)\n", terminalWidth, terminalHeight);
 	}}
 
@@ -121,6 +128,9 @@ color_t _colorFromHSV(uint8 h, uint8 s, uint8 v) {
 }
 
 inline void setPixel(uint32 x, uint32 y, color_t c) {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	uint32 p;
 	if (framebuffer_Bpp == 4 && framebuffer_pitch == framebuffer_width) { // slight optimization for most likely configuration
 		p = x + y * framebuffer_pitch;
@@ -135,6 +145,9 @@ inline void setPixel(uint32 x, uint32 y, color_t c) {
 }
 
 void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	uint32 s = 0;
 	for (uint32 fy = y; fy < h+y; ++fy) {
 		uint32 offset = fy * framebuffer_pitch;
@@ -148,10 +161,16 @@ void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
 }
 
 void fillScreen(color_t c) {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	fillRect(0, 0, framebuffer_width, framebuffer_height, c);
 }
 
 void clearScreen() {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	cursorx = 0; 
 	cursory = 0; 
 	fillScreen(GColBLACK);
@@ -162,6 +181,9 @@ void clearScreen() {
  // efficient.
 
 void badPlaceChar(kchar ltr, uint32 x, uint32 y, color_t c) {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	for (uint8 py = 0; py < fontHeight; ++py) {
 		for (uint8 px = 0; px < fontWidth+1; ++px) {
 			if (font[(uint8)ltr][py]>>(fontWidth-px)&1) {
@@ -185,6 +207,9 @@ void gsetCsr(uint32 x, uint32 y) {
 }
 
 void cursor_pos_updated() {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	if (FBScreen) {
 		// There isn't a cursor on the framebuffer screen yet
 	} else {
@@ -214,6 +239,9 @@ uint32 getTerminalHeight() {
 }
 
 void legacyScrollTerminal() {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	for (uint32 i = 0; i < terminalHeight; ++i) {
 		memcpy((uint8*)&basicPtr[i * terminalWidth], (uint8*)&basicPtr[(i+1) * terminalWidth], terminalWidth*2);
 	}
@@ -222,6 +250,9 @@ void legacyScrollTerminal() {
 }
 
 void scrollTerminal() {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	for (uint32 i = 0; i < framebuffer_height/fontHeight; ++i) {
 		memcpy((uint8*)(ptr+i*framebuffer_pitch*fontHeight), (uint8*)(ptr+(i+1)*framebuffer_pitch*fontHeight), framebuffer_pitch*fontHeight*framebuffer_Bpp);
 	}
@@ -230,12 +261,9 @@ void scrollTerminal() {
 	return;
 }
 
-void putc(kchar chr) {
-	if (chr == '\n') {
-		serial_putc('\r');
-		serial_putc('\n');
-	} else {
-		serial_putc(chr);
+void terminalPrintChar(kchar chr) {
+	if (!isDisplayInitialized) {
+		return;
 	}
 	if (FBScreen) {
 		#pragma GCC diagnostic push
@@ -286,10 +314,10 @@ void putc(kchar chr) {
 	cursor_pos_updated();
 }
 
-void termBackspace() {
-	serial_putc('\b');
-	serial_putc(' ');
-	serial_putc('\b');
+void terminalBackspace() {
+	if (!isDisplayInitialized) {
+		return;
+	}
 	if (FBScreen) {
 		if (cursorx > 0) {
 			cursorx--;

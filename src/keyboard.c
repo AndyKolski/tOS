@@ -431,18 +431,18 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 				if (XOR(lockStates.CapsLock, keyPressStates[KEY_LeftShift] || keyPressStates[KEY_RightShift]) && keyData.CanUppercase) {
 					addCharToBuffer(keyData.UpperASCII);
 					if (terminalEcho) {
-						putc(keyData.UpperASCII);
+						putchar(keyData.UpperASCII);
 					}
 				} else {
 					addCharToBuffer(keyData.ASCII);
 					if (terminalEcho) {
-						putc(keyData.ASCII);
+						putchar(keyData.ASCII);
 					}
 				}
 			} else if (keyData.VKeyCode == KEY_Backspace) {
 				addCharToBuffer('\b');
 				if (terminalEcho) {
-					termBackspace();
+					putchar('\b');
 				}
 			}
 
@@ -466,7 +466,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 void keyboardKeyPress(char key) {
 	addCharToBuffer(key);
 	if (terminalEcho) {
-		putc(key);
+		putchar(key);
 	}
 }
 

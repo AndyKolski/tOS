@@ -9,7 +9,7 @@ LD = Toolchain/i686-elf-cross/bin/i686-elf-gcc
 AS = nasm
 QEMU = qemu-system-i386
 
-QEMUARGS = -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime#-serial file:serial.log
+QEMUARGS = -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime -name $(NAME)#-serial file:serial.log
 QEMUDEBUG = -s -S
 
 #-c: Compile only, disable linking -ffreestanding: Assume non-hosted environment, -fstack-protector-strong: enable stack-smashing detection,

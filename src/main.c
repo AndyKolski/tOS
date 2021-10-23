@@ -15,6 +15,10 @@
 
 int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 
+	puts("kmain() function called");
+
+
+	puts("Setting up display...");
 	install_display(multibootInfo->framebuffer_addr, multibootInfo->framebuffer_width, multibootInfo->framebuffer_height, multibootInfo->framebuffer_bpp, multibootInfo->framebuffer_pitch, multibootInfo->framebuffer_type == 1 ? false : true);
 
 	puts("Setting up serial interface...");

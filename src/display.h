@@ -45,6 +45,6 @@ uint32 getTerminalHeight();
 
 void legacyScrollTerminal();
 
-void putc(kchar chr);
+void terminalPrintChar(kchar chr);
 
-void termBackspace();
+void terminalBackspace();
