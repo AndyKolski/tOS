@@ -60,7 +60,7 @@ bool configurePort(uint8 com, uint32 baudRate, uint8 bitsPerChar, bool useTwoSto
 	outb(port + 0, divisor & 0xff); // Baud rate divisor least significant byte
 	outb(port + 1, divisor >> 8); // Baud rate divisor most significant byte
 
-	outb(port + 2, 0x07); // FIFO control registers - Interrupt after 1 byte, clear everything
+	outb(port + 2, 0b01000111); // FIFO control registers - Interrupt after 1 byte, clear everything
 
 	uint8 portReg3Value = (bitsPerCharValue & 0x03) | (useTwoStopBits << 2) | (useParity << 3) | (evenParity << 4) | (stickParity << 5); // Line Control Register - bits 0-1 are bits per char, bit 2 is stop bits, 3 is parity enable, 4 is even parity, 5 is stick parity
 	outb(port + 3, portReg3Value);
@@ -102,7 +102,7 @@ void serial_handler(struct regs *r __attribute__((__unused__))) {
 				} else if (status == 2) { // Data received
 					uint8 read = inb(port + 0);
 					if (i+1 == usePort) {
-						keyboardKeyPress((char)read);
+						keyboardKeyPress((kchar)read);
 					}
 					// printf("Serial in: %c\n", read);
 				} else if (status == 3) { // Error
