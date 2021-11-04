@@ -102,8 +102,8 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 		
 		mmap_entry = (multiboot_memory_map_t*) (mmap_entry + 1);
 	}
-	printf("Total available memory: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", totalMem, intdivround(totalMem,KiB), intdivround(totalMem,MiB), intdivround(totalMem,GiB));
-	printf("Longest continuous memory area: 0x%08qx - size: %qu B (%qu KiB / %qu MiB / %qu GiB)\n", (uint64)(uint32)largestContinuousMemLocation, largestContinuousMemSize, intdivround(largestContinuousMemSize,KiB), intdivround(largestContinuousMemSize,MiB), intdivround(largestContinuousMemSize,GiB));
+	printf("Total available memory: %qu MiB (%qu GiB)\n", intdivround(totalMem,MiB), intdivround(totalMem,GiB));
+	printf("Longest continuous usable memory area is at 0x%08qx, size: %qu MiB (%qu GiB)\n", (uint64)(uint32)largestContinuousMemLocation, intdivround(largestContinuousMemSize,MiB), intdivround(largestContinuousMemSize,GiB));
 	printf("Kernel start: 0x%08qx end: 0x%08qx len: 0x%qx (%qu KiB) loaded at start of largest memory area: %s\n", (uint64)(uint32)startOfKernel, (uint64)(uint32)endOfKernel, sizeOfKernel, intdivround(sizeOfKernel,KiB), largestContinuousMemLocation == startOfKernel ? "true" : "false");
 
 	if (largestContinuousMemLocation == startOfKernel) {
