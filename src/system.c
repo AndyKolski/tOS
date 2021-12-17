@@ -17,15 +17,15 @@ void reboot() {
 	 halt();
 }
 
-void _assert(kchar *file, uint32 line, kchar *msg, bool conf) {
+void _assert(kchar *file, uint32 line, const kchar *func, kchar *msg, bool conf) {
 	if (!conf) {
-		printf("\n [!!!] Assertion failed at %s:%lu - %s\n", file, line, msg);
+		printf("\n [!!!] Assertion failed at %s:%lu in function %s - %s\n", file, line, func, msg);
 		halt();
 	}
 }
 
-void _panic(kchar *file, uint32 line, kchar *msg) {
-	printf("\n [!!!] Kernel panic at %s:%lu - %s\n", file, line, msg);
+void _panic(kchar *file, uint32 line, const kchar *func, kchar *msg) {
+	printf("\n [!!!] Kernel panic at %s:%lu in function %s - %s\n", file, line, func, msg);
 	halt();
 }
 
