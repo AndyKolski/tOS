@@ -3,6 +3,7 @@
 #include <irq.h>
 #include <keyboard.h>
 #include <stdio.h>
+#include <string.h>
 #include <system.h>
 
 #define IRQ_MOUSE 12
@@ -59,20 +60,24 @@ void wait_then_write(uint8 port, uint8 data) {
     outb(port, data);
 }
 
-void expect_ack() {
+void expect_ack(char* location) {
+    char message[64] = "Not ack in ";
+    assert(strlen(message) + strlen(location) + 1 <= (int32) sizeof(message), "location string too long");
+    strcat(message, location);
+
     uint8 data = mouse_read();
-   	assert(data == I8042_ACK, "Not ack");
+   	assert(data == I8042_ACK, message);
 }
 uint8 get_device_id() {
     mouse_write(PS2MOUSE_GET_DEVICE_ID);
-    expect_ack();
+    expect_ack("get_device_id");
     return mouse_read();
 }
 void set_sample_rate(uint8 rate) {
     mouse_write(PS2MOUSE_SET_SAMPLE_RATE);
-    expect_ack();
+    expect_ack("get_sample_rate 1");
     mouse_write(rate);
-    expect_ack();
+    expect_ack("get_sample_rate 2");
 }
 
 
@@ -252,11 +257,11 @@ void mouse_install() {
 
          // Set default settings.
 	    mouse_write(PS2MOUSE_SET_DEFAULTS);
-	    expect_ack();
+	    expect_ack("mouse_install set defaults");
 
 	    // Enable.
 	    mouse_write(PS2MOUSE_ENABLE_PACKET_STREAMING);
-	    expect_ack();
+	    expect_ack("mouse_install enable");
 
 	    uint8 device_id = get_device_id();
 	    if (device_id != PS2MOUSE_INTELLIMOUSE_ID) {
