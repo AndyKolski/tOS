@@ -9,14 +9,14 @@ LD = Toolchain/i686-elf-cross/bin/i686-elf-gcc
 AS = nasm
 QEMU = qemu-system-i386
 
-QEMUARGS = -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime -name $(NAME)#-serial file:serial.log
+override QEMUARGS := -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime -name $(NAME) ${QEMUARGS}#-serial file:serial.log
 QEMUDEBUG = -s -S
 
 #-c: Compile only, disable linking -ffreestanding: Assume non-hosted environment, -fstack-protector-strong: enable stack-smashing detection,
 #-I src: Set include path, -std=gnu99: Use GNU C99 standard for compilation, -W*: Enable various warnings, -g: include debug symbols, -Og, optimize for debugging
 COPT = -g\
 -Og
-CFLAGS = -c\
+override CFLAGS := -c\
 -ffreestanding\
 -fstack-protector-strong\
 -I src\
@@ -33,7 +33,8 @@ CFLAGS = -c\
 -Werror\
 $(COPT)\
 -DGIT_VERSION="\"$(shell git describe --dirty --always --tags)\""\
--DCC_VERSION="\"$(shell $(CC) --version | head -n 1)\""
+-DCC_VERSION="\"$(shell $(CC) --version | head -n 1)\""\
+$(CFLAGS)
 
 
 # -nostdlib: don't include standard libraries -lgcc: link libgcc
@@ -69,13 +70,13 @@ out/$(NAME).bin: out/obj $(TARGETS)
 
 out/$(NAME).iso: isodir/boot/grub out/$(NAME).bin
 	@echo 'Packing into ISO...'
-	@cp out/$(NAME).bin isodir/boot/$(NAME).bin
+	cp out/$(NAME).bin isodir/boot/$(NAME).bin
 	@echo 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot /boot/$(NAME).bin Hello\n}' > isodir/boot/grub/grub.cfg
 	grub-mkrescue -o out/$(NAME).iso isodir --compress gz --quiet -volid "$(NAME) Boot Disk"
 
 
 run: out/$(NAME).iso
-	@$(QEMU) $(QEMUARGS)
+	$(QEMU) $(QEMUARGS)
 
 debug: out/$(NAME).iso
 	x-terminal-emulator -e "$(QEMU) $(QEMUDEBUG) $(QEMUARGS)"
