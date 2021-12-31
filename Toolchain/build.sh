@@ -36,7 +36,7 @@ mkdir -p "$DIR/Tarballs"
 
 pushd "$DIR/Tarballs"
 
-	echo "Checking if we need to download Binutils"
+	printf "Checking if we need to download Binutils... "
 	md5=""
 	if [ -e "$BINUTILS_PKG" ]; then
 		md5="$($MD5SUM $BINUTILS_PKG | cut -f1 -d' ')"
@@ -51,7 +51,7 @@ pushd "$DIR/Tarballs"
 
 	echo
 
-	echo "Checking if we need to download GCC"
+	printf "Checking if we need to download GCC... "
 	md5=""
 	if [ -e "$GCC_PKG" ]; then
 		md5="$($MD5SUM $GCC_PKG | cut -f1 -d' ')"
@@ -73,6 +73,13 @@ pushd "$DIR/Tarballs"
 
 	echo "Extracting GCC..."
 	tar -xzf ${GCC_PKG}
+
+
+	if [ "$TARGET" == "x86_64-elf" ]; then
+		printf "MULTILIB_OPTIONS += mno-red-zone\nMULTILIB_DIRNAMES += no-red-zone\n" > $DIR/Tarballs/$GCC_NAME/gcc/config/i386/t-x86_64-elf
+
+		patch -u -d $DIR/Tarballs/$GCC_NAME/gcc/ < $DIR/Patches/libgcc_no_redzone.patch
+	fi
 
 popd
 
