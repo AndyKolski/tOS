@@ -105,11 +105,11 @@ void set_tss(int gdt_number) {
     gdt[gdt_number].big = 0; // should leave zero according to manuals.
     gdt[gdt_number].gran = 0; // limit is in bytes, not pages
     
-    extern uint32 get_esp();
+    uint32 esp = 0;
+    asm("mov %%esp, %0" : "=a"(esp));
 
     tss_entry.ss0 = 0x10;
-    tss_entry.esp0 = get_esp();
-
+    tss_entry.esp0 = esp;
 }
 
 void gdt_install() {

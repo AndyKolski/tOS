@@ -1,6 +1,6 @@
 NAME=tOS
 
-_TARGETS=start.o ctype.o display.o gdt.o idt.o io.o irq.o isrs.o keyboard.o main.o memory.o mouse.o paging.o pcspeaker.o pit.o rtc.o serial.o stdio.o string.o system.o time.o 
+_TARGETS=bootstrap.o ctype.o display.o gdt.o gdt_asm.o idt.o idt_asm.o io.o irq.o irq_asm.o isrs.o isrs_asm.o keyboard.o main.o memory.o mouse.o multiboot.o paging.o paging_asm.o pcspeaker.o pit.o rtc.o serial.o stdio.o string.o system.o time.o
 TARGETS=$(patsubst %,out/obj/%,$(_TARGETS))
 
 CC = Toolchain/i686-elf-cross/bin/i686-elf-gcc
@@ -68,6 +68,14 @@ out/obj/%.o: src/%.asm
 
 out/$(NAME).bin: out/obj $(TARGETS) linker.ld
 	$(LD) $(TARGETS) -T linker.ld $(LDFLAGS) -o out/$(NAME).bin
+
+	@if ! grub-file --is-x86-multiboot out/$(NAME).bin; then \
+		echo "The linked kernel is not multiboot compliant! The make process cannot proceed until this is fixed."; \
+		rm out/$(NAME).bin; \
+		false; \
+	else \
+		echo "The linked kernel is multiboot compliant."; \
+	fi
 
 
 isodir/boot/$(NAME).bin: out/$(NAME).bin isodir/boot/grub
