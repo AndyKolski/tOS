@@ -70,11 +70,11 @@ out/$(NAME).bin: out/obj $(TARGETS) linker.ld
 	$(LD) $(TARGETS) -T linker.ld $(LDFLAGS) -o out/$(NAME).bin
 
 	@if ! grub-file --is-x86-multiboot out/$(NAME).bin; then \
-		echo "The linked kernel is not multiboot compliant! The make process cannot proceed until this is fixed."; \
+		echo "The linked kernel is not multiboot compliant! The make process cannot proceed until this is fixed"; \
 		rm out/$(NAME).bin; \
 		false; \
 	else \
-		echo "The linked kernel is multiboot compliant."; \
+		echo "The linked kernel is multiboot compliant"; \
 	fi
 
 
