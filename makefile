@@ -52,26 +52,31 @@ iso: out/$(NAME).iso
 clean:
 	rm -rf out isodir
 
+
 out/obj:
 	mkdir out/obj -p
 isodir/boot/grub:
 	mkdir isodir/boot/grub -p
 
+
 out/obj/%.o: src/%.c src/%.h
-	$(CC) -o $@ $< $(CFLAGS) 
+	$(CC) -o $@ $< $(CFLAGS)
+
 out/obj/%.o: src/%.asm
-	$(AS) -o $@ $< $(ASFLAGS) 
+	$(AS) -o $@ $< $(ASFLAGS)
 	
 
-
-out/$(NAME).bin: out/obj $(TARGETS)
+out/$(NAME).bin: out/obj $(TARGETS) linker.ld
 	$(LD) $(TARGETS) -T linker.ld $(LDFLAGS) -o out/$(NAME).bin
-	@echo '$(NAME) compiled successfully!'
 
-out/$(NAME).iso: isodir/boot/grub out/$(NAME).bin
-	@echo 'Packing into ISO...'
+
+isodir/boot/$(NAME).bin: out/$(NAME).bin isodir/boot/grub
 	cp out/$(NAME).bin isodir/boot/$(NAME).bin
+
+isodir/boot/grub/grub.cfg: isodir/boot/grub
 	@echo 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot /boot/$(NAME).bin Hello\n}' > isodir/boot/grub/grub.cfg
+
+out/$(NAME).iso: isodir/boot/$(NAME).bin isodir/boot/grub/grub.cfg
 	grub-mkrescue -o out/$(NAME).iso isodir --compress gz --quiet -volid "$(NAME) Boot Disk"
 
 
