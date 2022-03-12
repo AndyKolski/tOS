@@ -30,54 +30,54 @@
 #define PS2MOUSE_INTELLIMOUSE_EXPLORER_ID 0x04
 
 void prepare_for_input() {
-    while (true) {
-        if (inb(I8042_STATUS) & 1)
-            return;
-    }
+	while (true) {
+		if (inb(I8042_STATUS) & 1)
+			return;
+	}
 }
 uint8 mouse_read() {
-    prepare_for_input();
-    return inb(I8042_BUFFER);
+	prepare_for_input();
+	return inb(I8042_BUFFER);
 }
 uint8 wait_then_read(uint8 port) {
-    prepare_for_input();
-    return inb(port);
+	prepare_for_input();
+	return inb(port);
 }
 void prepare_for_output() {
-    while (true) {
-        if (!(inb(I8042_STATUS) & 2))
-            return;
-    }
+	while (true) {
+		if (!(inb(I8042_STATUS) & 2))
+			return;
+	}
 }
 void mouse_write(uint8 data) {
-    prepare_for_output();
-    outb(I8042_STATUS, 0xd4);
-    prepare_for_output();
-    outb(I8042_BUFFER, data);
+	prepare_for_output();
+	outb(I8042_STATUS, 0xd4);
+	prepare_for_output();
+	outb(I8042_BUFFER, data);
 }
 void wait_then_write(uint8 port, uint8 data) {
-    prepare_for_output();
-    outb(port, data);
+	prepare_for_output();
+	outb(port, data);
 }
 
 void expect_ack(char* location) {
-    char message[64] = "Not ack in ";
-    assert(strlen(message) + strlen(location) + 1 <= (int32) sizeof(message), "location string too long");
-    strcat(message, location);
+	char message[64] = "Not ack in ";
+	assert(strlen(message) + strlen(location) + 1 <= (int32) sizeof(message), "location string too long");
+	strcat(message, location);
 
-    uint8 data = mouse_read();
-   	assert(data == I8042_ACK, message);
+	uint8 data = mouse_read();
+	assert(data == I8042_ACK, message);
 }
 uint8 get_device_id() {
-    mouse_write(PS2MOUSE_GET_DEVICE_ID);
-    expect_ack("get_device_id");
-    return mouse_read();
+	mouse_write(PS2MOUSE_GET_DEVICE_ID);
+	expect_ack("get_device_id");
+	return mouse_read();
 }
 void set_sample_rate(uint8 rate) {
-    mouse_write(PS2MOUSE_SET_SAMPLE_RATE);
-    expect_ack("get_sample_rate 1");
-    mouse_write(rate);
-    expect_ack("get_sample_rate 2");
+	mouse_write(PS2MOUSE_SET_SAMPLE_RATE);
+	expect_ack("get_sample_rate 1");
+	mouse_write(rate);
+	expect_ack("get_sample_rate 2");
 }
 
 
@@ -133,7 +133,7 @@ MouseEvent parseMouseData() {
 	if (hasFiveButtons && hasScrollWheel) {
 		event.dZ = (mouseBuffer[3] & 0x0f);
 		if (event.dZ == 15) {// -1 in 4 bits
-		    event.dZ = -1;
+			event.dZ = -1;
 		}
 		event.FourthButton = (mouseBuffer[3] & 0x10) == 0x10;
 		event.FifthButton = (mouseBuffer[3] & 0x20) == 0x20;
@@ -160,29 +160,29 @@ MouseEvent parseMouseData() {
 
 void mouse_handler(struct regs *r __attribute__((__unused__))) {
 	uint8 status = inb(I8042_STATUS);
-    if (!(((status & I8042_WHICH_BUFFER) == I8042_MOUSE_BUFFER) && (status & I8042_BUFFER_FULL)))
-        return;
+	if (!(((status & I8042_WHICH_BUFFER) == I8042_MOUSE_BUFFER) && (status & I8042_BUFFER_FULL)))
+		return;
 
-    uint8 data = inb(I8042_BUFFER);
-    
-    mouseBuffer[mouseBufferPosition] = data;
-    MouseEvent event = {0};
+	uint8 data = inb(I8042_BUFFER);
+	
+	mouseBuffer[mouseBufferPosition] = data;
+	MouseEvent event = {0};
 
-    bool isFinishedPacket = false;
+	bool isFinishedPacket = false;
 
-    if ((hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 3) { // either scroll wheel or 5-button mouse, both use 4-byte packets
+	if ((hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 3) { // either scroll wheel or 5-button mouse, both use 4-byte packets
 		event = parseMouseData();
 		isFinishedPacket = true;
 		mouseBufferPosition = 0;
-    } else if (!(hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 2) { // basic mouse, uses 3-byte packets
-    	event = parseMouseData();
+	} else if (!(hasScrollWheel || hasFiveButtons) && mouseBufferPosition == 2) { // basic mouse, uses 3-byte packets
+		event = parseMouseData();
 		isFinishedPacket = true;
 		mouseBufferPosition = 0;
-    } else { // buffer not yet full. Wait for next packet
-    	mouseBufferPosition++;
-    }
+	} else { // buffer not yet full. Wait for next packet
+		mouseBufferPosition++;
+	}
 
-    if(isFinishedPacket) {
+	if(isFinishedPacket) {
 
 		// fillRect(xPos, yPos, 5, 5, GColBLACK);
 		// fillRect(getScreenWidth()-20, zPos, 20, 10, GColBLACK);
@@ -233,61 +233,61 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 		if (event.FifthButton) {
 			printf("Button 5 Click\n");
 		}
-    }
+	}
 	return;
 }
 void mouse_install() {
 	// centerMouseOnScreen();
-    wait_then_write(I8042_STATUS, 0xa8);
-    mouse_write(PS2MOUSE_REQUEST_SINGLE_PACKET);
-    uint8 maybe_ack = mouse_read();
-    if (maybe_ack == I8042_ACK) {
-    	//Mouse is available. Ignore next 3 packets
-        mouse_read();
-        mouse_read();
-        mouse_read();
+	wait_then_write(I8042_STATUS, 0xa8);
+	mouse_write(PS2MOUSE_REQUEST_SINGLE_PACKET);
+	uint8 maybe_ack = mouse_read();
+	if (maybe_ack == I8042_ACK) {
+		//Mouse is available. Ignore next 3 packets
+		mouse_read();
+		mouse_read();
+		mouse_read();
 
-        mouseIsPresent = true;
+		mouseIsPresent = true;
 
-        wait_then_write(I8042_STATUS, 0x20); // get config data
-        uint8 status = wait_then_read(I8042_BUFFER);
+		wait_then_write(I8042_STATUS, 0x20); // get config data
+		uint8 status = wait_then_read(I8042_BUFFER);
 
-        wait_then_write(I8042_STATUS, 0x60);
-        wait_then_write(I8042_BUFFER, status | 3); // enable mouse & keyboard ints
+		wait_then_write(I8042_STATUS, 0x60);
+		wait_then_write(I8042_BUFFER, status | 3); // enable mouse & keyboard ints
 
-         // Set default settings.
-	    mouse_write(PS2MOUSE_SET_DEFAULTS);
-	    expect_ack("mouse_install set defaults");
+		 // Set default settings.
+		mouse_write(PS2MOUSE_SET_DEFAULTS);
+		expect_ack("mouse_install set defaults");
 
-	    // Enable.
-	    mouse_write(PS2MOUSE_ENABLE_PACKET_STREAMING);
-	    expect_ack("mouse_install enable");
+		// Enable.
+		mouse_write(PS2MOUSE_ENABLE_PACKET_STREAMING);
+		expect_ack("mouse_install enable");
 
-	    uint8 device_id = get_device_id();
-	    if (device_id != PS2MOUSE_INTELLIMOUSE_ID) {
-            // Send magical wheel initiation sequence.
-            set_sample_rate(200);
-            set_sample_rate(100);
-            set_sample_rate(80);
-            device_id = get_device_id();
-        }
-        if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
-           hasScrollWheel = true;
-       }
+		uint8 device_id = get_device_id();
+		if (device_id != PS2MOUSE_INTELLIMOUSE_ID) {
+			// Send magical wheel initiation sequence.
+			set_sample_rate(200);
+			set_sample_rate(100);
+			set_sample_rate(80);
+			device_id = get_device_id();
+		}
+		if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
+		   hasScrollWheel = true;
+	   }
 
-	    if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
-	        // Try to enable 5 buttons as well!
-	        set_sample_rate(200);
-	        set_sample_rate(200);
-	        set_sample_rate(80);
-	        device_id = get_device_id();
-	    }
-	    if (device_id == PS2MOUSE_INTELLIMOUSE_EXPLORER_ID) {
-           hasFiveButtons = true;
-       	}
+		if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
+			// Try to enable 5 buttons as well!
+			set_sample_rate(200);
+			set_sample_rate(200);
+			set_sample_rate(80);
+			device_id = get_device_id();
+		}
+		if (device_id == PS2MOUSE_INTELLIMOUSE_EXPLORER_ID) {
+		   hasFiveButtons = true;
+		}
 		irq_install_handler(12, mouse_handler);
-    	printf("Detected mouse configuration - scroll wheel: %s, buttons: %i\n", (hasScrollWheel ? "true" : "false"), (hasFiveButtons ? 5 : 3));
-    } else {
-    	puts("No mouse present or detected");
-    }
+		printf("Detected mouse configuration - scroll wheel: %s, buttons: %i\n", (hasScrollWheel ? "true" : "false"), (hasFiveButtons ? 5 : 3));
+	} else {
+		puts("No mouse present or detected");
+	}
 }

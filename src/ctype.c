@@ -22,7 +22,7 @@ bool isxDigit(char c) {
 	return (isCharInRange('A', 'F', c) || isCharInRange('a', 'f', c) || isDigit(c));
 }
 bool isDigit(char c) {
-    return isCharInRange('0', '9', c);
+	return isCharInRange('0', '9', c);
 }
 bool isLower(char c) {
 	return isCharInRange('a', 'z', c);

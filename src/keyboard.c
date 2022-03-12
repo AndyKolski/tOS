@@ -330,11 +330,11 @@ keyPressEventDataLUTEntry e0ScancodeLookup[255] = {
 
 
 void addCharToBuffer(keyPressEvent c) {
-    bufferOffset += 1;
-    if (bufferOffset == KEYBOARD_BUFFER_SIZE) {
-        bufferOffset = 0;
-    }
-    keyboardBuffer[BUFFER_CALC_OFFSET(KEYBOARD_BUFFER_SIZE-1)] = c;
+	bufferOffset += 1;
+	if (bufferOffset == KEYBOARD_BUFFER_SIZE) {
+		bufferOffset = 0;
+	}
+	keyboardBuffer[BUFFER_CALC_OFFSET(KEYBOARD_BUFFER_SIZE-1)] = c;
 }
 
 void clearBuffer() {
@@ -345,14 +345,14 @@ void clearBuffer() {
 }
 
 keyPressEvent getCharFromBuffer() {
-    for (uint32 i = 0; i < KEYBOARD_BUFFER_SIZE; ++i) {
-        keyPressEvent read = keyboardBuffer[BUFFER_CALC_OFFSET(i)];
-        if (read.isValid == true) {
-            keyboardBuffer[BUFFER_CALC_OFFSET(i)] = makeKeyPressEvent(KEY_Invalid, 0);;
-            return read;
-        }
-    }
-    return makeKeyPressEvent(KEY_Invalid, 0);
+	for (uint32 i = 0; i < KEYBOARD_BUFFER_SIZE; ++i) {
+		keyPressEvent read = keyboardBuffer[BUFFER_CALC_OFFSET(i)];
+		if (read.isValid == true) {
+			keyboardBuffer[BUFFER_CALC_OFFSET(i)] = makeKeyPressEvent(KEY_Invalid, 0);;
+			return read;
+		}
+	}
+	return makeKeyPressEvent(KEY_Invalid, 0);
 }
 
 volatile bool e0Prefix = false;

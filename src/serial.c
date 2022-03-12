@@ -70,7 +70,7 @@ bool configurePort(uint8 com, uint32 baudRate, uint8 bitsPerChar, bool useTwoSto
 	outb(port + 0, 0xaa);
 
 	if(inb(port + 0) != 0xaa) {
-	      return false;
+		  return false;
 	}
 
 	outb(port + 3, 0x00); // set DTAB to 0
@@ -131,7 +131,7 @@ void init_serial() {
 		}
 	}
 	if (usePort == 0) {
-    	puts("No serial port present or detected");
+		puts("No serial port present or detected");
 	} else {
 		printf("Using serial port: %i\n", usePort);
 	}

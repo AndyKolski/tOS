@@ -20,7 +20,6 @@ bootstrap_entry:
 
 
 	extern PageDirectoryTable
-	
 
 	; clear out the PDT
 	mov eax, 0
@@ -58,15 +57,15 @@ bootstrap_entry:
 	; configure and enable paging
 
 	mov eax, (PageDirectoryTable-0xC0000000)
-    mov cr3, eax
+	mov cr3, eax
 
-    mov ebx, cr4        ; read current cr4
-    or  ebx, 0x00000010 ; set PSE
-    mov cr4, ebx        ; update cr4
+	mov ebx, cr4        ; read current cr4
+	or  ebx, 0x00000010 ; set PSE
+	mov cr4, ebx        ; update cr4
 
-    mov ebx, cr0        ; read current cr0
-    or  ebx, 0x80010000 ; set PG and WP
-    mov cr0, ebx        ; update cr0
+	mov ebx, cr0        ; read current cr0
+	or  ebx, 0x80010000 ; set PG and WP
+	mov cr0, ebx        ; update cr0
 
 	add esp, 0xC0000000 ; switch to accessing the stack using the higher-half mapping
 

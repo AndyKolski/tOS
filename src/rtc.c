@@ -21,16 +21,16 @@
 #define status_register_b 0x0B
 
 uint8 bcdToDecimal(uint8 bcd) {
-    assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nibble is valid
-    assert((bcd & 0x0F) < 10, "invalid BCD conversion");         // Less significant nibble is valid
-    return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
+	assert(((bcd & 0xF0) >> 4) < 10, "invalid BCD conversion");  // More significant nibble is valid
+	assert((bcd & 0x0F) < 10, "invalid BCD conversion");         // Less significant nibble is valid
+	return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
 }
 
 bool NMIsEnabled = true;
 
 bool isRTCUpdating() {
-      outb(rtc_address, 0x0A);
-      return (inb(rtc_data) & update_in_progress_flag);
+	  outb(rtc_address, 0x0A);
+	  return (inb(rtc_data) & update_in_progress_flag);
 }
 uint8 readCMOSRegister(uint8 reg) {
 	outb(rtc_address, (!NMIsEnabled << 7) | (reg));
@@ -52,12 +52,12 @@ void RTC_handler(struct regs *r __attribute__((__unused__))) { // set to exactly
 }
 
 void RTC_install() {
-    irq_install_handler(8, RTC_handler);
+	irq_install_handler(8, RTC_handler);
 
-    outb(rtc_address, 0x8B);
-    uint8 prev = inb(rtc_data);
-    outb(rtc_address, 0x8B);
-    outb(rtc_data, prev | 0x40);
+	outb(rtc_address, 0x8B);
+	uint8 prev = inb(rtc_data);
+	outb(rtc_address, 0x8B);
+	outb(rtc_data, prev | 0x40);
 
 	while (isRTCUpdating()) {}
 	uint8 statusRegisterBValue = readCMOSRegister(status_register_b);

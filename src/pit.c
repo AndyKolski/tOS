@@ -23,10 +23,10 @@ void PIT_handler(struct regs *r __attribute__((__unused__))) {
 
 void PIT_Install(uint32 freq) {
 	setPITRate(freq);
-    irq_install_handler(0, PIT_handler);
+	irq_install_handler(0, PIT_handler);
 }
 
 void setPITRate(uint32 freq) {
-    printf("Setting PIT to %lu Hz...\n", freq);
-    configurePIT(TIMER0_SELECT, TIMER0_CTL, freq, MODE_SQUARE_WAVE);
+	printf("Setting PIT to %lu Hz...\n", freq);
+	configurePIT(TIMER0_SELECT, TIMER0_CTL, freq, MODE_SQUARE_WAVE);
 }
