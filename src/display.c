@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <system.h>
+#include <paging.h>
 
  // TODO: The VESA framebuffer needs to be double-buffered, and it needs a 
  // cursor, among other fixes.
@@ -47,11 +48,13 @@ void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb
 		terminalWidth = framebuffer_width/(fontWidth+1);
 		terminalHeight = framebuffer_height/(fontHeight+1);
 
+		mapRegion(PRESENT|WRITABLE|WRITETHROUGHCACHE|FOURMIBPAGE, ptr, ptr, framebuffer_width*framebuffer_height*framebuffer_Bpp);
+
 		isDisplayInitialized = true;
 		fillScreen(backgroundColor);
 		printf("Created console with size %lux%lu (%lupx x %lupx @ %ibpp) at 0x%lx (%lu KiB)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr, (framebuffer_width*framebuffer_height*framebuffer_Bpp)/KiB);
 	} else {
-		basicPtr = (uint16*) 0x000b8000;
+		basicPtr = (uint16*) 0xC00b8000;
 		terminalWidth = 80;
 		terminalHeight = 25;
 		for (uint8 y = 0; y < 25; y++) {

@@ -3,32 +3,37 @@ ENTRY(bootstrap_entry)
 
 SECTIONS {
 	. = 0x00100000;
-	KERNEL_START = .;
 
 	.multiboot ALIGN (4) :
 	{
-		*(.multiboot)
+		out/obj/multiboot.o(.multiboot)
 	}
 
-	.text ALIGN (4K) :
+	.bootstrap.text ALIGN(4K) : {
+		out/obj/bootstrap.o(.bootstrap.text)
+	}
+
+	. += 0xC0000000;
+
+	KERNEL_START = .;
+
+	.text ALIGN (4K) : AT(ADDR(.text) - 0xC0000000)
 	{
-		text = .;
 		*(.text)
 	}
 
-	.rodata ALIGN (4K) :
+	.rodata ALIGN (4K) : AT(ADDR(.rodata) - 0xC0000000)
 	{
 		*(.rodata)
 	}
 
-	.data ALIGN (4K) :
+	.data ALIGN (4K) : AT(ADDR(.data) - 0xC0000000)
 	{
 		*(.data)
 	}
 
-	.bss ALIGN (4K) :
+	.bss ALIGN (4K) : AT(ADDR(.bss) - 0xC0000000)
 	{
-		bss = .;
 		*(COMMON)
 		*(.bss)
 	}

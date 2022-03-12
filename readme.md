@@ -10,9 +10,9 @@ Currently, t/OS has the following features:
 - A graphical VESA terminal
 - Full system date and time support
 - Interrupt and exception handling
-- Kernel memory management
+- <s>Kernel memory management</s> (temporarily broken)
 - Keyboard and mouse support
-- Paging
+- Paging and a higher-half kernel
 - PC Speaker support
 - Serial support
 - Very experimental ring-3 (userland) functionality

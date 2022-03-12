@@ -3,16 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <system.h>
-
-uint32 intdivceil(uint32 a, uint32 b) { // calculates ceil(a/b) without using any floating point math
-	if (a%b == 0) {
-		return a/b;
-	} else {
-		return a/b + 1;
-	}
-}
-#define intdivround(a, b) ((a + (b / 2)) / b)
-// calculates round(a/b) without using any floating point math
+#include <intmath.h>
 
 void* freememStart;
 void* freememEnd;
@@ -114,6 +105,12 @@ void install_memory(multiboot_memory_map_t* mmap_addr, uint32 mmap_length) {
 		freememStart = largestContinuousMemLocation + sizeof(*heapMannagerArray);
 		freememEnd = largestContinuousMemLocation + largestContinuousMemSize - sizeof(*heapMannagerArray);
 	}
+
+	// TODO: When I switched the kernel to the higher-half, I broke the dynamic 
+	// memory allocator. I need to fix it
+
+	return;
+
 
 	// TODO: Use more than just the continuous memory starting at 0x00100000
 

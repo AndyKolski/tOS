@@ -1,19 +1,15 @@
 #include <paging.h>
 #include <stdio.h>
 #include <system.h>
+#include <intmath.h>
 
- // TODO: For now we just use identity paging and 4-MiB pages. At some point we
- // should transition to a higher-half kernel, with 4-KiB pages.
+ // TODO: For now we just use 4-MiB pages. At some point we should transition 
+ // to 4-KiB pages.
+
+ // TODO: implement functions to check and remove pages
 
 typedef struct PageDirectoryEntry {
-	uint32 present		: 1;
-	uint32 rw 			: 1;
-	uint32 user			: 1;
-	uint32 writeThrough	: 1;
-	uint32 cacheDisabled: 1;
-	uint32 accessed		: 1;
-	uint32 zero			: 1;
-	uint32 size 		: 1;
+	uint32 attributes	: 8;
 	uint32 ignored		: 1;
 	uint32 availa		: 1;
 	uint32 availb		: 1;
@@ -25,16 +21,9 @@ typedef struct PageDirectoryEntry {
 
 volatile PageDirectoryEntry PageDirectoryTable[1024] __attribute__((aligned(4096)));
 
-PageDirectoryEntry createPageDirectoryEntry(uint32 present, uint32 rw, uint32 user, uint32 writeThrough, uint32 cacheDisabled, uint32 size, uint32 available, uint32 address) {
+PageDirectoryEntry createPageDirectoryEntry(uint8 attributes, uint32 available, uint32 address) {
 	PageDirectoryEntry new;
-	new.present = present;
-	new.rw = rw;
-	new.user = user;
-	new.writeThrough = writeThrough;
-	new.cacheDisabled = cacheDisabled;
-	new.accessed = 0;
-	new.zero = 0;
-	new.size = size;
+	new.attributes = attributes;
 	new.ignored = 0;
 	new.availa = available & 1;
 	new.availb = available >> 1 & 1;
@@ -46,14 +35,31 @@ PageDirectoryEntry createPageDirectoryEntry(uint32 present, uint32 rw, uint32 us
 	return new;
 }
 
-extern void enablePaging();
+extern void invalidateDirectory();
 
-void install_paging() {
-		for (uint32 i = 0; i < 1024; ++i) {
-		// printf("%04i: %08x - %08x\n", i, i<<22, ((i+1)<<22)-1);
-							// present rw user writeThrough cacheDisabled 		size available address
-		PageDirectoryTable[i] = createPageDirectoryEntry(1, 1, 1, 1, 1, 	1, 0, i);
+void mapPage(uint8 attributes, void* physicalAddress, void* virtualAddress, bool doInvalidateDirectory) {
+
+	uint32 tableIndex = (uint32)physicalAddress >> 22;
+	uint32 tableAddress = (uint32)virtualAddress >> 22;
+
+	printf("mapping: %08lx p (%lu) -> %08lx v (%lu)\n", (uint32)physicalAddress, tableIndex, (uint32)virtualAddress, tableAddress);
+	PageDirectoryTable[tableIndex] = createPageDirectoryEntry(attributes, 0, tableAddress);
+	if (doInvalidateDirectory) {
+		invalidateDirectory();
 	}
+}
 
-	enablePaging();
+void mapRegion(uint8 attributes, void* physicalAddress, void* virtualAddress, size_t length) {
+	if (!(attributes & FOURMIBPAGE)) {
+		panic("Unimplemented: Attempted to map a region without using 4-MiB pages");
+	}
+	uint32 pageLength = 4*MiB;
+	uint32 numberOfPagesNeeded = intdivceil(length, pageLength);
+
+	printf("len: %lu, numPages: %lu\n", length, numberOfPagesNeeded);
+
+	for (uint32 i = 0; i < numberOfPagesNeeded; ++i) {
+		mapPage(attributes, physicalAddress + (i*pageLength), virtualAddress + (i*pageLength), false);
+	}
+	invalidateDirectory();
 }

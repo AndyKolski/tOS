@@ -1,6 +1,6 @@
 NAME=tOS
 
-_TARGETS=bootstrap.o ctype.o display.o gdt.o gdt_asm.o idt.o idt_asm.o io.o irq.o irq_asm.o isrs.o isrs_asm.o keyboard.o main.o memory.o mouse.o multiboot.o paging.o paging_asm.o pcspeaker.o pit.o rtc.o serial.o stdio.o string.o system.o time.o
+_TARGETS=bootstrap.o ctype.o display.o gdt.o gdt_asm.o idt.o idt_asm.o intmath.o io.o irq.o irq_asm.o isrs.o isrs_asm.o keyboard.o main.o memory.o mouse.o multiboot.o paging.o paging_asm.o pcspeaker.o pit.o rtc.o serial.o stdio.o string.o system.o time.o
 TARGETS=$(patsubst %,out/obj/%,$(_TARGETS))
 
 CC = Toolchain/i686-elf-cross/bin/i686-elf-gcc
