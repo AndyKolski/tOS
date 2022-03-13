@@ -4,6 +4,8 @@ ENTRY(bootstrap_entry)
 SECTIONS {
 	. = 0x00100000;
 
+	KERNEL_START = .;
+
 	.multiboot ALIGN (4) :
 	{
 		out/obj/multiboot.o(.multiboot)
@@ -14,8 +16,6 @@ SECTIONS {
 	}
 
 	. += 0xC0000000;
-
-	KERNEL_START = .;
 
 	.text ALIGN (4K) : AT(ADDR(.text) - 0xC0000000)
 	{
@@ -37,5 +37,5 @@ SECTIONS {
 		*(COMMON)
 		*(.bss)
 	}
-	KERNEL_END = .;
+	KERNEL_END = . - 0xC0000000;
 }
