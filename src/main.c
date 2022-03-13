@@ -24,7 +24,7 @@ int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 	puts("Setting up serial interface...");
 	init_serial();
 	
-	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%lx\n", (char*)multibootInfo->boot_loader_name+0xC0000000, multibootInfo->framebuffer_type, (char*)multibootInfo->cmdline+0xC0000000, bootloaderMagic);
+	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%lx\n", (char*)multibootInfo->boot_loader_name+KERNEL_OFFSET, multibootInfo->framebuffer_type, (char*)multibootInfo->cmdline+KERNEL_OFFSET, bootloaderMagic);
 
 	printf("t/OS test build " GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " CC_VERSION  " \n");
 
@@ -42,7 +42,7 @@ int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 	puts("Initializing Time...");
 	initTime();
 	puts("Initializing Memory Management...");
-	install_memory((multiboot_memory_map_t*) (multibootInfo->mmap_addr+0xC0000000), multibootInfo->mmap_length);
+	install_memory((multiboot_memory_map_t*) (multibootInfo->mmap_addr+KERNEL_OFFSET), multibootInfo->mmap_length);
 	puts("Setting up Mouse Controller...");
 	mouse_install();
 	puts("Setting up Keyboard Controller...");

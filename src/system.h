@@ -18,6 +18,8 @@ typedef int64_t			int64;
 
 typedef char kchar;
 
+#define KERNEL_OFFSET 0xC0000000
+
 #define XOR(A, B) (((A) || (B)) && !((A) && (B)))
 
 #define KiB (1024)
