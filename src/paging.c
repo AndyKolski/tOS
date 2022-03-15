@@ -42,7 +42,7 @@ void mapPage(uint8 attributes, void* physicalAddress, void* virtualAddress, bool
 	uint32 tableIndex = (uint32)physicalAddress >> 22;
 	uint32 tableAddress = (uint32)virtualAddress >> 22;
 
-	printf("mapping: %08lx p (%lu) -> %08lx v (%lu)\n", (uint32)physicalAddress, tableIndex, (uint32)virtualAddress, tableAddress);
+	// printf("mapping: %08lx p (%lu) -> %08lx v (%lu)\n", (uint32)physicalAddress, tableIndex, (uint32)virtualAddress, tableAddress);
 	PageDirectoryTable[tableIndex] = createPageDirectoryEntry(attributes, 0, tableAddress);
 	if (doInvalidateDirectory) {
 		invalidateDirectory();
@@ -56,7 +56,7 @@ void mapRegion(uint8 attributes, void* physicalAddress, void* virtualAddress, si
 	uint32 pageLength = 4*MiB;
 	uint32 numberOfPagesNeeded = intdivceil(length, pageLength);
 
-	printf("len: %lu, numPages: %lu\n", length, numberOfPagesNeeded);
+	// printf("len: %lu, numPages: %lu\n", length, numberOfPagesNeeded);
 
 	for (uint32 i = 0; i < numberOfPagesNeeded; ++i) {
 		mapPage(attributes, physicalAddress + (i*pageLength), virtualAddress + (i*pageLength), false);
