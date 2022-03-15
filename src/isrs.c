@@ -121,64 +121,38 @@ char *exceptionMessages[] = {
 	"Reserved Exception",
 	"Reserved Exception"
 };
-
-char *pagingMessages[] = {
-	"Supervisory process tried to read a non-present page entry",
-	"Supervisory process tried to read a page and caused a protection fault",
-	"Supervisory process tried to write to a non-present page entry",
-	"Supervisory process tried to write a page and caused a protection fault",
-	"User process tried to read a non-present page entry",
-	"User process tried to read a page and caused a protection fault",
-	"User process tried to write to a non-present page entry",
-	"User process tried to write a page and caused a protection fault",
-
-	"Supervisory process tried to read a non-present page entry. One or more page directory entries contain reserved bits which are set to 1",
-	"Supervisory process tried to read a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1",
-	"Supervisory process tried to write to a non-present page entry. One or more page directory entries contain reserved bits which are set to 1",
-	"Supervisory process tried to write a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1",
-	"User process tried to read a non-present page entry. One or more page directory entries contain reserved bits which are set to 1",
-	"User process tried to read a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1",
-	"User process tried to write to a non-present page entry. One or more page directory entries contain reserved bits which are set to 1",
-	"User process tried to write a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1",
-
-	"Supervisory process tried to read a non-present page entry (Instruction Fetch)",
-	"Supervisory process tried to read a page and caused a protection fault (Instruction Fetch)",
-	"Supervisory process tried to write to a non-present page entry (Instruction Fetch)",
-	"Supervisory process tried to write a page and caused a protection fault (Instruction Fetch)",
-	"User process tried to read a non-present page entry (Instruction Fetch)",
-	"User process tried to read a page and caused a protection fault (Instruction Fetch)",
-	"User process tried to write to a non-present page entry (Instruction Fetch)",
-	"User process tried to write a page and caused a protection fault (Instruction Fetch)",
-
-	"Supervisory process tried to read a non-present page entry. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)",
-	"Supervisory process tried to read a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)",
-	"Supervisory process tried to write to a non-present page entry. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)",
-	"Supervisory process tried to write a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)",
-	"User process tried to read a non-present page entry. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)",
-	"User process tried to read a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)",
-	"User process tried to write to a non-present page entry. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)",
-	"User process tried to write a page and caused a protection fault. One or more page directory entries contain reserved bits which are set to 1 (Instruction Fetch)"
-};
-
-/* All of our Exception handling Interrupt Service Routines will
-*  point to this function. This will tell us what exception has
-*  happened! Right now, we simply halt the system by hitting an
-*  endless loop. All ISRs disable interrupts while they are being
-*  serviced as a 'locking' mechanism to prevent an IRQ from
-*  happening and messing up kernel data structures */
 void fault_handler(struct regs *r) {
-	/* Is this a fault whose number is from 0 to 31? */
 	if (r->int_no < 32) {
-		/* Display the description for the Exception that occurred.
-		*  In this tutorial, we will simply halt the system using an
-		*  infinite loop */
-		printf("\n [!!!] %s - Int: %i ErrCode: 0x%08x\n\
+		printf("\n [!!!] Interrupt #%i - %s, ErrCode=0x%08x\n\
 	EDI=0x%08x ESI=0x%08x EBP=0x%08x EBX=0x%08x EDX=0x%08x ECX=0x%08x EAX=0x%08x\n\
 	EIP=0x%08x  CS=0x%08x EFLAGS=0x%08x\n", \
-	exceptionMessages[r->int_no], r->int_no, r->err_code, r->edi, r->esi, r->ebp, r->ebx, r->edx, r->ecx, r->eax, r->eip, r->cs, r->eflags);
+	r->int_no, exceptionMessages[r->int_no], r->err_code, r->edi, r->esi, r->ebp, r->ebx, r->edx, r->ecx, r->eax, r->eip, r->cs, r->eflags);
 
 		if (r->int_no == E_PAGE_FAULT) {
-			printf("    %s\n", pagingMessages[r->err_code & 0x1f]);
+			uint32 faultAddress;
+
+			asm("mov %%cr2, %0" : "=r"(faultAddress));
+
+			printf("    A %s process caused a protection fault while %s a %s page at address 0x%08lx during %s.\n", \
+				r->err_code & 1<<2 ? "user" : "kernel", \
+				r->err_code & 1<<1 ? "writing to" : "reading from", \
+				r->err_code & 1<<0 ? "present" : "non-present", \
+				faultAddress, \
+				r->err_code & 1<<4 ? "instruction fetch" : "data access");
+
+			if (r->err_code & 1<<3) {
+				printf("	One or more reserved bits were set to 1.\n");
+			}
+			if (r->err_code & 1<<5) {
+				printf("	A protection-key violation occurred.\n");
+			}
+			if (r->err_code & 1<<6) {
+				printf("	A shadow-stack access fault occurred.\n");
+			}
+			if (r->err_code & 1<<15) {
+				printf("	An SGX violation occurred.\n");
+			}
+
 		}
 
 		halt();
