@@ -2,6 +2,7 @@ out/*
 isodir/*
 serial.log
 OS.sublime*
+.vscode
 Toolchain/*
 !Toolchain/build.sh
 !Toolchain/Patches
