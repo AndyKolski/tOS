@@ -91,7 +91,8 @@ out/$(NAME).iso: isodir/boot/$(NAME).bin isodir/boot/grub/grub.cfg
 run: out/$(NAME).iso
 	$(QEMU) $(QEMUARGS)
 
-debug: out/$(NAME).iso
+startdebugvm: out/$(NAME).iso
 	x-terminal-emulator -e "$(QEMU) $(QEMUDEBUG) $(QEMUARGS)"
-	gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234" 
 
+debug: startdebugvm
+	gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234"
