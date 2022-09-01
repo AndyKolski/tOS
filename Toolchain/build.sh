@@ -34,7 +34,7 @@ echo
 
 mkdir -p "$DIR/Tarballs"
 
-pushd "$DIR/Tarballs"
+pushd "$DIR/Tarballs" > /dev/null
 
 	printf "Checking if we need to download Binutils... "
 	md5=""
@@ -81,7 +81,7 @@ pushd "$DIR/Tarballs"
 		patch -u -d $DIR/Tarballs/$GCC_NAME/gcc/ < $DIR/Patches/libgcc_no_redzone.patch
 	fi
 
-popd
+popd > /dev/null
 
 
 rm -rf "$DIR/Build"
@@ -94,27 +94,41 @@ mkdir -p "$PREFIX"
 export CFLAGS="-g0 -O2 -mtune=native"
 export CXXFLAGS="-g0 -O2 -mtune=native"
 
-pushd "$DIR/Build/Binutils"
+pushd "$DIR/Build/Binutils" > /dev/null
 	echo "Configuring Binutils..."
-	../../Tarballs/${BINUTILS_NAME}/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror > >(sed 's/^/[binutils conf]: /')
+
+	../../Tarballs/${BINUTILS_NAME}/configure \
+	--target="$TARGET" \
+	--prefix="$PREFIX" \
+	--with-sysroot \
+	--disable-nls \
+	--disable-werror \
+	> >(sed 's/^/[binutils conf]: /')
 
 	echo "Building Binutils..."
 	make -j $MAKEJOBS > >(sed 's/^/[binutils build]: /')
 	make install > >(sed 's/^/[binutils install]: /')
-popd
+popd > /dev/null
 
 PATH="$PREFIX/bin:$PATH"
 
-pushd "$DIR/Build/gcc"
+pushd "$DIR/Build/gcc" > /dev/null
 	echo "Configuring GCC..."
-	../../Tarballs/${GCC_NAME}/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers > >(sed 's/^/[gcc conf]: /')
+
+	../../Tarballs/${GCC_NAME}/configure \
+	--target=$TARGET \
+	--prefix="$PREFIX" \
+	--disable-nls \
+	--enable-languages=c,c++ \
+	--without-headers \
+	> >(sed 's/^/[gcc conf]: /')
 	
 	echo "Building GCC..."
 	make all-gcc -j $MAKEJOBS  > >(sed 's/^/[gcc build]: /')
 	make all-target-libgcc -j $MAKEJOBS > >(sed 's/^/[libgcc build]: /')
 	make install-gcc > >(sed 's/^/[gcc install]: /')
 	make install-target-libgcc > >(sed 's/^/[libgcc install]: /')
-popd
+popd > /dev/null
 
 echo "Done. Toolchain should be functional"
 echo "You can delete the Build and Tarballs folders to free up space"
