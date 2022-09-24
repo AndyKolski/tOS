@@ -54,8 +54,8 @@ char *strcpy(char *dest, const char* src) {
 	return ret;
 }
 
-size_t strlen(const kchar *s) {
+size_t strlen(const char *s) {
 	const char *p = s;
 	while (*s) ++s;
-	return (uint32) (s - p);
+	return (size_t) (s - p);
 }

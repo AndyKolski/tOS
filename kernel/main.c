@@ -26,7 +26,7 @@ int kmain(unsigned long bootloaderMagic, multiboot_info_t* multibootInfo) {
 	
 	printf("Booted by \"%s\" FB type: %i cmdline: \"%s\" magic: 0x%lx\n", (char*)multibootInfo->boot_loader_name+KERNEL_OFFSET, multibootInfo->framebuffer_type, (char*)multibootInfo->cmdline+KERNEL_OFFSET, bootloaderMagic);
 
-	printf("t/OS test build " GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " CC_VERSION  " \n");
+	printf(__ARCH " t/OS test build " __GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " __CC_VERSION  "\n");
 
 	if (bootloaderMagic != MULTIBOOT_BOOTLOADER_MAGIC) {
 		printf("Warning: Bootloader magic value is 0x%lx instead of the expected value: 0x%x\n", bootloaderMagic, MULTIBOOT_BOOTLOADER_MAGIC);

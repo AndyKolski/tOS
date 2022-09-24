@@ -1,4 +1,3 @@
-#include <system.h>
 #include <stddef.h>
 
 #pragma once
@@ -15,4 +14,4 @@ int strncmp(const char* s1, const char* s2, size_t n);
 
 char *strcpy(char *restrict dest, const char *restrict src);
 
-size_t strlen(const kchar *s);
+size_t strlen(const char *s);

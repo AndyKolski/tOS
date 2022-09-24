@@ -8,11 +8,11 @@ SECTIONS {
 
 	.multiboot ALIGN (4) :
 	{
-		out/obj/multiboot.o(.multiboot)
+		out/obj/kernel/multiboot.o(.multiboot)
 	}
 
 	.bootstrap.text ALIGN(4K) : {
-		out/obj/bootstrap.o(.bootstrap.text)
+		out/obj/kernel/bootstrap.o(.bootstrap.text)
 	}
 
 	. += 0xC0000000;

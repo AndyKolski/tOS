@@ -1,5 +1,3 @@
-#include <system.h>
-
 #pragma once
 
 kchar putchar(kchar chr);

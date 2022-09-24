@@ -1,5 +1,5 @@
+#include <stdbool.h>
 #include <ctype.h>
-#include <system.h>
 
 char toLower(char c) {
 	if (isUpper(c)) {
