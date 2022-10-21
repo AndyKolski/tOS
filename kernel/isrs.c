@@ -123,17 +123,27 @@ char *exceptionMessages[] = {
 };
 void fault_handler(struct regs *r) {
 	if (r->int_no < 32) {
-		printf("\n [!!!] Interrupt #%i - %s, ErrCode=0x%08x\n\
-	EDI=0x%08x ESI=0x%08x EBP=0x%08x EBX=0x%08x EDX=0x%08x ECX=0x%08x EAX=0x%08x\n\
-	EIP=0x%08x  CS=0x%08x EFLAGS=0x%08x\n", \
-	r->int_no, exceptionMessages[r->int_no], r->err_code, r->edi, r->esi, r->ebp, r->ebx, r->edx, r->ecx, r->eax, r->eip, r->cs, r->eflags);
+		printf("\n [!!!] Unhandled %s (#%i) - Error code: 0x%08x\n\
+Register states:\n\
+ EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x\n\
+  CS=0x%08x  DS=0x%08x  SS=0x%08x  ES=0x%08x FS=0x%08x GS=0x%08x\n\
+ ESI=0x%08x EDI=0x%08x\n\
+ EBP=0x%08x ESP=0x%08x EIP=0x%08x  EFLAGS=0x%08x\n\
+Extra info:\n",
+
+	exceptionMessages[r->int_no], r->int_no, r->err_code,
+
+	r->eax, r->ebx, r->ecx, r->edx,
+	r->cs, r->ds, r->ss, r->es, r->fs, r->gs,
+	r->esi, r->edi,
+	r->ebp, r->esp, r->eip, r->eflags);
 
 		if (r->int_no == E_PAGE_FAULT) {
 			uint32 faultAddress;
 
 			asm("mov %%cr2, %0" : "=r"(faultAddress));
 
-			printf("    A %s process caused a protection fault while %s a %s page at address 0x%08lx during %s.\n", \
+			printf(" A %s process caused a protection fault while %s a %s page at address 0x%08lx during %s.\n", \
 				r->err_code & 1<<2 ? "user" : "kernel", \
 				r->err_code & 1<<1 ? "writing to" : "reading from", \
 				r->err_code & 1<<0 ? "present" : "non-present", \
@@ -155,6 +165,7 @@ void fault_handler(struct regs *r) {
 
 		}
 
+		printf("\n [!!!] System halted.");
 		halt();
 	}
 
