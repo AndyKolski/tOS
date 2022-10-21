@@ -1,22 +1,20 @@
 #!/usr/bin/env bash
 
-
 set -eo pipefail
-
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TARGET=i386-elf
 export PREFIX="$DIR/$TARGET-cross"
 
+MAKE="make"
+MD5SUM="md5sum"
+MAKEJOBS=$(nproc)
 
 echo DIR is "$DIR"
 echo TARGET is "$TARGET"
 echo PREFIX is "$PREFIX"
+echo MAKEJOBS is "$MAKEJOBS"
 
-MAKE="make"
-MD5SUM="md5sum"
-
-MAKEJOBS=$(nproc)
 
 BINUTILS_VERSION="2.37"
 BINUTILS_MD5SUM="1e55743d73c100b7a0d67ffb32398cdb"
@@ -30,6 +28,7 @@ GCC_NAME="gcc-$GCC_VERSION"
 GCC_PKG="${GCC_NAME}.tar.gz"
 GCC_BASE_URL="http://ftp.gnu.org/gnu/gcc"
 
+
 echo
 
 mkdir -p "$DIR/Tarballs"
@@ -42,14 +41,14 @@ pushd "$DIR/Tarballs" > /dev/null
 		md5="$($MD5SUM $BINUTILS_PKG | cut -f1 -d' ')"
 	fi
 	if [ "$md5" != ${BINUTILS_MD5SUM} ] ; then
-		echo "We do need to. Downloading Binutils..."
+		echo "We do need to."
 		rm -f $BINUTILS_PKG
+		echo "Downloading Binutils..."
 		curl -LO "$BINUTILS_BASE_URL/$BINUTILS_PKG"
+		echo
 	else
-		echo "We do not need to download Binutils"
+		echo "We do not."
 	fi
-
-	echo
 
 	printf "Checking if we need to download GCC... "
 	md5=""
@@ -57,14 +56,17 @@ pushd "$DIR/Tarballs" > /dev/null
 		md5="$($MD5SUM $GCC_PKG | cut -f1 -d' ')"
 	fi
 	if [ "$md5" != ${GCC_MD5SUM} ] ; then
-		echo "We do need to. Downloading GCC..."
+		echo "We do need to."
 		rm -f $GCC_PKG
+		echo "Downloading GCC..."
 		curl -LO "$GCC_BASE_URL/$GCC_NAME/$GCC_PKG"
 	else
-		echo "We do not need to download GCC"
+		echo "We do not."
 	fi
 
 	echo
+
+	echo "Cleaning up any old source directories..."
 
 	rm -rf ${GCC_NAME} ${BINUTILS_NAME}
 
@@ -80,7 +82,7 @@ pushd "$DIR/Tarballs" > /dev/null
 
 		patch -u -d $DIR/Tarballs/$GCC_NAME/gcc/ < $DIR/Patches/libgcc_no_redzone.patch
 	fi
-
+	echo
 popd > /dev/null
 
 
@@ -131,4 +133,4 @@ pushd "$DIR/Build/gcc" > /dev/null
 popd > /dev/null
 
 echo "Done. Toolchain should be functional"
-echo "You can delete the Build and Tarballs folders to free up space"
+echo "You can optionally delete the Build and Tarballs folders to free up space"
