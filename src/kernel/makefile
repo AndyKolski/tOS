@@ -1,4 +1,4 @@
-include kernel/arch/$(ARCH)/makefile
+include src/kernel/arch/$(ARCH)/makefile
 KERNEL_OBJS := \
 $(KERNEL_ARCH_OBJS)\
 keyboard.o\

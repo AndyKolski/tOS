@@ -3,8 +3,8 @@ ARCH := i386
 
 OSDIR := $(shell pwd)
 
-include kernel/makefile # for KERNEL_OBJS
-include lib/makefile # for LIB_OBJS
+include src/kernel/makefile # for KERNEL_OBJS
+include src/lib/makefile # for LIB_OBJS
 
 ALLOBJS = $(KERNEL_OBJS) $(LIB_OBJS)
 
@@ -54,8 +54,8 @@ COPT = -g\
 override CFLAGS := -c\
 -ffreestanding\
 -fstack-protector-strong\
--I kernel\
--I lib\
+-I src/kernel\
+-I src/lib\
 -std=gnu99\
 -D__GIT_VERSION="\"$(shell git describe --dirty --always --tags)\""\
 -D__CC_VERSION="\"$(shell $(CC) --version | head -n 1)\""\
@@ -104,15 +104,15 @@ isodir/boot/grub:
 	mkdir isodir/boot/grub -p
 
 
-out/obj/kernel/%.o: kernel/%.c
+out/obj/kernel/%.o: src/kernel/%.c
 	@echo Kernel Compile: $@
 	@$(CC) -o $@ $< $(CFLAGS)
 
-out/obj/kernel/%.o: kernel/%.asm
+out/obj/kernel/%.o: src/kernel/%.asm
 	@echo Kernel Assemble: $@
 	@$(AS) -o $@ $< $(ASFLAGS) 
 
-out/obj/lib/%.o: lib/%.c
+out/obj/lib/%.o: src/lib/%.c
 	@echo Lib Compile: $@
 	@$(CC) -o $@ $< $(CFLAGS)
 
