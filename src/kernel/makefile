@@ -1,30 +1,28 @@
 include src/kernel/arch/$(ARCH)/makefile
 KERNEL_OBJS := \
 $(KERNEL_ARCH_OBJS)\
-keyboard.o\
-main.o\
-memory.o\
-mouse.o\
-paging.o\
-pcspeaker.o\
-pit.o\
-rtc.o\
-serial.o\
-system.o\
-time.o\
 display.o\
-gdt.o\
-idt.o\
+interrupts/idt.o\
+interrupts/irq_asm.o\
+interrupts/irq.o\
+interrupts/isrs_asm.o\
+interrupts/isrs.o\
+interrupts/pic.o\
 intmath.o\
 io.o\
-irq.o\
-isrs.o\
-isrs_asm.o\
-multiboot.o\
-paging_asm.o\
-bootstrap.o\
-gdt_asm.o\
-idt_asm.o\
-irq_asm.o
+keyboard.o\
+main.o\
+memory/paging_asm.o\
+memory/paging.o\
+memory/pmm.o\
+mouse.o\
+multiboot_header_asm.o\
+multibootdata.o\
+pcspeaker.o\
+serial.o\
+system.o\
+time/pit.o\
+time/rtc.o\
+time/time.o\
 
 KERNEL_OBJS := $(patsubst %.o,out/obj/kernel/%.o,$(KERNEL_OBJS))

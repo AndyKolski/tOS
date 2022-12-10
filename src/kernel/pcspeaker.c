@@ -1,7 +1,7 @@
 #include <io.h>
-#include <pit.h>
 #include <system.h>
-#include <time.h>
+#include <time/pit.h>
+#include <time/time.h>
 
 
 void tone(uint32 freq) {

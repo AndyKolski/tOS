@@ -1,5 +1,5 @@
 NAME := tOS
-ARCH := i386
+ARCH := x86_64
 
 OSDIR := $(shell pwd)
 
@@ -21,15 +21,15 @@ CC := $(TOOLCHAINBIN)$(ARCH)-elf-gcc
 LD := $(TOOLCHAINBIN)$(ARCH)-elf-gcc
 
 AS := nasm
-QEMU := qemu-system-i386
+QEMU := qemu-system-$(ARCH)
 
 REQUIRED_BINS := $(AS) $(QEMU) $(LD) $(CC)
 $(foreach bin,$(REQUIRED_BINS),\
     $(if $(shell command -v $(bin) 2> /dev/null),,$(error Please install `$(bin)`. Try running the script Toolchain/build.sh)))
 
 
-override QEMUARGS := -boot d -cdrom out/$(NAME).iso -debugcon stdio -d cpu_reset,guest_errors -m 2048M -soundhw pcspk -rtc base=localtime -name $(NAME) ${QEMUARGS}#-serial file:serial.log
-QEMUDEBUG = -s -S
+override QEMUARGS := -boot d -cdrom out/$(NAME).iso -debugcon stdio -m 2048M -soundhw pcspk -rtc base=localtime -name $(NAME) ${QEMUARGS} #-serial file:serial.log #
+QEMUDEBUG = -s -S -d cpu_reset,guest_errors -no-shutdown -no-reboot
 
 
 CWARNINGFLAGS := -Wall\
@@ -53,6 +53,7 @@ COPT = -g\
 -Og
 override CFLAGS := -c\
 -ffreestanding\
+-nostdlib\
 -fstack-protector-strong\
 -I src/kernel\
 -I src/lib\
@@ -61,13 +62,15 @@ override CFLAGS := -c\
 -D__CC_VERSION="\"$(shell $(CC) --version | head -n 1)\""\
 -D__ARCH="\"$(ARCH)\""\
 -MMD\
+-mcmodel=large\
+-mno-red-zone -mno-mmx -mno-sse -mno-sse2\
 $(COPT)\
 $(CWARNINGFLAGS)\
 $(CFLAGS)
 
 # -nostdlib: don't include standard libraries -lgcc: link libgcc
-LDFLAGS = -nostdlib -lgcc
-ASFLAGS = -felf
+LDFLAGS = -nostdlib -lgcc -z max-page-size=0x1000
+ASFLAGS = -felf64
 
 
 .PHONY: all iso clean run debug dumpvars info
@@ -96,35 +99,39 @@ iso: out/$(NAME).iso
 clean:
 	rm -rf out isodir
 
-out/obj/kernel/arch/$(ARCH):
+out/obj/kernel:
 	mkdir out/obj/kernel/arch/$(ARCH) -p
+	mkdir out/obj/kernel/interrupts -p
+	mkdir out/obj/kernel/memory -p
+	mkdir out/obj/kernel/time -p
 mkdir out/obj/lib:
 	mkdir out/obj/lib -p
+	mkdir out/obj/lib/printf -p
 isodir/boot/grub:
 	mkdir isodir/boot/grub -p
 
-
-out/obj/kernel/%.o: src/kernel/%.c
-	@echo Kernel Compile: $@
-	@$(CC) -o $@ $< $(CFLAGS)
 
 out/obj/kernel/%.o: src/kernel/%.asm
 	@echo Kernel Assemble: $@
 	@$(AS) -o $@ $< $(ASFLAGS) 
 
+out/obj/kernel/%.o: src/kernel/%.c
+	@echo Kernel Compile: $@
+	@$(CC) -o $@ $< $(CFLAGS)
+
 out/obj/lib/%.o: src/lib/%.c
 	@echo Lib Compile: $@
-	@$(CC) -o $@ $< $(CFLAGS)
+	@$(CC) -o $@ $< $(CFLAGS) $(LIBCFLAGS)
 
 	
 
-out/$(NAME).bin: out/obj/kernel/arch/$(ARCH) out/obj/lib $(ALLOBJS) linker.ld
+out/$(NAME).bin: out/obj/kernel out/obj/lib $(ALLOBJS) linker.ld
 	@echo Linking: $@
 	@$(LD) $(ALLOBJS) -T linker.ld $(LDFLAGS) -o $@
 
 	@if ! grub-file --is-x86-multiboot $@; then \
 		echo "The linked kernel is not multiboot compliant! The make process cannot proceed until this is fixed"; \
-		rm $@; \
+		# rm $@; \
 		false; \
 	else \
 		echo "The linked kernel is multiboot compliant"; \
@@ -145,7 +152,9 @@ run: out/$(NAME).iso
 	$(QEMU) $(QEMUARGS)
 
 startdebugvm: out/$(NAME).iso
+	killall $(QEMU) || true
 	x-terminal-emulator -e "$(QEMU) $(QEMUDEBUG) $(QEMUARGS)"
 
+
 debug: startdebugvm
-	gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234"
+	sudo gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234"

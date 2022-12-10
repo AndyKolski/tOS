@@ -2,7 +2,7 @@
 
 #pragma once
 
-void isrs_install();
+void initISRs();
 
 
 #define E_DIVISION_BY_ZERO 0

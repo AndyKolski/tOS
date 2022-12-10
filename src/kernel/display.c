@@ -6,7 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <system.h>
-#include <paging.h>
+#include <intmath.h>
+#include <multibootdata.h>
 
  // TODO: The VESA framebuffer needs to be double-buffered, and it needs a 
  // cursor, among other fixes.
@@ -14,19 +15,22 @@
  // TODO: Lots of this code is old, badly written, and generally not great. I
  // should rewrite a good portion of it at some point.
 
-uint32 *ptr; // pointer to the graphical framebuffer
-uint16 *basicPtr; // pointer to the text console
+uint32 *graphicFB; // pointer to the graphical framebuffer
+uint16 *BIOSFB; // pointer to the BIOS text console framebuffer
 
 uint32 framebuffer_width = 0; // framebuffer width, in pixels
 uint32 framebuffer_height = 0; // framebuffer height, in pixels
-uint8 framebuffer_Bpp = 0; // the number of bytes per pixel
+uint8 framebuffer_depth = 0; // the number of bytes per pixel
 uint32 framebuffer_pitch = 0; // the number of bytes between one pixel and the one directly below it
+
+uint8 framebuffer_depth_doublewords = 0; // the number of doublewords per pixel
+uint32 framebuffer_pitch_doublewords = 0; // the number of doublewords between one pixel and the one directly below it
 
 uint32 terminalWidth = 0; // the width of the terminal, in characters
 uint32 terminalHeight = 0; // the height of the terminal, in characters
 
-uint32 cursorx = 0; // the horizontal position of the cursor on the terminal, in characters
-uint32 cursory = 0; // the vertical position of the cursor on the terminal, in characters
+uint32 cursorX = 0; // the horizontal position of the cursor on the terminal, in characters
+uint32 cursorY = 0; // the vertical position of the cursor on the terminal, in characters
 
 bool FBScreen = false; // is the display graphical or a text console
 
@@ -35,39 +39,294 @@ bool isDisplayInitialized = false;
 color_t textColor = GColWHITE;
 color_t backgroundColor = GColBLACK;
 
-void install_display(uint64 fb_addr, uint32 fb_width, uint32 fb_height, uint8 fb_bpp, uint32 fb_pitch, bool useLegacy) {
-	FBScreen = !useLegacy;
-	if (FBScreen) {
-		ptr = (uint32*)(uint32)fb_addr;
+void initDisplay() {
+
+	displayData_t displayData = *getDisplayData();
+
+	FBScreen = displayData.isGraphicalFramebuffer;
+
+	if (FBScreen) { // We have a graphical framebuffer
+		graphicFB = displayData.framebufferVirtAddress;
 		
-		framebuffer_width = fb_width;
-		framebuffer_height = fb_height;
-		framebuffer_Bpp = fb_bpp/8;
-		framebuffer_pitch = fb_pitch/4;
+		framebuffer_width = displayData.width;
+		framebuffer_height = displayData.height;
+		framebuffer_depth = displayData.depth;
+		framebuffer_pitch = displayData.pitch;
+
+		framebuffer_depth_doublewords = framebuffer_depth / 4;
+		framebuffer_pitch_doublewords = framebuffer_pitch / 4;
 
 		terminalWidth = framebuffer_width/(fontWidth+1);
 		terminalHeight = framebuffer_height/(fontHeight+1);
 
-		mapRegion(PRESENT|WRITABLE|WRITETHROUGHCACHE|FOURMIBPAGE, ptr, ptr, framebuffer_width*framebuffer_height*framebuffer_Bpp);
-
+		clearScreen();
 		isDisplayInitialized = true;
-		fillScreen(backgroundColor);
-		printf("Created console with size %lux%lu (%lupx x %lupx @ %ibpp) at 0x%lx (%lu KiB)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, fb_bpp, (uint32)fb_addr, (framebuffer_width*framebuffer_height*framebuffer_Bpp)/KiB);
-	} else {
-		basicPtr = (uint16*) 0xC00b8000;
-		terminalWidth = 80;
-		terminalHeight = 25;
+		printf("Created console with size %u x %u (%u px x %u px @ %i bpp) at 0x%x (virt 0x%p) (%lu %s)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, displayData.depth * 8, displayData.framebufferPhysAddress, graphicFB, numBytesToHuman(displayData.framebufferSize), numBytesToUnit(displayData.framebufferSize));
+	} else { // We have a BIOS text console
+		BIOSFB = displayData.framebufferVirtAddress;
+		terminalWidth = displayData.width;
+		terminalHeight = displayData.height;
 		for (uint8 y = 0; y < 25; y++) {
 			for (uint8 x = 0; x < 80; x++) {
-				basicPtr[y * 80 + x] = ' ' | (15 | 0 << 4) << 8;
+				BIOSFB[y * 80 + x] = ' ' | (15 | 0 << 4) << 8;
 			}
 		}
 		isDisplayInitialized = true;
-		printf("Created console with size %lux%lu (--px x --px @ --bpp)\n", terminalWidth, terminalHeight);
-	}}
+		printf("Created console with size %ux%u\n", terminalWidth, terminalHeight);
+	}
+}
 
-color_t colorFromRGB(uint8 r, uint8 g, uint8 b) {
-	return (color_t)(b|(g<<8)|(r<<16));
+/// @brief Sets the pixel at the specified position to the specified color. This function does not check if the pixel is within the bounds of the framebuffer.
+/// @param xPosition The horizontal position of the pixel to set, in pixels.
+/// @param yPosition The vertical position of the pixel to set, in pixels.
+/// @param color The color to set the pixel to.
+inline void setPixel_UNSAFE(uint32 xPosition, uint32 yPosition, color_t color) {
+	graphicFB[xPosition + yPosition * framebuffer_pitch_doublewords] = color;
+}
+
+/// @brief Sets the pixel at the specified position to the specified color. This function checks if the pixel is within the bounds of the framebuffer.
+/// @param xPosition The horizontal position of the pixel to set, in pixels.
+/// @param yPosition The vertical position of the pixel to set, in pixels.
+/// @param color The color to set the pixel to.
+inline void setPixel(uint32 xPosition, uint32 yPosition, color_t color) {
+	if (!isDisplayInitialized) {
+		return;
+	}
+
+	if (xPosition >= framebuffer_width || yPosition >= framebuffer_height) {
+		return;
+	}
+
+	setPixel_UNSAFE(xPosition, yPosition, color);
+}
+
+/// @brief Fills in a rectangle of the specified size at the specified position with the specified color. This function does not check if the rectangle is within the bounds of the framebuffer.
+/// @param xPosition The horizontal position of the top-left corner of the rectangle to fill, in pixels.
+/// @param yPosition The vertical position of the top-left corner of the rectangle to fill, in pixels.
+/// @param width The width of the rectangle to fill, in pixels.
+/// @param height The height of the rectangle to fill, in pixels.
+/// @param color The color to fill the rectangle with.
+void fillRect_UNSAFE(uint32 xPosition, uint32 yPosition, uint32 width, uint32 height, color_t color) {
+	uint32 verticalOffset = 0;
+	for (uint32 loopYPosition = yPosition; loopYPosition < yPosition + height; loopYPosition++) {
+		for (uint32 loopXPosition = xPosition; loopXPosition < xPosition + width; loopXPosition++) {
+			graphicFB[verticalOffset + loopXPosition] = color;
+		}
+		verticalOffset += framebuffer_pitch_doublewords;
+	}
+}
+
+/// @brief Fills in a rectangle of the specified size at the specified position with the specified color. This function checks if the rectangle is within the bounds of the framebuffer.
+/// @param xPosition The horizontal position of the top-left corner of the rectangle to fill, in pixels.
+/// @param yPosition The vertical position of the top-left corner of the rectangle to fill, in pixels.
+/// @param width The width of the rectangle to fill, in pixels.
+/// @param height The height of the rectangle to fill, in pixels.
+/// @param color The color to fill the rectangle with.
+void fillRect(uint32 xPosition, uint32 yPosition, uint32 width, uint32 height, color_t color) {
+	if (!isDisplayInitialized) {
+		return;
+	}
+
+	if (xPosition >= framebuffer_width || yPosition >= framebuffer_height) {
+		return;
+	}
+
+	if (xPosition + width >= framebuffer_width) {
+		width = framebuffer_width - xPosition;
+	}
+
+	if (yPosition + height >= framebuffer_height) {
+		height = framebuffer_height - yPosition;
+	}
+	
+	fillRect_UNSAFE(xPosition, yPosition, width, height, color);
+}
+
+/// @brief Fills the entire screen with the specified color.
+/// @param color The color to fill the screen with.
+void fillScreen(color_t color) {
+	fillRect_UNSAFE(0, 0, framebuffer_width, framebuffer_height, color);
+}
+
+void clearScreen() {
+	fillScreen(backgroundColor);
+	setCursorPosition(0, 0);
+}
+
+/// @brief Place a character on the screen at the specified position.
+/// @param character The character to place on the screen.
+/// @param xPosition The horizontal position of the character to place, in pixels.
+/// @param yPosition The vertical position of the character to place, in pixels.
+void placeChar(char character, uint32 xPosition, uint32 yPosition) {
+	if (!isDisplayInitialized) {
+		return;
+	}
+	if (xPosition >= framebuffer_width || yPosition >= framebuffer_height) {
+		return;
+	}
+	if (xPosition + fontWidth >= framebuffer_width) {
+		return;
+	}
+	if (yPosition + fontHeight >= framebuffer_height) {
+		return;
+	}
+	color_t setColor = (color_t) character;
+	uint32 verticalOffset = yPosition * framebuffer_pitch_doublewords;
+	for (uint32 loopYPosition = yPosition; loopYPosition < fontHeight + yPosition; loopYPosition++) {
+		for (uint32 loopXPosition = xPosition; loopXPosition < fontWidth + 1u + xPosition; loopXPosition++) {
+			if (font[(uint8)character][loopYPosition-yPosition] >> (fontWidth - (loopXPosition - xPosition)) & 1) {
+				setColor = textColor;
+			} else {
+				setColor = backgroundColor;
+			}
+			graphicFB[verticalOffset + loopXPosition] = setColor;
+		}
+		verticalOffset += framebuffer_pitch_doublewords;
+	}
+}
+
+			
+
+
+void cursorMoved() {
+	if (!isDisplayInitialized) {
+		return;
+	}
+	if (FBScreen) {
+		// There isn't a cursor on the framebuffer screen yet
+	} else {
+		uint16 pos = cursorY * terminalWidth + cursorX;
+		outb(0x3D4, 0x0F);
+		outb(0x3D5, (uint8) (pos & 0xFF));
+		outb(0x3D4, 0x0E);
+		outb(0x3D5, (uint8) ((pos >> 8) & 0xFF));
+	}
+}
+
+void setColors(color_t text, color_t background) {
+	textColor = text;
+	backgroundColor = background;
+}
+void setCursorPosition(uint32 xPosition, uint32 yPosition) {
+	cursorX = xPosition;
+	cursorY = yPosition;
+	cursorMoved();
+}
+
+uint32 getScreenWidth() {
+	return framebuffer_width;
+}
+uint32 getScreenHeight() {
+	return framebuffer_height;
+}
+uint32 getTerminalWidth() {
+	return framebuffer_width/fontWidth;
+}
+uint32 getTerminalHeight() {
+	return framebuffer_height/fontHeight;
+}
+
+
+
+
+void scrollBIOS() {
+	if (!isDisplayInitialized) {
+		return;
+	}
+	for (uint32 i = 0; i < terminalHeight; ++i) {
+		memcpy((uint8*)&BIOSFB[i * terminalWidth], (uint8*)&BIOSFB[(i+1) * terminalWidth], terminalWidth*2);
+	}
+	cursorY--;
+	return;
+}
+
+void scrollTerminal() {
+	if (!isDisplayInitialized) {
+		return;
+	}
+	for (uint32 i = 0; i < framebuffer_height/fontHeight; ++i) {
+		memcpy((uint8*)(graphicFB+i*framebuffer_pitch*fontHeight), (uint8*)(graphicFB+(i+1)*framebuffer_pitch*fontHeight), framebuffer_pitch*fontHeight*framebuffer_depth_doublewords);
+	}
+	fillRect(0, framebuffer_height-fontHeight, framebuffer_width, fontHeight, backgroundColor);
+	cursorY--;
+	return;
+}
+
+void terminalPrintChar(char character) {
+	if (!isDisplayInitialized) {
+		return;
+	}
+	if (FBScreen) {
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wtype-limits"
+		if (character > 128 || character == 0) { // char is a char for now, so this line causes a GCC warning
+			return;
+		}
+		#pragma GCC diagnostic pop
+		if (character == '\n') {
+			cursorX = 0;
+			cursorY++;
+			if (cursorY >= terminalHeight) {
+				scrollTerminal();
+			}
+			return;
+		}
+		placeChar(character, cursorX*(fontWidth+1)+1, cursorY*(fontHeight+1)+1);
+		if (cursorX+1 < terminalWidth) {
+			cursorX++;
+		} else {
+			cursorX = 0;
+			cursorY++;
+		}
+		if (cursorY >= terminalHeight) {
+			scrollTerminal();
+		}
+	} else {
+		if (character == '\n') {
+			cursorX = 0;
+			cursorY++;
+			if (cursorY >= terminalHeight) {
+				scrollBIOS();
+			}
+			cursorMoved();
+			return;
+		}
+		BIOSFB[cursorY * terminalWidth + cursorX] = character | (15 | 0 << 4) << 8;
+		if (cursorX+1 < terminalWidth) {
+			cursorX++;
+		} else {
+			cursorX = 0;
+			cursorY++;
+		}
+		if (cursorY >= terminalHeight) {
+			scrollBIOS();
+		}
+	}
+	cursorMoved();
+}
+
+void terminalBackspace() {
+	if (!isDisplayInitialized) {
+		return;
+	}
+	if (FBScreen) {
+		if (cursorX > 0) {
+			cursorX--;
+		} else if(cursorY > 0) {
+			cursorX = terminalWidth-1;
+			cursorY--;
+		}
+		fillRect(cursorX*(fontWidth+1)+1, cursorY*(fontHeight+1)+1, fontWidth+1, fontHeight, backgroundColor); 
+	} else {
+		if (cursorX > 0) {
+			cursorX--;
+		} else if(cursorY > 0) {
+			cursorX = terminalWidth-1;
+			cursorY--;
+		}
+		BIOSFB[cursorY * terminalWidth + cursorX] = ' ' | (15 | 0 << 4) << 8;
+	}
+	cursorMoved();
 }
 
 color_t _colorFromHSV(uint8 h, uint8 s, uint8 v) {
@@ -128,215 +387,4 @@ color_t _colorFromHSV(uint8 h, uint8 s, uint8 v) {
 	            break;
 	    }
 	    return colorFromRGB(r, g, b);
-}
-
-inline void setPixel(uint32 x, uint32 y, color_t c) {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	uint32 p;
-	if (framebuffer_Bpp == 4 && framebuffer_pitch == framebuffer_width) { // slight optimization for most likely configuration
-		p = x + y * framebuffer_pitch;
-	} else {
-		p = x * (framebuffer_Bpp/4) + y * framebuffer_pitch;	
-	}
-	ptr[p] = c;
-	// ptr[p+0] = c | c >> 8 | c >> 16;  // kept in case needed later
-	// ptr[p+1] = c >> 8;
-	// ptr[p+2] = c >> 16;
-	return;
-}
-
-void fillRect(uint32 x, uint32 y, uint32 w, uint32 h, color_t c) {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	uint32 s = 0;
-	for (uint32 fy = y; fy < h+y; ++fy) {
-		uint32 offset = fy * framebuffer_pitch;
-		for (uint32 fx = x; fx < w+x; ++fx) {
-			s = fx*(framebuffer_Bpp/4) + offset;
-			ptr[s] = c;
-		}
-		offset += framebuffer_pitch;
-	}
-	return;
-}
-
-void fillScreen(color_t c) {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	fillRect(0, 0, framebuffer_width, framebuffer_height, c);
-}
-
-void clearScreen() {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	cursorx = 0; 
-	cursory = 0; 
-	fillScreen(GColBLACK);
-	cursor_pos_updated();
-}
-
- // TODO: Better optimize this function. It works, but could be made much more
- // efficient.
-
-void badPlaceChar(kchar ltr, uint32 x, uint32 y, color_t c) {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	for (uint8 py = 0; py < fontHeight; ++py) {
-		for (uint8 px = 0; px < fontWidth+1; ++px) {
-			if (font[(uint8)ltr][py]>>(fontWidth-px)&1) {
-				setPixel(x+px, y+py, c);
-			} else {
-				setPixel(x+px, y+py, backgroundColor);
-			}
-		}
-	}
-}
-
-void gSetCsrColor(color_t text, color_t background) {
-	textColor = text;
-	backgroundColor = background;
-}
-
-void gsetCsr(uint32 x, uint32 y) {
-	cursorx = x;
-	cursory = y;
-	cursor_pos_updated();
-}
-
-void cursor_pos_updated() {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	if (FBScreen) {
-		// There isn't a cursor on the framebuffer screen yet
-	} else {
-		uint16_t pos = cursory * terminalWidth + cursorx;
-		outb(0x3D4, 0x0F);
-		outb(0x3D5, (uint8) (pos & 0xFF));
-		outb(0x3D4, 0x0E);
-		outb(0x3D5, (uint8) ((pos >> 8) & 0xFF));
-	}
-}
-
-uint32 getStrWidth(kchar *str) {
-	return strlen(str) * (fontWidth+1);
-}
-
-uint32 getScreenWidth() {
-	return framebuffer_width;
-}
-uint32 getScreenHeight() {
-	return framebuffer_height;
-}
-uint32 getTerminalWidth() {
-	return framebuffer_width/fontWidth;
-}
-uint32 getTerminalHeight() {
-	return framebuffer_height/fontHeight;
-}
-
-void legacyScrollTerminal() {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	for (uint32 i = 0; i < terminalHeight; ++i) {
-		memcpy((uint8*)&basicPtr[i * terminalWidth], (uint8*)&basicPtr[(i+1) * terminalWidth], terminalWidth*2);
-	}
-	cursory--;
-	return;
-}
-
-void scrollTerminal() {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	for (uint32 i = 0; i < framebuffer_height/fontHeight; ++i) {
-		memcpy((uint8*)(ptr+i*framebuffer_pitch*fontHeight), (uint8*)(ptr+(i+1)*framebuffer_pitch*fontHeight), framebuffer_pitch*fontHeight*framebuffer_Bpp);
-	}
-	fillRect(0, framebuffer_height-fontHeight, framebuffer_width, fontHeight, backgroundColor);
-	cursory--;
-	return;
-}
-
-void terminalPrintChar(kchar chr) {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	if (FBScreen) {
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wtype-limits"
-		if (chr > 128 || chr == 0) { // kchar is a char for now, so this line causes a GCC warning
-			return;
-		}
-		#pragma GCC diagnostic pop
-		if (chr == '\n') {
-			cursorx = 0;
-			cursory++;
-			if (cursory >= terminalHeight) {
-				scrollTerminal();
-			}
-			return;
-		}
-		badPlaceChar(chr, cursorx*(fontWidth+1)+1, cursory*(fontHeight+1)+1, textColor);
-		if (cursorx+1 < terminalWidth) {
-			cursorx++;
-		} else {
-			cursorx = 0;
-			cursory++;
-		}
-		if (cursory >= terminalHeight) {
-			scrollTerminal();
-		}
-	} else {
-		if (chr == '\n') {
-			cursorx = 0;
-			cursory++;
-			if (cursory >= terminalHeight) {
-				legacyScrollTerminal();
-			}
-			cursor_pos_updated();
-			return;
-		}
-		basicPtr[cursory * terminalWidth + cursorx] = chr | (15 | 0 << 4) << 8;
-		if (cursorx+1 < terminalWidth) {
-			cursorx++;
-		} else {
-			cursorx = 0;
-			cursory++;
-		}
-		if (cursory >= terminalHeight) {
-			legacyScrollTerminal();
-		}
-	}
-	cursor_pos_updated();
-}
-
-void terminalBackspace() {
-	if (!isDisplayInitialized) {
-		return;
-	}
-	if (FBScreen) {
-		if (cursorx > 0) {
-			cursorx--;
-		} else if(cursory > 0) {
-			cursorx = terminalWidth-1;
-			cursory--;
-		}
-		fillRect(cursorx*(fontWidth+1)+1, cursory*(fontHeight+1)+1, fontWidth+1, fontHeight, backgroundColor); 
-	} else {
-		if (cursorx > 0) {
-			cursorx--;
-		} else if(cursory > 0) {
-			cursorx = terminalWidth-1;
-			cursory--;
-		}
-		basicPtr[cursory * terminalWidth + cursorx] = ' ' | (15 | 0 << 4) << 8;
-	}
-	cursor_pos_updated();
 }

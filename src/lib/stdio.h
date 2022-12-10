@@ -1,7 +1,8 @@
 #pragma once
 
-kchar putchar(kchar chr);
+#include <printf/printf.h>
 
-void puts(kchar *text);
 
-__attribute__ ((format (printf, 1, 2))) int printf (const char* format, ...);
+char putchar(char chr);
+
+void puts(char *text);

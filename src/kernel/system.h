@@ -13,12 +13,13 @@ typedef int16_t			int16;
 typedef int32_t			int32;
 typedef int64_t			int64;
 
- // TODO: At some point it would be good to transition to using uint32 for 
- // chars, to allow for easier Unicode support in the future.
+extern void* _gdt_kernel_code_segment;
+#define gdt_kernel_code_segment (uint64)&_gdt_kernel_code_segment
+extern void* _gdt_kernel_data_segment;
+#define gdt_kernel_data_segment (uint64)&_gdt_kernel_data_segment
 
-typedef char kchar;
-
-#define KERNEL_OFFSET 0xC0000000
+extern void* __OFFSET;
+#define KERNEL_OFFSET (uintptr_t)&__OFFSET
 
 #define XOR(A, B) (((A) || (B)) && !((A) && (B)))
 
@@ -28,12 +29,16 @@ typedef char kchar;
 
 /* This defines what the stack looks like after an ISR was running */
 struct regs {
-	unsigned int gs, fs, es, ds;      /* pushed the segs last */
-	unsigned int edi, esi, ebp, esp, ebx, edx, ecx, eax;  /* pushed by 'pusha' */
-	unsigned int int_no, err_code;    /* our 'push byte #' and ecodes do this */
-	unsigned int eip, cs, eflags, useresp, ss;   /* pushed by the processor automatically */ 
+	uint64 rax, rbx, rcx, rdx, rsi, rdi, rbp, r8, r9, r10, r11, r12, r13, r14, r15;
+
+	uint64 int_no, err_code;
+
+	uint64 rip, cs, rflags, rsp, ss;
 };
 
+
+void sti();
+void cli();
 
 void halt();
 
@@ -41,8 +46,8 @@ void reboot();
 
 #define C_ASSERT(e) typedef char __C_ASSERT__[(e)?1:-1]
 
-void _assert(kchar *file, uint32 line, const kchar *func, kchar *msg, bool conf);
-void  _panic(kchar *file, uint32 line, const kchar *func, kchar *msg);
+void _assert(char *file, uint32 line, const char *func, char *msg, bool conf);
+void  _panic(char *file, uint32 line, const char *func, char *msg);
 
 #define assert(conf, msg) _assert(__FILE__, __LINE__, __func__, msg, conf)
 #define assertf(msg)      _assert(__FILE__, __LINE__, __func__, msg, false)

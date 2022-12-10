@@ -2,4 +2,4 @@
 
 #pragma once
 
-int kmain(unsigned long magic, unsigned long addr);
+int kmain(uint32 bootloaderMagic, uint32 multibootInfoPtr);

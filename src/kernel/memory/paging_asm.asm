@@ -1,7 +1,7 @@
-[BITS 32]
+[BITS 64]
 
 global invalidateDirectory
 invalidateDirectory:
-	mov eax, cr3
-	mov cr3, eax
+	mov rax, cr3
+	mov cr3, rax
 	ret

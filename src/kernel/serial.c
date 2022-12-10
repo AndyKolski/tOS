@@ -1,6 +1,6 @@
 #include <display.h>
 #include <io.h>
-#include <irq.h>
+#include <interrupts/irq.h>
 #include <keyboard.h>
 #include <stdio.h>
 #include <string.h>
@@ -102,7 +102,7 @@ void serial_handler(struct regs *r __attribute__((__unused__))) {
 				} else if (status == 2) { // Data received
 					uint8 read = inb(port + 0);
 					if (i+1 == usePort) {
-						keyboardKeyPress((kchar)read);
+						keyboardKeyPress((char)read);
 					}
 					// printf("Serial in: %c\n", read);
 				} else if (status == 3) { // Error
@@ -123,7 +123,7 @@ void serial_handler(struct regs *r __attribute__((__unused__))) {
 	}
 }
 
-void init_serial() {
+void initSerial() {
 	for (int i = 0; i < 4; ++i) {
 		portsEnabled[i] = configurePort(i+1, 9600, 8, 0, 0, 0, 0); // Try to configure the port at: 9600 baud, 8 bits per char, one stop bit, and no parity
 		if (portsEnabled[i] && !usePort) {

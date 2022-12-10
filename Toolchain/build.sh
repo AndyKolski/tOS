@@ -3,7 +3,7 @@
 set -eo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TARGET=i386-elf
+TARGET=x86_64-elf
 export PREFIX="$DIR/$TARGET-cross"
 
 MAKE="make"

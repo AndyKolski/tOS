@@ -1,6 +1,6 @@
 #include <display.h>
 #include <io.h>
-#include <irq.h>
+#include <interrupts/irq.h>
 #include <keyboard.h>
 #include <stdio.h>
 #include <string.h>
@@ -236,7 +236,7 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 	}
 	return;
 }
-void mouse_install() {
+void initMouse() {
 	// centerMouseOnScreen();
 	wait_then_write(I8042_STATUS, 0xa8);
 	mouse_write(PS2MOUSE_REQUEST_SINGLE_PACKET);
@@ -257,11 +257,11 @@ void mouse_install() {
 
 		 // Set default settings.
 		mouse_write(PS2MOUSE_SET_DEFAULTS);
-		expect_ack("mouse_install set defaults");
+		expect_ack("initMouse set defaults");
 
 		// Enable.
 		mouse_write(PS2MOUSE_ENABLE_PACKET_STREAMING);
-		expect_ack("mouse_install enable");
+		expect_ack("initMouse enable");
 
 		uint8 device_id = get_device_id();
 		if (device_id != PS2MOUSE_INTELLIMOUSE_ID) {

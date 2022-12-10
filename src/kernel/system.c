@@ -2,8 +2,16 @@
 #include <stdio.h>
 #include <system.h>
 
+
+void sti() {
+	__asm__ __volatile__ ("sti"); 
+}
+void cli() {
+	__asm__ __volatile__ ("cli"); 
+}
+
 void halt() {
-	__asm__ volatile ("cli");
+	cli();
 	while (true) {
 		__asm__ volatile ("hlt");
 	}
@@ -17,19 +25,19 @@ void reboot() {
 	 halt();
 }
 
-void _assert(kchar *file, uint32 line, const kchar *func, kchar *msg, bool conf) {
+void _assert(char *file, uint32 line, const char *func, char *msg, bool conf) {
 	if (!conf) {
-		printf("\n [!!!] Assertion failed at %s:%lu in function %s - %s\n", file, line, func, msg);
+		printf("\n [!!!] Assertion failed at %s:%u in function %s - %s\n", file, line, func, msg);
 		halt();
 	}
 }
 
-void _panic(kchar *file, uint32 line, const kchar *func, kchar *msg) {
-	printf("\n [!!!] Kernel panic at %s:%lu in function %s - %s\n", file, line, func, msg);
+void _panic(char *file, uint32 line, const char *func, char *msg) {
+	printf("\n [!!!] Kernel panic at %s:%u in function %s - %s\n", file, line, func, msg);
 	halt();
 }
 
-void panicNoLineNumber(kchar *msg) {
+void panicNoLineNumber(char *msg) {
 	printf("\n [!!!] Kernel panic - %s\n", msg);
 	halt();
 }
@@ -38,3 +46,4 @@ uintptr_t __stack_chk_guard = 0x681a7261; // Random number, picked using random.
 void __stack_chk_fail(void) {
 	panicNoLineNumber("Stack smashing detected!");	
 }
+

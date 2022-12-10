@@ -1,4 +1,4 @@
-[BITS 32]
+[BITS 64]
 
 global isr0
 global isr1
@@ -33,248 +33,141 @@ global isr29
 global isr30
 global isr31
 
-;  0: Divide By Zero Exception
-isr0:
-	cli
+isr0: ; Divide By Zero Exception
 	push byte 0
 	push byte 0
 	jmp isr_common_stub
-
-;  1: Debug Exception
-isr1:
-	cli
+isr1: ; Debug Exception
 	push byte 0
 	push byte 1
 	jmp isr_common_stub
-
-;  2: NMI
-isr2:
-	cli
+isr2: ; NMI
 	push byte 0
 	push byte 2
 	jmp isr_common_stub
-
-;  3: Breakpoint
-isr3:
-	cli
+isr3: ; Breakpoint
 	push byte 0
 	push byte 3
 	jmp isr_common_stub
-
-;  4: Into Detected Breakpoint
-isr4:
-	cli
+isr4: ; Into Detected Breakpoint
 	push byte 0
 	push byte 4
 	jmp isr_common_stub
-
-;  5: Out of Bounds
-isr5:
-	cli
+isr5: ; Out of Bounds
 	push byte 0
 	push byte 5
 	jmp isr_common_stub
-
-;  6: Debug Exception
-isr6:
-	cli
+isr6: ; Debug Exception
 	push byte 0
 	push byte 6
 	jmp isr_common_stub
-
-;  7: No Coprocessor
-isr7:
-	cli
+isr7: ; No Coprocessor
 	push byte 0
 	push byte 7
 	jmp isr_common_stub
-
-;  8: Double Fault (With Error Code!)
-isr8:
-	cli
+isr8: ; Double Fault (With Error Code!)
 	push byte 8
 	jmp isr_common_stub
-
-;  9: Coprocessor Segment Overrun
-isr9:
-	cli
+isr9: ; Coprocessor Segment Overrun
 	push byte 0
 	push byte 9
 	jmp isr_common_stub
-
-;  10: Bad TSS
-isr10:
-	cli
+isr10: ; Bad TSS
 	push byte 10
 	jmp isr_common_stub
-
-;  11: Segment Not Present
-isr11:
-	cli
+isr11: ; Segment Not Present
 	push byte 11
 	jmp isr_common_stub
-
-;  12: Stack Fault
-isr12:
-	cli
+isr12: ; Stack Fault
 	push byte 12
 	jmp isr_common_stub
-
-;  13: General Protection Fault
-isr13:
-	cli
+isr13: ; General Protection Fault
 	push byte 13
 	jmp isr_common_stub
-
-;  14: Page Fault
-isr14:
-	cli
+isr14: ; Page Fault
 	push byte 14
 	jmp isr_common_stub
-
-;  15: Unknown Interupt
-isr15:
-	cli
+isr15: ; Unknown Interupt
 	push byte 0
 	push byte 15
 	jmp isr_common_stub
-
-;  16: Coprocessor Fault
-isr16:
-	cli
+isr16: ; Coprocessor Fault
 	push byte 0
 	push byte 16
 	jmp isr_common_stub
-
-;  17: Alignment Check (486+)
-isr17:
-	cli
+isr17: ; Alignment Check (486+)
 	push byte 0
 	push byte 17
 	jmp isr_common_stub
-
-;  18: Machine Check (Pentium / 586+)
-isr18:
-	cli
+isr18: ; Machine Check (Pentium / 586+)
 	push byte 0
 	push byte 18
 	jmp isr_common_stub
-
-;19: Reserved
-isr19:
-	cli
+isr19: ; Reserved
 	push byte 0
 	push byte 19
 	jmp isr_common_stub
-
-;20: Reserved
-isr20:
-	cli
+isr20: ; Reserved
 	push byte 0
 	push byte 20
 	jmp isr_common_stub
-
-;21: Reserved
-isr21:
-	cli
+isr21: ; Reserved
 	push byte 0
 	push byte 21
 	jmp isr_common_stub
-
-;22: Reserved
-isr22:
-	cli
+isr22: ; Reserved
 	push byte 0
 	push byte 22
 	jmp isr_common_stub
-
-;23: Reserved
-isr23:
-	cli
+isr23: ; Reserved
 	push byte 0
 	push byte 23
 	jmp isr_common_stub
-
-;24: Reserved
-isr24:
-	cli
+isr24: ; Reserved
 	push byte 0
 	push byte 24
 	jmp isr_common_stub
-
-;25: Reserved
-isr25:
-	cli
+isr25: ; Reserved
 	push byte 0
 	push byte 25
 	jmp isr_common_stub
-
-;26: Reserved
-isr26:
-	cli
+isr26: ; Reserved
 	push byte 0
 	push byte 26
 	jmp isr_common_stub
-
-;27: Reserved
-isr27:
-	cli
+isr27: ; Reserved
 	push byte 0
 	push byte 27
 	jmp isr_common_stub
-
-;28: Reserved
-isr28:
-	cli
+isr28: ; Reserved
 	push byte 0
 	push byte 28
 	jmp isr_common_stub
-
-;29: Reserved
-isr29:
-	cli
+isr29: ; Reserved
 	push byte 0
 	push byte 29
 	jmp isr_common_stub
-
-;30: Reserved
-isr30:
-	cli
+isr30: ; Reserved
 	push byte 0
 	push byte 30
 	jmp isr_common_stub
-
-;31: Reserved
-isr31:
-	cli
+isr31: ; Reserved
 	push byte 0
 	push byte 31
 	jmp isr_common_stub
 
-
 extern fault_handler
 
+%include "src/kernel/interrupts/macros.asm"
+
 isr_common_stub:
-	pusha
-	push ds
-	push es
-	push fs
-	push gs
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov eax, esp
-	push eax
-	mov eax, fault_handler
-	call eax
-	pop eax
-	pop gs
-	pop fs
-	pop es
-	pop ds
-	popa
-	add esp, 8
-	iret
+	cli
+
+	push_cpu_state
+
+	call fault_handler
+
+	pop_cpu_state
+
+	iretq
 			

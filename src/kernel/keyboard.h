@@ -4,17 +4,17 @@
 
 typedef struct keyPressEvent {
 	uint8 code;
-	kchar ASCII;
+	char ASCII;
 	bool isValid;
 } keyPressEvent;
 
-void keyboard_install();
+void initKeyboard();
 bool isKeyDown(uint8 keyId);
 void setKeyDownState(uint8 keyId, bool newState);
 void keyboardKeyPress(char key);
 void updateLEDs();
 void setKeyboardLEDs(uint8 ledstatus);
-kchar readChar();
+char readChar();
 keyPressEvent readKey();
 void setTerminalEcho(bool new);
 bool getTerminalEcho();

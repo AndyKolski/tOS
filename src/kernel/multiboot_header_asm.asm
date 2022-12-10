@@ -1,5 +1,5 @@
 SECTION .multiboot
-ALIGN 4
+ALIGN 8
 
 mboot:
 	MULTIBOOT_PAGE_ALIGN    equ 1<<0    ; Load kernel and modules on a page boundary

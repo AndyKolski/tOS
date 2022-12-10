@@ -1,8 +1,8 @@
 #include <io.h>
-#include <irq.h>
+#include <interrupts/irq.h>
 #include <stdio.h>
 #include <system.h>
-#include <time.h>
+#include <time/time.h>
 
 #define rtc_address 0x70
 #define rtc_data 0x71

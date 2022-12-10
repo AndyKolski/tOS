@@ -1,9 +1,9 @@
 #include <io.h>
-#include <irq.h>
-#include <pit.h>
+#include <interrupts/irq.h>
+#include <time/pit.h>
 #include <stdio.h>
 #include <system.h>
-#include <time.h>
+#include <time/time.h>
 
 #define PIT_CTL 0x43
 
@@ -27,6 +27,6 @@ void PIT_Install(uint32 freq) {
 }
 
 void setPITRate(uint32 freq) {
-	printf("Setting PIT to %lu Hz...\n", freq);
+	printf("Setting PIT to %u Hz...\n", freq);
 	configurePIT(TIMER0_SELECT, TIMER0_CTL, freq, MODE_SQUARE_WAVE);
 }

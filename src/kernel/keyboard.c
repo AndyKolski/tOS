@@ -1,10 +1,10 @@
 #include <display.h>
 #include <io.h>
-#include <irq.h>
+#include <interrupts/irq.h>
 #include <keyboard.h>
 #include <stdio.h>
 #include <system.h>
-#include <time.h>
+#include <time/time.h>
 
 #define IRQ_KEYBOARD 1
 #define I8042_BUFFER 0x60
@@ -16,8 +16,8 @@
 #define I8042_KEYBOARD_BUFFER 0x00
 
 typedef struct keyPressEventDataLUTEntry {
-	kchar ASCII;
-	kchar UpperASCII;
+	char ASCII;
+	char UpperASCII;
 	bool CanUppercase;
 	bool IsPrintable;
 	bool IsModifierKey;
@@ -32,7 +32,7 @@ typedef struct lockState {
 	bool ScrollLock;
 } lockState;
 
-keyPressEvent makeKeyPressEvent(uint8 code, kchar ASCII) {
+keyPressEvent makeKeyPressEvent(uint8 code, char ASCII) {
 	keyPressEvent event = {0};
 	event.code = code;
 	event.ASCII = ASCII;
@@ -47,7 +47,7 @@ volatile bool terminalEcho = true;
 volatile keyPressEvent keyboardBuffer[KEYBOARD_BUFFER_SIZE];
 volatile uint32 bufferOffset = 0;
 
-keyPressEventDataLUTEntry scancodeLookup[255] = {
+const keyPressEventDataLUTEntry scancodeLookup[255] = {
 //    ┌ ASCII form
 //    │    ┌ Uppercase ASCII form
 //    │    │   ┌ Can this key be uppercased?
@@ -186,7 +186,7 @@ keyPressEventDataLUTEntry scancodeLookup[255] = {
 	{ 0 ,  0 , 0, 0, 0, 0, 0, KEY_Invalid},           // 0x7E
 	{ 0 ,  0 , 0, 0, 0, 0, 0, KEY_Invalid}            // 0x7F
 };
-keyPressEventDataLUTEntry e0ScancodeLookup[255] = {
+const keyPressEventDataLUTEntry e0ScancodeLookup[255] = {
 //    ┌ ASCII form
 //    │    ┌ Uppercase ASCII form
 //    │    │   ┌ Can this key be uppercased?
@@ -498,7 +498,7 @@ void clearKeyboardBuffer() {
 	clearBuffer();
 }
 
-kchar readChar() {
+char readChar() {
 	while (true) {
 		keyPressEvent read = getCharFromBuffer();
 		if (read.isValid) {
@@ -525,7 +525,7 @@ bool getTerminalEcho() {
 	return terminalEcho;
 }
 
-void keyboard_install() {
+void initKeyboard() {
 	irq_install_handler(1, keyboard_handler);
 	updateLEDs();
 }

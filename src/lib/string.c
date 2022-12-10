@@ -1,5 +1,4 @@
 #include <display.h>
-#include <irq.h>
 #include <stddef.h>
 #include <string.h>
 

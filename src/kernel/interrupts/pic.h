@@ -2,4 +2,4 @@
 
 #pragma once
 
-void initMouse();
+void PIC_remap();

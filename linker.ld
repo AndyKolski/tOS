@@ -1,41 +1,49 @@
-OUTPUT_FORMAT("elf32-i386")
+OUTPUT_FORMAT("elf64-x86-64")
 ENTRY(bootstrap_entry)
 
+__BOOTLOADER_LOAD_ADDR = 0x100000;
+
+/* Kernel at 0xffffffff80000000 */
+__OFFSET = (0xFFFFFFFF80000000 - __BOOTLOADER_LOAD_ADDR); 
+
 SECTIONS {
-	. = 0x00100000;
+	. = __BOOTLOADER_LOAD_ADDR;
 
-	KERNEL_START = .;
-
-	.multiboot ALIGN (4) :
-	{
-		out/obj/kernel/multiboot.o(.multiboot)
+	.multiboot ALIGN (8) : {
+		*(.multiboot)
 	}
 
-	.bootstrap.text ALIGN(4K) : {
-		out/obj/kernel/bootstrap.o(.bootstrap.text)
+	.bootstrap.text : {
+		*(.bootstrap.text)
 	}
 
-	. += 0xC0000000;
+	/* We don't count the multiboot header or bootstrap code as part of the kernel as they aren't needed once paging is set up */
+	__KERNEL_START = .;
+	. += __OFFSET;
 
-	.text ALIGN (4K) : AT(ADDR(.text) - 0xC0000000)
-	{
+	.text ALIGN (4K) : AT(ADDR(.text) - __OFFSET) {
+		__TEXT_START = .;
 		*(.text)
 	}
+	__TEXT_END = .;
 
-	.rodata ALIGN (4K) : AT(ADDR(.rodata) - 0xC0000000)
-	{
-		*(.rodata)
+	.rodata ALIGN (4K) : AT(ADDR(.rodata) - __OFFSET) {
+		__RODATA_START = .;
+		*(.rodata .rodata.*)
 	}
+	__RODATA_END = .;
 
-	.data ALIGN (4K) : AT(ADDR(.data) - 0xC0000000)
-	{
-		*(.data)
+	.data ALIGN (4K) : AT(ADDR(.data) - __OFFSET) {
+		__DATA_START = .;
+		*(.data .data.*)
 	}
+	__DATA_END = .;
 
-	.bss ALIGN (4K) : AT(ADDR(.bss) - 0xC0000000)
-	{
+	.bss ALIGN (4K) : AT(ADDR(.bss) - __OFFSET) {
+		__BSS_START = .;
+		*(.bss .bss.* .common)
 		*(COMMON)
-		*(.bss)
 	}
-	KERNEL_END = . - 0xC0000000;
+	__BSS_END = .;
+	__KERNEL_END = . - __OFFSET;
 }

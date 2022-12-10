@@ -1,8 +1,8 @@
-#include <pit.h>
-#include <rtc.h>
+#include <time/pit.h>
+#include <time/rtc.h>
 #include <stdio.h>
 #include <system.h>
-#include <time.h>
+#include <time/time.h>
 
 const char *monthNames[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 const char *weekDayNames[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
@@ -35,7 +35,7 @@ void setTime(time_t time) {
 	systemTime = time;
 	printf("Set system time to: ");
 	printHumanTime(time);
-	printf(" (%qu)\n", time);
+	printf(" (%lu)\n", time);
 }
 
 inline void PIT_Tick() {
@@ -63,7 +63,7 @@ void initTime() {
 
 void printHumanTime(time_t time) {
 	HumanTime hTime = getHumanTime(time);
-	printf("%s, %s %i %lu %i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
+	printf("%s, %s %i %u %i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
 }
 
 time_t getTimeFromHuman(HumanTime time) {
