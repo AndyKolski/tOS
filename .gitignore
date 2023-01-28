@@ -6,3 +6,6 @@ OS.sublime*
 Toolchain/*
 !Toolchain/build.sh
 !Toolchain/Patches
+bochs.cfg
+.gdbinit
+temp/*
