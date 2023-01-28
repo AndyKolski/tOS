@@ -78,6 +78,7 @@ override CFLAGS := -c\
 -MMD\
 -mcmodel=large\
 -mno-red-zone -mno-mmx -mno-sse -mno-sse2\
+-funsigned-char\
 $(COPT)\
 $(CWARNINGFLAGS)\
 $(CFLAGS)

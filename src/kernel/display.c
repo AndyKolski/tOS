@@ -268,12 +268,9 @@ void terminalPrintChar(char character) {
 		return;
 	}
 	if (FBScreen) {
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wtype-limits"
-		if (character > 128 || character == 0) { // char is a char for now, so this line causes a GCC warning
+		if (character > 128 || character == 0) {
 			return;
 		}
-		#pragma GCC diagnostic pop
 		if (character == '\n') {
 			cursorX = 0;
 			cursorY++;
