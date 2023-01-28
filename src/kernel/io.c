@@ -8,6 +8,16 @@ uint8 inb(uint16 port) {
 void outb(uint16 port, uint8 val) {
 	 __asm__ volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
 }
+
+uint16 inw(uint16 port) {
+	 uint16 ret;
+	 __asm__ volatile ( "inw %1, %0" : "=a"(ret) : "Nd"(port) );
+	 return ret;
+}
+void outw(uint16 port, uint16 val) {
+	 __asm__ volatile ( "outw %0, %1" : : "a"(val), "Nd"(port) );
+}
+
 void io_wait() {
     outb(0x80, 0);
 }
