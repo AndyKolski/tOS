@@ -27,9 +27,23 @@ REQUIRED_BINS := $(AS) $(QEMU) $(LD) $(CC)
 $(foreach bin,$(REQUIRED_BINS),\
     $(if $(shell command -v $(bin) 2> /dev/null),,$(error Please install `$(bin)`. Try running the script Toolchain/build.sh)))
 
+override QEMUARGS := -drive format=raw,media=cdrom,file=out/$(NAME).iso\
+-boot d\
+-debugcon stdio\
+-m 2048M\
+-audiodev pa,id=audio0\
+-machine pcspk-audiodev=audio0\
+-rtc base=localtime\
+-name $(NAME)\
+${QEMUARGS}\
+#-serial file:serial.log #
 
-override QEMUARGS := -boot d -cdrom out/$(NAME).iso -debugcon stdio -m 2048M -soundhw pcspk -rtc base=localtime -name $(NAME) ${QEMUARGS} #-serial file:serial.log #
-QEMUDEBUG = -s -S -d cpu_reset,guest_errors -no-shutdown -no-reboot
+# -gdb: listen for gdb connection on port 1234, -S: Start with the VM paused, -d: enable additional debug logging, -no-shutdown: don't exit on guest shutdown, -no-reboot: don't allow reboots (including triple faults)
+QEMUDEBUG = -s\
+-S\
+-d cpu_reset,guest_errors,unimp\
+-no-shutdown\
+-no-reboot\
 
 
 CWARNINGFLAGS := -Wall\

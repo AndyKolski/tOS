@@ -110,12 +110,11 @@ inline void setPixel(uint32 xPosition, uint32 yPosition, color_t color) {
 /// @param height The height of the rectangle to fill, in pixels.
 /// @param color The color to fill the rectangle with.
 void fillRect_UNSAFE(uint32 xPosition, uint32 yPosition, uint32 width, uint32 height, color_t color) {
-	uint32 verticalOffset = 0;
-	for (uint32 loopYPosition = yPosition; loopYPosition < yPosition + height; loopYPosition++) {
-		for (uint32 loopXPosition = xPosition; loopXPosition < xPosition + width; loopXPosition++) {
-			graphicFB[verticalOffset + loopXPosition] = color;
+	uint32 verticalEnd = (yPosition + height) * framebuffer_pitch_doublewords;
+	for (uint32 verticalOffset = yPosition * framebuffer_pitch_doublewords; verticalOffset < verticalEnd; verticalOffset += framebuffer_pitch_doublewords) {
+		for (uint32 horizontalOffset = xPosition; horizontalOffset < xPosition + width; horizontalOffset++) {
+			graphicFB[horizontalOffset + verticalOffset] = color;
 		}
-		verticalOffset += framebuffer_pitch_doublewords;
 	}
 }
 
@@ -134,12 +133,12 @@ void fillRect(uint32 xPosition, uint32 yPosition, uint32 width, uint32 height, c
 		return;
 	}
 
-	if (xPosition + width >= framebuffer_width) {
-		width = framebuffer_width - xPosition;
+	if (xPosition + width > framebuffer_width) {
+		return;
 	}
 
-	if (yPosition + height >= framebuffer_height) {
-		height = framebuffer_height - yPosition;
+	if (yPosition + height > framebuffer_height) {
+		return;
 	}
 	
 	fillRect_UNSAFE(xPosition, yPosition, width, height, color);
@@ -249,16 +248,16 @@ void scrollTerminal() {
 	}
 
 	// For each line of text in the framebuffer, we copy it to the line above it
-	for (uint32 i = 0; i < terminalHeight-1; ++i) {
+	for (uint32 i = 0; i < terminalHeight-1; i++) {
 		memcpy(
 			(uint8*)(graphicFB + (i * (lineHeight) * framebuffer_pitch_doublewords)),
 			(uint8*)(graphicFB + ((i+1) * (lineHeight) * framebuffer_pitch_doublewords)),
-			framebuffer_pitch * fontHeight
+			framebuffer_pitch * lineHeight
 		);
 	}
 
 	// We fill the bottom line with blank space
-	fillRect(0, framebuffer_height - (lineHeight), framebuffer_width, fontHeight, backgroundColor);
+	fillRect(0, framebuffer_height - lineHeight, framebuffer_width, lineHeight, backgroundColor);
 
 	cursorY--;
 	return;
