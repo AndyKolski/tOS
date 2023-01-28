@@ -41,7 +41,7 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 	puts("Initializing display...");
 	initDisplay();
 
-	printf("/OS " __ARCH " test build " __GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " __CC_VERSION"\n");
+	printf("t/OS " __ARCH " test build " __GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " __CC_VERSION"\n");
 	printf("Booted by \"%s\" cmdline: \"%s\" magic: 0x%x\n", bootData->bootloaderName, bootData->cmdline, bootloaderMagic);
 
 	printf("Offset: 0x%lx\n", KERNEL_OFFSET);

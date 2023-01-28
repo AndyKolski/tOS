@@ -29,6 +29,8 @@ uint32 framebuffer_pitch_doublewords = 0; // the number of doublewords between o
 uint32 terminalWidth = 0; // the width of the terminal, in characters
 uint32 terminalHeight = 0; // the height of the terminal, in characters
 
+uint32 lineHeight = 0; // the height of a line of text, in pixels (fontHeight + 1)
+
 uint32 cursorX = 0; // the horizontal position of the cursor on the terminal, in characters
 uint32 cursorY = 0; // the vertical position of the cursor on the terminal, in characters
 
@@ -56,8 +58,9 @@ void initDisplay() {
 		framebuffer_depth_doublewords = framebuffer_depth / 4;
 		framebuffer_pitch_doublewords = framebuffer_pitch / 4;
 
+		lineHeight = fontHeight + 1;
 		terminalWidth = framebuffer_width/(fontWidth+1);
-		terminalHeight = framebuffer_height/(fontHeight+1);
+		terminalHeight = framebuffer_height/(lineHeight);
 
 		clearScreen();
 		isDisplayInitialized = true;
@@ -164,10 +167,10 @@ void placeChar(char character, uint32 xPosition, uint32 yPosition) {
 	if (xPosition >= framebuffer_width || yPosition >= framebuffer_height) {
 		return;
 	}
-	if (xPosition + fontWidth >= framebuffer_width) {
+	if (xPosition + fontWidth > framebuffer_width) {
 		return;
 	}
-	if (yPosition + fontHeight >= framebuffer_height) {
+	if (yPosition + fontHeight > framebuffer_height) {
 		return;
 	}
 	color_t setColor = (color_t) character;
@@ -244,10 +247,19 @@ void scrollTerminal() {
 	if (!isDisplayInitialized) {
 		return;
 	}
-	for (uint32 i = 0; i < framebuffer_height/fontHeight; ++i) {
-		memcpy((uint8*)(graphicFB+i*framebuffer_pitch*fontHeight), (uint8*)(graphicFB+(i+1)*framebuffer_pitch*fontHeight), framebuffer_pitch*fontHeight*framebuffer_depth_doublewords);
+
+	// For each line of text in the framebuffer, we copy it to the line above it
+	for (uint32 i = 0; i < terminalHeight-1; ++i) {
+		memcpy(
+			(uint8*)(graphicFB + (i * (lineHeight) * framebuffer_pitch_doublewords)),
+			(uint8*)(graphicFB + ((i+1) * (lineHeight) * framebuffer_pitch_doublewords)),
+			framebuffer_pitch * fontHeight
+		);
 	}
-	fillRect(0, framebuffer_height-fontHeight, framebuffer_width, fontHeight, backgroundColor);
+
+	// We fill the bottom line with blank space
+	fillRect(0, framebuffer_height - (lineHeight), framebuffer_width, fontHeight, backgroundColor);
+
 	cursorY--;
 	return;
 }
