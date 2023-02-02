@@ -1,4 +1,4 @@
-#include <intmath.h>
+#include <formatting.h>
 #include <memory/paging.h>
 #include <memory/pmm.h>
 #include <stdio.h>

@@ -8,7 +8,7 @@ interrupts/irq.o\
 interrupts/isrs_asm.o\
 interrupts/isrs.o\
 interrupts/pic.o\
-intmath.o\
+formatting.o\
 io.o\
 keyboard.o\
 main.o\

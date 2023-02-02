@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <system.h>
-#include <intmath.h>
+#include <formatting.h>
 #include <multibootdata.h>
 
  // TODO: The VESA framebuffer needs to be double-buffered, and it needs a 

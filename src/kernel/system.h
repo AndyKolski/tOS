@@ -37,6 +37,13 @@ struct regs {
 };
 
 
+
+uint32 intDivCeil(uint32 a, uint32 b);
+
+#define intDivRound(a, b) ((a + (b / 2)) / b)
+// calculates round(a/b) without using any floating point math
+
+
 void sti();
 void cli();
 
