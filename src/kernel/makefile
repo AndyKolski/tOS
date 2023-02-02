@@ -19,6 +19,7 @@ mouse.o\
 multiboot_header_asm.o\
 multibootdata.o\
 pcspeaker.o\
+pci/pci.o\
 serial.o\
 system.o\
 time/pit.o\

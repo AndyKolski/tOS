@@ -119,6 +119,7 @@ out/obj/kernel:
 	mkdir out/obj/kernel/interrupts -p
 	mkdir out/obj/kernel/memory -p
 	mkdir out/obj/kernel/time -p
+	mkdir out/obj/kernel/pci -p
 mkdir out/obj/lib:
 	mkdir out/obj/lib -p
 	mkdir out/obj/lib/printf -p
