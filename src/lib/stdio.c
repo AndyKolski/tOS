@@ -6,6 +6,9 @@
 #include <stddef.h>
 #include <string.h>
 
+/// @brief Prints a single character to the screen
+/// @param chr The character to print
+/// @return The character that was printed
 char putchar(char chr) {
 	
 	outb(0xe9, (uint8)chr);
@@ -30,6 +33,8 @@ char putchar(char chr) {
 	return chr;
 }
 
+/// @brief Prints a string to the screen, followed by a newline character
+/// @param text The string to print
 void puts(char *text) {
 	for (uint32 i = 0; i < strlen(text); ++i) {
 		putchar(text[i]);

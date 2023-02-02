@@ -61,8 +61,11 @@ CWARNINGFLAGS := -Wall\
 -Wparentheses
 
 
-#-c: Compile only, disable linking -ffreestanding: Assume non-hosted environment, -fstack-protector-strong: enable stack-smashing detection,
-#-I src: Set include path, -std=gnu99: Use GNU C99 standard for compilation, -g: include debug symbols, -Og, optimize for debugging
+# -g: include debug symbols, -Og: optimize for debugging, -c: Compile code, but don't link it yet, -ffreestanding: Assume non-hosted environment,
+# -nostdlib: don't include standard libraries, -fstack-protector-strong: enable stack-smashing detection, -I src: Set include path, 
+# -std=gnu99: Use GNU C99 standard for compilation, -MMD: create dependency files, -mcmodel=large: support placing code and data anywhere in the 64-bit address space,
+# -mno-red-zone: disable the red zone, -mno-mmx: disable MMX instructions, -mno-sse: disable SSE instructions,
+# -mno-sse2: disable SSE2 instructions, -funsigned-char: char is unsigned by default
 COPT = -g\
 -Og
 override CFLAGS := -c\
