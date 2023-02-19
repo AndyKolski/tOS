@@ -1,29 +1,30 @@
+MULTIBOOT_HEADER_MAGIC  equ 0xe85250d6 ; Multiboot Magic value
+MULTIBOOT_ARCHITECTURE  equ 0 ; Architecture (x86 32-bit protected mode)
+MULTIBOOT_HEADER_LENGTH equ (mboot_end - mboot) ; Header length
+
 SECTION .multiboot
-ALIGN 8
 
 mboot:
-	MULTIBOOT_PAGE_ALIGN    equ 1<<0    ; Load kernel and modules on a page boundary
-	MULTIBOOT_MEMORY_INFO equ 1<<1 ; Provide your kernel with memory info
-	MULTIBOOT_VIDEO_ENBABLE equ 1<<2 ; Provide a vbuffer
-	MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002 ; Multiboot Magic value
-	MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_VIDEO_ENBABLE
-	MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+	ALIGN 8
 
 	dd MULTIBOOT_HEADER_MAGIC
-	dd MULTIBOOT_HEADER_FLAGS
-	dd MULTIBOOT_CHECKSUM
+	dd MULTIBOOT_ARCHITECTURE
+	dd MULTIBOOT_HEADER_LENGTH
 
-	; unnecessary fields for aout kludge
+	dd -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE + MULTIBOOT_HEADER_LENGTH) ; Checksum
 
-	dd 0 ; header_addr
-	dd 0 ; load_addr
-	dd 0 ; load_end_addr
-	dd 0 ; bss_end_addr
-	dd 0 ; entry_addr
+	; Tags
 
-	; video mode fields
+	dw 5	; Type (framebuffer)
+	dw 0	; Flags
+	dd 20	; Size
+	dd 800	; Width
+	dd 600	; Height
+	dd 32	; Depth
 
-	dd 0 ; Mode type
-	dd 800 ; width
-	dd 600 ; height
-	dd 32 ; depth
+	ALIGN 8
+
+	dw 0	; Type
+	dw 0	; Flags
+	dd 8	; Size
+mboot_end:

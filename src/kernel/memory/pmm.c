@@ -251,31 +251,32 @@ uint64 getFreeMemory(bool excludeSmallRegions) {
 }
 
 void initPMM() {
-	bootData_t *bootData = getBootData();
-	multiboot_memory_map_t *memoryMap = bootData->mmapAddress;
+	memoryMap_t * memoryMap = getMemoryMap();
 	
-	printf("Found %li memory regions\n", bootData->mmapLength/sizeof(multiboot_memory_map_t));
+	printf("Found %u memory regions\n", memoryMap->entryCount);
 
-	for (size_t i = 0; i < bootData->mmapLength/sizeof(multiboot_memory_map_t); i++) {
-		if (memoryMap[i].type == MULTIBOOT_MEMORY_AVAILABLE) {
-			if (memoryMap[i].addr < MiB) {
+	for (size_t i = 0; i < memoryMap->entryCount; i++) {
+		memoryMapEntry_t * entry = memoryMap->entries + (i * memoryMap->entrySize);
+
+		if (entry->type == MEMORY_AVAILABLE) {
+			if (entry->baseAddress < MiB) {
 				// Ignore the first MiB of memory, there tend to be important structures there
-				printf("Ignoring region at 0x%p, length %lu %s\n", (void*)memoryMap[i].addr, numBytesToHuman(memoryMap[i].len), numBytesToUnit(memoryMap[i].len));
+				printf("Ignoring region at 0x%p, length %lu %s\n", (void*)entry->baseAddress, numBytesToHuman(entry->length), numBytesToUnit(entry->length));
 			} else {
 				// Usable memory entry!
 
-				if ((void*)memoryMap[i].addr < KERNEL_END && (void*)(memoryMap[i].addr + memoryMap[i].len) > KERNEL_START) { // This region contains the kernel, so we split it into two regions
+				if ((void*)entry->baseAddress < KERNEL_END && (void*)(entry->baseAddress + entry->length) > KERNEL_START) { // This region contains the kernel, so we split it into two regions
 					
-					if ((void*)memoryMap[i].addr < KERNEL_START) {
+					if ((void*)entry->baseAddress < KERNEL_START) {
 						// The region starts before the kernel, so we add the first part to the linked list
-						insertEntry((void*)memoryMap[i].addr, (uintptr_t)KERNEL_START - memoryMap[i].addr, false);
+						insertEntry((void*)entry->baseAddress, (uintptr_t)KERNEL_START - entry->baseAddress, false);
 					}
-					if ((void*)(memoryMap[i].addr + memoryMap[i].len) > KERNEL_END) {
+					if ((void*)(entry->baseAddress + entry->length) > KERNEL_END) {
 						// The region ends after the kernel, so we add the second part to the linked list
-						insertEntry(KERNEL_END, memoryMap[i].addr + memoryMap[i].len - (uintptr_t)KERNEL_END, false);
+						insertEntry(KERNEL_END, entry->baseAddress + entry->length - (uintptr_t)KERNEL_END, false);
 					}
 				} else { // This region does not contain the kernel, so we can add it to the linked list
-					insertEntry((void*)(memoryMap[i].addr), memoryMap[i].len, false);
+					insertEntry((void*)(entry->baseAddress), entry->length, false);
 				}
 			}
 		} else {

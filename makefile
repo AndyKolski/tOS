@@ -148,7 +148,7 @@ out/$(NAME).bin: out/obj/kernel out/obj/lib $(ALLOBJS) linker.ld
 	@echo Linking: $@
 	@$(LD) $(ALLOBJS) -T linker.ld $(LDFLAGS) -o $@
 
-	@if ! grub-file --is-x86-multiboot $@; then \
+	@if ! grub-file --is-x86-multiboot2 $@; then \
 		echo "The linked kernel is not multiboot compliant! The make process cannot proceed until this is fixed"; \
 		# rm $@; \
 		false; \
@@ -161,7 +161,7 @@ isodir/boot/$(NAME).bin: out/$(NAME).bin isodir/boot/grub
 	cp $< $@
 
 isodir/boot/grub/grub.cfg: isodir/boot/grub
-	@echo -e 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot /boot/$(NAME).bin Hello\n}' > $@
+	@echo -e 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot2 /boot/$(NAME).bin Hello\n}' > $@
 
 out/$(NAME).iso: isodir/boot/$(NAME).bin isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $@ isodir --compress gz --quiet -volid "$(NAME) Boot Disk"

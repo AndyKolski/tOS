@@ -1,84 +1,106 @@
 #include <system.h>
 #include <memory/paging.h>
 #include <multibootdata.h>
-#include <multiboot1header.h>
+#include <multiboot2.h>
+#include <stdio.h>
+#include <formatting.h>
 
-multiboot_info_t *multibootData;
+void* multibootData;
 
 bootData_t bootData = {0};
 displayData_t displayData = {0};
+memoryMap_t memMap = {0};
 
-void parseMultibootData(uint32 bootloaderMagic, uint32 multibootLocation) {
+struct multibootInformationStructureData {
+	uint32 total_size;
+	uint32 reserved;
+};
 
-    // Map the multiboot data to a virtual address so we can access it
-    multibootData = mapPhysicalToKernel((void*)(uintptr_t)multibootLocation, sizeof(multiboot_info_t), FLAG_PAGE_PRESENT);
-    
-    bootData.multibootMagic = bootloaderMagic;
-    bootData.bootDevice = multibootData->boot_device;
-    bootData.mmapLength = multibootData->mmap_length;
 
-    // The multiboot_info_t struct provides us with a pointer to the memory map and strings, so we need to map them to a virtual address
 
-    // They also may not be page-aligned, so we need to calculate the offset from the page boundary
+void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 
-    // Map the memory map
-    uint32 mmapAddressPhysical = multibootData->mmap_addr;
-    uint32 mmapAddressPhysicalOffset = 0;
+	printf("Multiboot data: 0x%x\n", multibootPhysLocation);
 
-	if (mmapAddressPhysical % PAGE_SIZE != 0) {
-		mmapAddressPhysicalOffset = (mmapAddressPhysical % PAGE_SIZE);
+	if (bootloaderMagic != MULTIBOOT2_BOOTLOADER_MAGIC) {
+		printf("Incorrect bootloader magic: 0x%x. Expected %x\n", bootloaderMagic, MULTIBOOT2_BOOTLOADER_MAGIC);
 	}
 
-    bootData.mmapAddress = mapPhysicalToKernel((void*)(uintptr_t)(mmapAddressPhysical - mmapAddressPhysicalOffset), bootData.mmapLength + mmapAddressPhysicalOffset, FLAG_PAGE_PRESENT) + mmapAddressPhysicalOffset;
+	// The multiboot data is likely not page-aligned, so we need to calculate the offset from the page boundary
+	uint32 offset = 0;
+	if (multibootPhysLocation % 0x1000 != 0) {
+		offset = multibootPhysLocation % 0x1000;
+	}
+	
+	// Map the multiboot data to a virtual address so we can access it. We don't know how large the multiboot data is, so we map 8 KiB and hope that is enough.
+	multibootData = mapPhysicalToKernel((void*)(uintptr_t)multibootPhysLocation - offset, (8*KiB) + offset, FLAG_PAGE_PRESENT) + offset;
 
-    // Map the command line. We don't know how long it is, so we'll just map 256 bytes
-    uint32 cmdlinePhysical = multibootData->cmdline;
-    uint32 cmdlinePhysicalOffset = 0;
+	struct multibootInformationStructureData *multibootInformationStructureData = multibootData;
 
-    if (cmdlinePhysical % PAGE_SIZE != 0) {
-        cmdlinePhysicalOffset = (cmdlinePhysical % PAGE_SIZE);
-    }
+	assert(multibootInformationStructureData->total_size < 8*KiB, "Multiboot data is too large");
 
-    bootData.cmdline = mapPhysicalToKernel((void*)(uintptr_t)(cmdlinePhysical - cmdlinePhysicalOffset), 256 + cmdlinePhysicalOffset, FLAG_PAGE_PRESENT) + cmdlinePhysicalOffset;
+	// hexDump(multibootData, multibootInformationStructureData->total_size);
 
-    // Map the bootloader name. We don't know how long it is, so we'll just map 256 bytes
+	struct multiboot_header_tag * tag = multibootData + sizeof(struct multibootInformationStructureData);
+	struct multiboot_tag_string *stringTag;
+	while (tag->type != MULTIBOOT_TAG_TYPE_END) {
+		
+		// printf("Found tag with type: %d, size: %d\n", tag->type, tag->size);
+		switch (tag->type) {
+			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
+				stringTag = (struct multiboot_tag_string *) tag;
+				bootData.bootloaderName = stringTag->string;
+				// printf("Bootloader name: %s\n", bootData.bootloaderName);
+				break;
+			case MULTIBOOT_TAG_TYPE_CMDLINE:
+				stringTag = (struct multiboot_tag_string *) tag;
+				bootData.cmdline = stringTag->string;
+				// printf("Command line: %s\n", bootData.cmdline);
+				break;
+			
+			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
+				struct multiboot_tag_framebuffer *framebufferTag = (struct multiboot_tag_framebuffer *) tag;
+				displayData.isGraphicalFramebuffer = framebufferTag->common.framebuffer_type == MULTIBOOT_FRAMEBUFFER_TYPE_RGB;
+				displayData.framebufferPhysAddress = framebufferTag->common.framebuffer_addr;
+				displayData.framebufferSize = framebufferTag->common.framebuffer_pitch * framebufferTag->common.framebuffer_height;
+				displayData.width = framebufferTag->common.framebuffer_width;
+				displayData.height = framebufferTag->common.framebuffer_height;
+				displayData.pitch = framebufferTag->common.framebuffer_pitch;
+				displayData.depth = framebufferTag->common.framebuffer_bpp / 8;
+				// We wait to page in the framebuffer until it's needed and when advanced paging is available
+				// printf("Framebuffer: %d x %d, depth: %d, pitch: %d\n", displayData.width, displayData.height, displayData.depth, displayData.pitch);
+				break;
+			
+			case MULTIBOOT_TAG_TYPE_MMAP:
+				struct multiboot_tag_mmap *mmapTag = (struct multiboot_tag_mmap *) tag;
+				
+				memMap.entryCount = (mmapTag->size - sizeof(struct multiboot_tag_mmap)) / mmapTag->entry_size;
+				memMap.entrySize = mmapTag->entry_size;
+				memMap.entries = (memoryMapEntry_t *) mmapTag->entries;
+				// printf("Memory map: version %d, %d entries, each entry is %d bytes\n", mmapTag->entry_version, memMap.entryCount, mmapTag->entry_size);
+				break;
+		
+			default: // Ignore all other tags
+				break;
+		}
 
-    uint32 bootloaderNamePhysical = multibootData->boot_loader_name;
-    uint32 bootloaderNamePhysicalOffset = 0;
 
-    if (bootloaderNamePhysical % PAGE_SIZE != 0) {
-        bootloaderNamePhysicalOffset = (bootloaderNamePhysical % PAGE_SIZE);
-    }
-
-    bootData.bootloaderName = mapPhysicalToKernel((void*)(uintptr_t)(bootloaderNamePhysical - bootloaderNamePhysicalOffset), 256 + bootloaderNamePhysicalOffset, FLAG_PAGE_PRESENT) + bootloaderNamePhysicalOffset;
-
-    // Display stuff
-    
-    displayData.isGraphicalFramebuffer = multibootData->framebuffer_type == MULTIBOOT_FRAMEBUFFER_TYPE_RGB;
-    displayData.framebufferPhysAddress = multibootData->framebuffer_addr;
-    
-    if (displayData.isGraphicalFramebuffer) {
-        displayData.width = multibootData->framebuffer_width;
-        displayData.height = multibootData->framebuffer_height;
-        displayData.depth = multibootData->framebuffer_bpp / 8; // Multiboot gives us the depth in bits, but we want it in bytes
-        displayData.pitch = multibootData->framebuffer_pitch;
-        displayData.framebufferPhysAddress = multibootData->framebuffer_addr;
-        displayData.framebufferSize = displayData.width * displayData.height * displayData.depth;
-    } else { // BIOS text mode
-        displayData.width = 80;
-        displayData.height = 25;
-        displayData.depth = 2;
-        displayData.pitch = 160;
-        displayData.framebufferPhysAddress = 0xB8000;
-        displayData.framebufferSize = displayData.pitch * displayData.height;
-    }
-
-    displayData.framebufferVirtAddress = mapPhysicalToKernel((void*)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE);
+		tag = (void *) tag + ((tag->size + 7) & ~7ul);
+	}
 }
 
 bootData_t *getBootData() {
-    return &bootData;
+
+	return &bootData;
 }
 displayData_t *getDisplayData() {
-    return &displayData;
+	printf("Framebuffer address: 0x%x, size: 0x%lx\n", displayData.framebufferPhysAddress, displayData.framebufferSize);
+
+	displayData.framebufferVirtAddress = mapPhysicalToKernel((void*)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE);
+	return &displayData;
+}
+
+memoryMap_t *getMemoryMap() {
+
+	return &memMap;
 }

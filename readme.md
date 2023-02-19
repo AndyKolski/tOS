@@ -72,7 +72,7 @@ Once you finish the previous steps, actually building t/OS is really simple.
 
 To compile and run t/OS in a QEMU VM, just run `make run`.
 
-To compile t/OS to a multiboot compatible file, run `make all`, and the result will be in `out/tOS.bin`.
+To compile t/OS to a multiboot 2 compatible file, run `make all`, and the result will be in `out/tOS.bin`.
 To get a bootable ISO file, run `make iso`, and the ISO will be in `out/tOS.iso`.
 
 Lastly, run `make debug` to compile and run t/OS with GDB attached.
