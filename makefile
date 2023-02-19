@@ -172,7 +172,7 @@ run: out/$(NAME).iso
 
 startdebugvm: out/$(NAME).iso
 	killall $(QEMU) || true
-	x-terminal-emulator -e "$(QEMU) $(QEMUDEBUG) $(QEMUARGS)"
+	xterm -e "$(QEMU) $(QEMUDEBUG) $(QEMUARGS)" &
 
 
 debug: startdebugvm

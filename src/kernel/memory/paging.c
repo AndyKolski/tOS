@@ -95,18 +95,17 @@ void mapRegion(void* physicalAddress, void* virtualAddress, size_t length, uint6
 	assert((uint64)physicalAddress % PAGE_SIZE == 0, "Physical address is not 4KB aligned");
 	assert((uint64)virtualAddress % PAGE_SIZE == 0, "Virtual address is not 4KB aligned");
 
-	printf("Mapping %lu %s region from phys 0x%p -> virt 0x%p\n", numBytesToHuman(length), numBytesToUnit(length), physicalAddress, virtualAddress);
+	uint64 numPages = intDivCeil(length, PAGE_SIZE);
+
+	printf("Mapping %lu %s region from phys 0x%p -> virt 0x%p (%lu %i-B page(s))\n", numBytesToHuman(length), numBytesToUnit(length), physicalAddress, virtualAddress, numPages, PAGE_SIZE);
 
 
-	if (length < PAGE_SIZE) {
+	if (numPages == 1) {
 		mapPage(VIRT_TO_INDICES(virtualAddress), physicalAddress, flags);			
 	} else {
-		uint64 numPages = intDivCeil(length, PAGE_SIZE);
-		
 		for (uint64 i = 0; i < numPages; i++) {
 			mapPage(VIRT_TO_INDICES(virtualAddress + (i * PAGE_SIZE)), physicalAddress + (i * PAGE_SIZE), flags);
 		}
-
 	}
 
 	invalidateDirectory();
