@@ -176,4 +176,4 @@ startdebugvm: out/$(NAME).iso
 
 
 debug: startdebugvm
-	sudo gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234"
+	gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234"

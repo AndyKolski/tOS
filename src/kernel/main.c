@@ -36,6 +36,9 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 	parseMultibootData(bootloaderMagic, multibootLocation);
 	bootData_t *bootData = getBootData();
 
+	puts("Initializing memory management...");
+	initPMM();
+
 	puts("Initializing display...");
 	initDisplay();
 
@@ -43,9 +46,6 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 	printf("Booted by \"%s\" cmdline: \"%s\" magic: 0x%x\n", bootData->bootloaderName, bootData->cmdline, bootloaderMagic);
 
 	printf("Offset: 0x%lx\n", KERNEL_OFFSET);
-	
-	puts("Initializing memory management...");
-	initPMM();
 	
 	puts("Initializing time...");
 	initTime();
@@ -58,7 +58,7 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 
 	printf("Testing printf: char: %c, string: %s, int: %i, negative int: %i, hex: 0x%x, hex 2: 0x%x\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe);
 
-	enumeratePCIDevices();
+	// enumeratePCIDevices();
 	
 	puts("OK");
 

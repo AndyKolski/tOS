@@ -3,6 +3,7 @@
 #include <memory/pmm.h>
 #include <stdio.h>
 #include <system.h>
+#include <string.h>
 
 // Each PML4 entry controls 512GiB of memory, PML4 tables control 256 TiB of memory
 // Each PML3 entry controls 1GiB of memory, PML3 tables control 512 GiB of memory
@@ -25,15 +26,23 @@ typedef struct paging_entry_t {
 	uint64 nx : 1; // If set, page is not executable
 } paging_entry_t;
 
-extern void invalidateDirectory();
+void reloadCR3() {
+	// Reload CR3 to flush the TLB
+	__asm__ volatile("movq %%cr3, %%rax; movq %%rax, %%cr3" : : : "rax");
+}
+
+void invalidateVirtualAddress(void *virtualAddress) {
+	// Invalidate a page in the TLB
+	__asm__ volatile("invlpg (%0)" : : "r" (virtualAddress) : "memory");
+}
 
 __attribute__((aligned(4096))) volatile paging_entry_t pml4_table[512] = {0}; // Root page table, set in CR3
 
 __attribute__((aligned(4096))) volatile paging_entry_t pml3_table_highest[512] = {0}; // Highest PML3 table, controls the upper 512 GiB of memory
 
 __attribute__((aligned(4096))) volatile paging_entry_t pml2_table_kernel[512] = {0}; // Controls the second highest GiB of memory. The kernel resides in the first 2 MiB of this table.
-__attribute__((aligned(4096))) volatile paging_entry_t pml1_table_kernel_data[10][512] = {0}; // Each of these 10 tables control 2 MiB of memory. Part of the first table is used for the kernel, the rest is free for use
-// TODO: Important! Make this dynamic
+
+__attribute__((aligned(4096))) volatile paging_entry_t pml1_table_kernel[512] = {0}; // Controls the first 2 MiB of the second-highest GiB of memory. This table controls access to the kernel.
 
 
 
@@ -46,6 +55,14 @@ uint64 highestKernelPML1 = 0;
 ((uint64)(virtualAddress) >> 21 & 0x1ff), \
 ((uint64)(virtualAddress) >> 12 & 0x1ff)
 
+#define RECURSIVE_ADDR 0xffffff0000000000 // We create a recursive mapping in pml4[510]
+#define REC_POS 510
+
+
+// Gets the page entry that controls a virtual address by using the recursive mapping
+paging_entry_t * indicesToVirtRecursive(uint64 p3, uint64 p2, uint64 p1, uint64 p0) {
+	return (paging_entry_t*)(RECURSIVE_ADDR + (((uint64)p3) << 30) + (((uint64)p2) << 21) + (((uint64)p1) << 12) + (((uint64)p0) << 3));
+}
 
 void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml1_index, void *physicalAddress, uint64 flags) {
 	assert(pml4_index < 512, "pml4_index out of bounds");
@@ -53,39 +70,83 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 	assert(pml2_index < 512, "pml2_index out of bounds");
 	assert(pml1_index < 512, "pml1_index out of bounds");
 
-	if (pml4_index == 511 && pml3_index == 510 && pml2_index < 10) {
-
-		if (pml2_index > lowestKernelPML1 && pml2_index < highestKernelPML1) { // Prevent overwriting kernel mappings
-			printf("Attempted to map a page over existing kernel mappings\n");
-			return;
-		}
-
-		if (!(flags & FLAG_PAGE_KERNEL) && pml1_table_kernel_data[pml2_index][pml1_index].present) { // Prevent overwriting existing mappings, except for remapping the kernel in initPaging()
-			printf("Attempted to map a page over present mappings\n");
-			return;
-		}
-
-		if ((flags & FLAG_PAGE_KERNEL) && pml4_index == 511 && pml3_index == 510 && pml2_index == 0) {
-			if (pml1_index < lowestKernelPML1) {
-				lowestKernelPML1 = pml1_index;
-			}
-			if (pml1_index > highestKernelPML1) {
-				highestKernelPML1 = pml1_index;
-			}
-		}
-		
-		pml1_table_kernel_data[pml2_index][pml1_index] = (paging_entry_t) {
-			.present = (flags & FLAG_PAGE_PRESENT) ? 1 : 0,
-			.rw = (flags & FLAG_PAGE_WRITABLE) ? 1 : 0,
-			.user = (flags & FLAG_PAGE_USER) ? 1 : 0,
-			.nx = (flags & FLAG_PAGE_EXECUTABLE) ? 0 : 1,
-			.addr = (uint64)physicalAddress >> 12
+	paging_entry_t *pml4_check = indicesToVirtRecursive(REC_POS, REC_POS, REC_POS, pml4_index);
+	if (!pml4_check->present) {
+		printf("PML4 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index);
+		uint64 newTable = (uint64)getFreePhysicalPage();
+		printf("New table at %lx\n", newTable);
+		*pml4_check = (paging_entry_t) {
+			.present = 1,
+			.rw = 1,
+			.user = 0,
+			.nx = 1,
+			.addr = newTable >> 12
 		};
-	} else {
-		printf("Page Table Indices: 4: %lu, 3: %lu, 2: %lu, 1: %lu\n", pml4_index, pml3_index, pml2_index, pml1_index);
-		printf("FUNCTION NOT IMPLEMENTED - NOT ACTUALLY MAPPING PAGE\n");
-		// assertf("not supported yet");
+		invalidateVirtualAddress(pml4_check);
+		
+		// Clear the new table
+		memset(indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, 0), 0, 4096);\
 	}
+
+	paging_entry_t *pml3_check = indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, pml3_index);
+	if (!pml3_check->present) {
+		printf("PML3 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index);
+		uint64 newTable = (uint64)getFreePhysicalPage();
+		printf("New table at %lx\n", newTable);
+		*pml3_check = (paging_entry_t) {
+			.present = 1,
+			.rw = 1,
+			.user = 0,
+			.nx = 1,
+			.addr = newTable >> 12
+		};
+		invalidateVirtualAddress(pml3_check);
+
+		// Clear the new table
+		memset(indicesToVirtRecursive(REC_POS, pml4_index, pml3_index, 0), 0, 4096);
+	}
+
+	paging_entry_t *pml2_check = indicesToVirtRecursive(REC_POS, pml4_index, pml3_index, pml2_index);
+	if (!pml2_check->present) {
+		printf("PML2 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index);
+		uint64 newTable = (uint64)getFreePhysicalPage();
+		printf("New table at %lx\n", newTable);
+		*pml2_check = (paging_entry_t) {
+			.present = 1,
+			.rw = 1,
+			.user = 0,
+			.nx = 1,
+			.addr = newTable >> 12
+		};
+		invalidateVirtualAddress(pml2_check);
+		
+		// Clear the new table
+		memset(indicesToVirtRecursive(pml4_index, pml3_index, pml2_index, 0), 0, 4096);
+	}
+
+	paging_entry_t *pml1_check = indicesToVirtRecursive(pml4_index, pml3_index, pml2_index, pml1_index);
+	if (pml1_check->present && !(flags & FLAG_PAGE_KERNEL)) {
+		printf("Page (%ld %ld %ld %ld) already mapped!\n", pml4_index, pml3_index, pml2_index, pml1_index);
+		return;
+	}
+
+	if ((flags & FLAG_PAGE_KERNEL) && pml4_index == 511 && pml3_index == 510 && pml2_index == 0) {
+		if (pml1_index < lowestKernelPML1) {
+			lowestKernelPML1 = pml1_index;
+		}
+		if (pml1_index > highestKernelPML1) {
+			highestKernelPML1 = pml1_index;
+		}
+	}
+	
+	*pml1_check = (paging_entry_t) {
+		.present = (flags & FLAG_PAGE_PRESENT) ? 1 : 0,
+		.rw = (flags & FLAG_PAGE_WRITABLE) ? 1 : 0,
+		.user = (flags & FLAG_PAGE_USER) ? 1 : 0,
+		.nx = (flags & FLAG_PAGE_EXECUTABLE) ? 0 : 1,
+		.addr = (uint64)physicalAddress >> 12
+	};
+	invalidateVirtualAddress(pml1_check);
 }
 
 
@@ -108,11 +169,14 @@ void mapRegion(void* physicalAddress, void* virtualAddress, size_t length, uint6
 		}
 	}
 
-	invalidateDirectory();
 	return;
 }
 
-uint64 upperMapLocation = (uint64)(KERNEL_OFFSET + (2*MiB)); // Start mapping things after the 2-MiB kernel page.
+
+// We start mapping anything the kernel needs right after the memory gap
+uint64 upperMapLocation = 0xffff800000000000;
+
+
 // TODO: Change this to actually keep track of used and freed virtual memory
 
 
@@ -140,11 +204,18 @@ void* mapPhysicalToKernel(void* physicalAddress, size_t length, uint64 flags) {
 	return virtualAddress;
 }
 
-void* recursiveMappingVirtual = (void*)0xffffff0000000000;
-#define GET_RECURSIVE_MAPPING(pml4, pml3, pml2, pml1) (recursiveMappingVirtual + ((pml4) << 39) + ((pml3) << 30) + ((pml2) << 21) + ((pml1) << 12))
-
 /// @brief Replace the existing kernel mapping with 4 KiB pages using the correct protection flags
 void initPaging() {
+
+	// Recursively map the PML4 table
+	pml4_table[REC_POS].present = 1;
+	pml4_table[REC_POS].rw = 1;
+	pml4_table[REC_POS].ps = 0;
+	pml4_table[REC_POS].addr = ((uint64) &pml4_table[510] - KERNEL_OFFSET) >> 12;
+	pml4_table[REC_POS].global = 1;
+	pml4_table[REC_POS].nx = 1;
+
+	reloadCR3();
 	
 
 	printf("Kernel text   start: 0x%p, end: 0x%p, size: %lu %s\n", TEXT_START, TEXT_END, numBytesToHuman(TEXT_SIZE), numBytesToUnit(TEXT_SIZE));
@@ -175,32 +246,15 @@ void initPaging() {
 	printf("First kernel page index: %lu, last kernel page index: %lu\n", lowestKernelPML1, highestKernelPML1);
 
 	for (uint64 i = 0; i < lowestKernelPML1; i++) { // Remove unnecessary pages before the kernel
-		pml1_table_kernel_data[0][i] = (paging_entry_t) {0};
+		*indicesToVirtRecursive(511, 510, 0, i) = (paging_entry_t) {0};
 	}
 	for (uint64 i = highestKernelPML1 + 1; i < 512; i++) { // Remove unnecessary pages after the kernel
-		pml1_table_kernel_data[0][i] = (paging_entry_t) {0};
+		*indicesToVirtRecursive(511, 510, 0, i) = (paging_entry_t) {0};
 	}
 	
-	for (uint64 i = 0; i < 10; i++) {
-		paging_entry_t newKernelPML2Entry = {0};
-		newKernelPML2Entry.present = 1;
-		newKernelPML2Entry.rw = 1;
-		newKernelPML2Entry.ps = 0;
-		
-		newKernelPML2Entry.addr = ((uint64) &pml1_table_kernel_data[i] - KERNEL_OFFSET) >> 12;
+	reloadCR3();
 
-		pml2_table_kernel[i] = newKernelPML2Entry;
+	if (upperMapLocation % PAGE_SIZE != 0) {
+		upperMapLocation += PAGE_SIZE - (upperMapLocation % PAGE_SIZE);
 	}
-
-	// Recursively map the PML4 table
-	pml4_table[510].present = 1;
-	pml4_table[510].rw = 1;
-	pml4_table[510].ps = 0;
-	pml4_table[510].addr = ((uint64) &pml4_table - KERNEL_OFFSET) >> 12;
-	pml4_table[510].global = 1;
-	pml4_table[510].nx = 1;
-
-	
-	invalidateDirectory();
-	
 }

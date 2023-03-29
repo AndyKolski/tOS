@@ -172,7 +172,7 @@ void placeChar(char character, uint32 xPosition, uint32 yPosition) {
 	if (yPosition + fontHeight > framebuffer_height) {
 		return;
 	}
-	color_t setColor = (color_t) character;
+	color_t setColor;
 	uint32 verticalOffset = yPosition * framebuffer_pitch_doublewords;
 	for (uint32 loopYPosition = yPosition; loopYPosition < fontHeight + yPosition; loopYPosition++) {
 		for (uint32 loopXPosition = xPosition; loopXPosition < fontWidth + 1u + xPosition; loopXPosition++) {

@@ -1,5 +1,6 @@
 #include <system.h>
 #include <memory/paging.h>
+#include <memory/pmm.h>
 #include <multibootdata.h>
 #include <multiboot2.h>
 #include <stdio.h>
@@ -32,12 +33,20 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 		offset = multibootPhysLocation % 0x1000;
 	}
 	
+	// We map the multiboot data right after the kernel, since we know we have some free memory there
+	multibootData = KERNEL_OFFSET + KERNEL_END + 0x1000;
+	
+
 	// Map the multiboot data to a virtual address so we can access it. We don't know how large the multiboot data is, so we map 8 KiB and hope that is enough.
-	multibootData = mapPhysicalToKernel((void*)(uintptr_t)multibootPhysLocation - offset, (8*KiB) + offset, FLAG_PAGE_PRESENT) + offset;
+	// TODO: Read the length, and map the exact amount of memory needed
+	mapRegion((void*)(uintptr_t)multibootPhysLocation - offset, multibootData, (8*KiB) + offset, FLAG_PAGE_PRESENT);
+
+	multibootData += offset;
+
 
 	struct multibootInformationStructureData *multibootInformationStructureData = multibootData;
 
-	assert(multibootInformationStructureData->total_size < 8*KiB, "Multiboot data is too large");
+	assert(multibootInformationStructureData->total_size < 8*KiB, "Multiboot data is too large (> 8 KiB)");
 
 	// hexDump(multibootData, multibootInformationStructureData->total_size);
 

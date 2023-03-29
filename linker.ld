@@ -45,5 +45,5 @@ SECTIONS {
 		*(COMMON)
 	}
 	__BSS_END = .;
-	__KERNEL_END = . - __OFFSET;
+	__KERNEL_END = ALIGN (4K) - __OFFSET;
 }

@@ -37,3 +37,5 @@ extern void* __BSS_END;
 #define BSS_SIZE (uint64)(BSS_END - BSS_START)
 
 void initPMM();
+
+void * getFreePhysicalPage();

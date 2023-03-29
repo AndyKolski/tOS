@@ -129,7 +129,7 @@ bootstrap_entry:
 	extern pml4_table
 	extern pml3_table_highest
 	extern pml2_table_kernel
-	extern pml1_table_kernel_data
+	extern pml1_table_kernel
 	
 	mov ecx, 0 ; first 512GB of memory
 	mov eax, (pml3_table_low - OFFSET)
@@ -222,7 +222,7 @@ bootstrap_low64:
 	
 
 	mov ecx, 0 ; first 2MiB of the second to last GiB memory
-	mov rax, (pml1_table_kernel_data - OFFSET)
+	mov rax, (pml1_table_kernel - OFFSET)
 
 	and rax, rdx
 	or rax, (PRESENT | WRITABLE)
@@ -238,7 +238,7 @@ bootstrap_low64:
 	fillPML1:
 		and rax, rdx
 		or rax, (PRESENT | WRITABLE)
-		mov [(pml1_table_kernel_data - OFFSET) + ecx], rax
+		mov [(pml1_table_kernel - OFFSET) + ecx], rax
 
 		add ecx, 8
 		add rax, 0x1000

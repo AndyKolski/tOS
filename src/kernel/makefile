@@ -12,7 +12,6 @@ formatting.o\
 io.o\
 keyboard.o\
 main.o\
-memory/paging_asm.o\
 memory/paging.o\
 memory/pmm.o\
 mouse.o\
