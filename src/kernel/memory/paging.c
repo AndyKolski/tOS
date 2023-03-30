@@ -19,6 +19,7 @@ typedef struct paging_entry_t {
 	uint64 accessed : 1; // Enabled by the CPU if a page is accessed
 	uint64 ignored : 1; // Ignored by the CPU, available for use
 	uint64 ps : 1; // Reserved for PML4 entries
+
 	uint64 global : 1; // If set, page is not flushed from the TLB when CR3 is loaded
 	uint64 ignored2 : 3; // Ignored by the CPU, available for use
 	uint64 addr : 40; // Address of next level page table
@@ -85,7 +86,7 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 		invalidateVirtualAddress(pml4_check);
 		
 		// Clear the new table
-		memset(indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, 0), 0, 4096);\
+		memset(indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, 0), 0, 4096);
 	}
 
 	paging_entry_t *pml3_check = indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, pml3_index);
@@ -144,6 +145,9 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 		.rw = (flags & FLAG_PAGE_WRITABLE) ? 1 : 0,
 		.user = (flags & FLAG_PAGE_USER) ? 1 : 0,
 		.nx = (flags & FLAG_PAGE_EXECUTABLE) ? 0 : 1,
+		.pwt = (flags & FLAG_PAGE_WRITETHROUGH_CACHE) ? 1 : 0,
+		.pcd = (flags & FLAG_PAGE_CACHE_DISABLE) ? 1 : 0,
+		.global = (flags & FLAG_PAGE_GLOBAL) ? 1 : 0,
 		.addr = (uint64)physicalAddress >> 12
 	};
 	invalidateVirtualAddress(pml1_check);

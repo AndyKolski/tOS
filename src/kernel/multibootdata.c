@@ -99,13 +99,12 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 }
 
 bootData_t *getBootData() {
-
 	return &bootData;
 }
 displayData_t *getDisplayData() {
 	printf("Framebuffer address: 0x%x, size: 0x%lx\n", displayData.framebufferPhysAddress, displayData.framebufferSize);
 
-	displayData.framebufferVirtAddress = mapPhysicalToKernel((void*)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE);
+	displayData.framebufferVirtAddress = mapPhysicalToKernel((void*)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
 	return &displayData;
 }
 

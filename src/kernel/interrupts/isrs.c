@@ -124,24 +124,25 @@ void fault_handler(struct regs *r) {
 
 			asm("movq %%cr2, %0" : "=r"(faultAddress));
 
-			printf(" A %s process caused a protection fault while %s a %s page at address 0x%08lx during %s.\n", \
+			printf(" A %s process caused a protection fault while %s a %s page at address 0x%08lx.\n", \
 				r->err_code & 1<<2 ? "user" : "kernel", \
 				r->err_code & 1<<1 ? "writing to" : "reading from", \
 				r->err_code & 1<<0 ? "present" : "non-present", \
-				faultAddress, \
-				r->err_code & 1<<4 ? "instruction fetch" : "data access");
-
+				faultAddress);
 			if (r->err_code & 1<<3) {
-				printf("	One or more reserved bits were set to 1.\n");
+				printf(" One or more reserved bits were set to 1.\n");
+			}
+			if (r->err_code & 1<<4) {
+				printf(" The fault occurred during instruction fetch.\n");
 			}
 			if (r->err_code & 1<<5) {
-				printf("	A protection-key violation occurred.\n");
+				printf(" A protection-key violation occurred.\n");
 			}
 			if (r->err_code & 1<<6) {
-				printf("	A shadow-stack access fault occurred.\n");
+				printf(" A shadow-stack access fault occurred.\n");
 			}
 			if (r->err_code & 1<<15) {
-				printf("	An SGX violation occurred.\n");
+				printf(" An SGX violation occurred.\n");
 			}
 
 		} else if (r->int_no == E_GENERAL_PROTECTION_FAULT && r->err_code != 0) {
@@ -150,7 +151,7 @@ void fault_handler(struct regs *r) {
 			}
 
 			char* faultTable;
-			switch ((r->err_code >> 1) & 0xb11) {
+			switch ((uint32)(r->err_code >> 1) & 0b11) {
 				case 0b00:
 					faultTable = "GDT";
 					break;
