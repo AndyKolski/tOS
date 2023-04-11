@@ -23,6 +23,9 @@ extern void* __OFFSET;
 
 #define XOR(A, B) (((A) || (B)) && !((A) && (B)))
 
+#define MIN(A, B) ((A) < (B) ? (A) : (B))
+#define MAX(A, B) ((A) > (B) ? (A) : (B))
+
 #define KiB (1024)
 #define MiB (KiB * 1024)
 #define GiB (MiB * 1024)
