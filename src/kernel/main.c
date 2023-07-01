@@ -14,9 +14,7 @@
 #include <time/time.h>
 
 int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
-	
 	puts("kmain() function called.");
-
 
 	puts("Initializing IDT...");
 	initIDT();
@@ -30,7 +28,6 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 
 	puts("Initializing basic paging...");
 	initPaging();
-	
 
 	puts("Parsing multiboot data...");
 	parseMultibootData(bootloaderMagic, multibootLocation);
@@ -42,11 +39,9 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 	puts("Initializing display...");
 	initDisplay();
 
-	printf("t/OS " __ARCH " test build " __GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " __CC_VERSION"\n");
+	printf("t/OS " __ARCH " test build " __GIT_VERSION ", compiled on " __DATE__ " at " __TIME__ " with " __CC_VERSION "\n");
 	printf("Booted by \"%s\" cmdline: \"%s\" magic: 0x%x\n", bootData->bootloaderName, bootData->cmdline, bootloaderMagic);
 
-	printf("Offset: 0x%lx\n", KERNEL_OFFSET);
-	
 	puts("Initializing time...");
 	initTime();
 	puts("Initializing mouse controller...");
@@ -59,12 +54,11 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 	printf("Testing printf: char: %c, string: %s, int: %i, negative int: %i, hex: 0x%x, hex 2: 0x%x\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe);
 
 	// enumeratePCIDevices();
-	
+
 	puts("OK");
 
-	
 	while (true) {
-		__asm__ volatile ("hlt"); // nothing to do, so we halt the processor until something needs to happen, which we deal with, and then halt again
+		__asm__ volatile("hlt");  // nothing to do, so we halt the processor until something needs to happen, which we deal with, and then halt again
 	}
 	return 0;
 }

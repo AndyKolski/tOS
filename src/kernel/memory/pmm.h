@@ -38,4 +38,4 @@ extern void* __BSS_END;
 
 void initPMM();
 
-void * getFreePhysicalPage();
+void* getFreePhysicalPage();
