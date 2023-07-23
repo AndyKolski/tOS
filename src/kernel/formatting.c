@@ -1,8 +1,8 @@
-#include <system.h>
+#include <ctype.h>
 #include <formatting.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#include <system.h>
 
 /// @brief Divides a number of bytes into a more human-readable unit
 /// @param numBytes The number of bytes to convert
@@ -44,7 +44,7 @@ uint32 getNumberLength(uint32 num, uint32 base) {
 	if (num == 0) {
 		return 1;
 	}
- 
+
 	uint32 digits = 0;
 	while (num != 0) {
 		num /= base;
@@ -54,10 +54,12 @@ uint32 getNumberLength(uint32 num, uint32 base) {
 	return digits;
 }
 
+#define bytesWide 16
+
 void hexDump(void *data, uint32 nBytes) {
-	#define bytesWide 16
 	char hexPrintBuffer[128] = {0};
 	char ASCIIPrintBuffer[128] = {0};
+	char tempTextBuffer[10] = {0};
 
 	uint32 maxNumWidth = getNumberLength(nBytes, 16);
 
@@ -71,31 +73,28 @@ void hexDump(void *data, uint32 nBytes) {
 	printf("\n");
 
 	repeatString(" ", maxNumWidth + 3);
-	repeatString("-", (bytesWide * 3) + (bytesWide/8) - 2); // Print a line of dashes to visually separate the data below from the 
+	repeatString("-", (bytesWide * 3) + (bytesWide / 8) - 2); // Print a line of dashes to visually separate the data below from the
 
 	printf("\n");
 
-
-	for (uint32 i = 0; i < nBytes; i+=bytesWide) {
+	for (uint32 i = 0; i < nBytes; i += bytesWide) { // Iterate through the data in chunks of bytesWide, printing each chunk on a new line
 		memset(hexPrintBuffer, 0, sizeof(hexPrintBuffer));
 		memset(ASCIIPrintBuffer, 0, sizeof(ASCIIPrintBuffer));
 
-
-		for (uint32 j = 0; j < bytesWide; j++) {
+		for (uint32 j = 0; j < bytesWide; j++) { // Iterate through each byte in the current chunk
 			uint8 thisByte;
 			if (j % 8 == 0 && j != 0) {
 				strcat(hexPrintBuffer, " ");
 			}
 
-			if (i+j >= nBytes) { // print blank spaces for past the end of the buffer
+			if (i + j >= nBytes) { // print blank spaces for past the end of the buffer
 				strcat(hexPrintBuffer, "   ");
-
 				continue;
 			} else {
-				thisByte = *(uint8 *)(data+i+j);
+				thisByte = *(uint8 *)(data + i + j);
 			}
 
-			char tempTextBuffer[10];
+			memset(tempTextBuffer, 0, sizeof(tempTextBuffer));
 
 			sprintf(tempTextBuffer, "%02x ", thisByte);
 			strcat(hexPrintBuffer, tempTextBuffer);
@@ -106,7 +105,6 @@ void hexDump(void *data, uint32 nBytes) {
 			} else {
 				strcat(ASCIIPrintBuffer, ".");
 			}
-
 		}
 
 		printf("%0*x : %s [%s]\n", maxNumWidth, i, hexPrintBuffer, ASCIIPrintBuffer);
