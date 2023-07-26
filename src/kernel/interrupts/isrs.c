@@ -71,7 +71,7 @@ void initISRs() {
 	idt_set_gate(31, (uintptr_t)isr31, GATE_INTERRUPT, 0);
 }
 
-char *exceptionMessages[] = {
+char *exceptionMessages[32] = {
 	"Division by Zero Exception",
 	"Debug Exception",
 	"Non Maskable Interrupt Exception",
@@ -103,8 +103,9 @@ char *exceptionMessages[] = {
 	"Reserved Exception",
 	"Reserved Exception",
 	"Reserved Exception",
-	"Reserved Exception"
+	"Reserved Exception",
 };
+
 void fault_handler(struct regs *r) {
 	if (r->int_no < 32) {
 		printf("\n [!!!] Unhandled %s (#%lu) - Error code: 0x%08lx\n", exceptionMessages[r->int_no], r->int_no, r->err_code);
@@ -116,13 +117,13 @@ void fault_handler(struct regs *r) {
 		printf(" R12: 0x%016lx R13: 0x%016lx R14: 0x%016lx R15: 0x%016lx\n", r->r12, r->r13, r->r14, r->r15);
 		printf(" RIP: 0x%016lx CS:  0x%04lx SS:  0x%04lx RFL: 0x%08lx\n", r->rip, r->cs, r->ss, r->rflags);
 
-
 		printf("Extra info:\n");
 
 		if (r->int_no == E_PAGE_FAULT) {
 			uint64 faultAddress;
 
-			asm("movq %%cr2, %0" : "=r"(faultAddress));
+			asm("movq %%cr2, %0"
+			    : "=r"(faultAddress));
 
 			printf(" A %s process caused a protection fault while %s a %s page at address 0x%08lx.\n", \
 				r->err_code & 1<<2 ? "user" : "kernel", \
@@ -132,25 +133,25 @@ void fault_handler(struct regs *r) {
 			if (r->err_code & 1<<3) {
 				printf(" One or more reserved bits were set to 1.\n");
 			}
-			if (r->err_code & 1<<4) {
+			if (r->err_code & 1 << 4) {
 				printf(" The fault occurred during instruction fetch.\n");
 			}
-			if (r->err_code & 1<<5) {
+			if (r->err_code & 1 << 5) {
 				printf(" A protection-key violation occurred.\n");
 			}
-			if (r->err_code & 1<<6) {
+			if (r->err_code & 1 << 6) {
 				printf(" A shadow-stack access fault occurred.\n");
 			}
-			if (r->err_code & 1<<15) {
+			if (r->err_code & 1 << 15) {
 				printf(" An SGX violation occurred.\n");
 			}
 
 		} else if (r->int_no == E_GENERAL_PROTECTION_FAULT && r->err_code != 0) {
-			if (r->err_code & 1<<0) {
+			if (r->err_code & 1 << 0) {
 				printf(" The fault originated externally to the processor.\n");
 			}
 
-			char* faultTable;
+			char *faultTable;
 			switch ((uint32)(r->err_code >> 1) & 0b11) {
 				case 0b00:
 					faultTable = "GDT";
@@ -165,7 +166,7 @@ void fault_handler(struct regs *r) {
 					faultTable = "IDT";
 					break;
 
-				default: 
+				default:
 					// GCC doesn't realize that the switch statement covers all possible values and insists
 					// we either do this or disable the relevant warning for this section.
 					assertf("This line should be unreachable!");
@@ -179,5 +180,4 @@ void fault_handler(struct regs *r) {
 		printf("\n [!!!] System halted.");
 		halt();
 	}
-
 }

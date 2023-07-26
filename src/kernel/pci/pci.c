@@ -13,7 +13,7 @@
 // Bits 1-0: Reserved
 
 #define PCI_CONFIG_ADDRESS 0xCF8
-#define PCI_CONFIG_DATA 0xCFC
+#define PCI_CONFIG_DATA    0xCFC
 
 uint32 enforceConfigReservedBits(uint32 config) {
 	if (config & 0x3) {
@@ -36,24 +36,24 @@ uint32 pciRead(uint32 address) {
 }
 
 uint32 pciReadConfig(uint8 bus, uint8 device, uint8 function, uint8 reg) {
-	uint32 address = 0x80000000 | (((uint32)bus) << 16) | (((uint32)device) << 11) | (((uint32)function) << 8) | (((uint32)reg) & 0xFC);
+	uint32 address = 0x80000000 | (((uint32)bus) << 16) | (((uint32)device) << 11) | (((uint32)function) << 8) | (((uint32)reg) << 2);
 	return pciRead(address);
 }
 
 void pciWriteConfig(uint8 bus, uint8 device, uint8 function, uint8 reg, uint32 data) {
-	uint32 address = 0x80000000 | (((uint32)bus) << 16) | (((uint32)device) << 11) | (((uint32)function) << 8) | (((uint32)reg) & 0xFC);
+	uint32 address = 0x80000000 | (((uint32)bus) << 16) | (((uint32)device) << 11) | (((uint32)function) << 8) | (((uint32)reg) << 2);
 	pciWrite(address, data);
 }
 
-char* getDeviceType (uint8 classCode, uint8 subclass, uint8 interface) {
+char *getDeviceType(uint8 classCode, uint8 subclass, uint8 interface) {
 	switch (classCode) {
-		case 0x00: 
+		case 0x00:
 			switch (subclass) {
 				case 0x00: return "Non-VGA Unspecified Device";
 				case 0x01: return "VGA-Compatible Device";
 				default: return "Unknown / Reserved Unspecified Device";
 			}
-		case 0x01: 
+		case 0x01:
 			switch (subclass) {
 				case 0x00: return "SCSI Bus Controller";
 				case 0x01: return "IDE Controller";
@@ -230,7 +230,7 @@ char* getDeviceType (uint8 classCode, uint8 subclass, uint8 interface) {
 				case 0x80: return "Other Data Acquisition/Signal Processing Controller";
 				default: return "Unknown / Reserved Data Acquisition/Signal Processing Controller";
 			}
-		
+
 		case 0x12: return "Processing Accelerator";
 		case 0x13: return "Non-Essential Instrumentation";
 		case 0x40: return "Co-Processor";

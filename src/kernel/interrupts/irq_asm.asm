@@ -96,4 +96,3 @@ irq_common_stub:
 	pop_cpu_state
 
 	iretq
-			

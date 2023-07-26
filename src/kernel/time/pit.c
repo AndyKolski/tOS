@@ -1,8 +1,8 @@
-#include <io.h>
 #include <interrupts/irq.h>
-#include <time/pit.h>
+#include <io.h>
 #include <stdio.h>
 #include <system.h>
+#include <time/pit.h>
 #include <time/time.h>
 
 #define PIT_CTL 0x43
@@ -13,8 +13,8 @@ void configurePIT(uint8 timerSelect, uint8 timerCTL, uint32 freq, uint8 mode) {
 	uint32 Div = 1193182 / freq;
 	outb(PIT_CTL, timerSelect | WRITE_WORD | mode);
 
-	outb(timerCTL, (uint8) (Div));
-	outb(timerCTL, (uint8) (Div >> 8));	
+	outb(timerCTL, (uint8)(Div));
+	outb(timerCTL, (uint8)(Div >> 8));
 }
 
 void PIT_handler(struct regs *r __attribute__((__unused__))) {
