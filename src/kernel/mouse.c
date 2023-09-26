@@ -1,38 +1,40 @@
 #include <display.h>
-#include <io.h>
 #include <interrupts/irq.h>
+#include <io.h>
 #include <keyboard.h>
 #include <stdio.h>
 #include <string.h>
 #include <system.h>
 
-#define IRQ_MOUSE 12
-#define I8042_BUFFER 0x60
-#define I8042_STATUS 0x64
-#define I8042_ACK 0xFA
-#define I8042_BUFFER_FULL 0x01
-#define I8042_WHICH_BUFFER 0x20
-#define I8042_MOUSE_BUFFER 0x20
+#define IRQ_MOUSE             12
+#define I8042_BUFFER          0x60
+#define I8042_STATUS          0x64
+#define I8042_ACK             0xFA
+#define I8042_BUFFER_FULL     0x01
+#define I8042_WHICH_BUFFER    0x20
+#define I8042_MOUSE_BUFFER    0x20
 #define I8042_KEYBOARD_BUFFER 0x00
 
-#define PS2MOUSE_SET_RESOLUTION 0xE8
-#define PS2MOUSE_STATUS_REQUEST 0xE9
-#define PS2MOUSE_REQUEST_SINGLE_PACKET 0xEB
-#define PS2MOUSE_GET_DEVICE_ID 0xF2
-#define PS2MOUSE_SET_SAMPLE_RATE 0xF3
-#define PS2MOUSE_ENABLE_PACKET_STREAMING 0xF4
+#define PS2MOUSE_SET_RESOLUTION           0xE8
+#define PS2MOUSE_STATUS_REQUEST           0xE9
+#define PS2MOUSE_REQUEST_SINGLE_PACKET    0xEB
+#define PS2MOUSE_GET_DEVICE_ID            0xF2
+#define PS2MOUSE_SET_SAMPLE_RATE          0xF3
+#define PS2MOUSE_ENABLE_PACKET_STREAMING  0xF4
 #define PS2MOUSE_DISABLE_PACKET_STREAMING 0xF5
-#define PS2MOUSE_SET_DEFAULTS 0xF6
-#define PS2MOUSE_RESEND 0xFE
-#define PS2MOUSE_RESET 0xFF
+#define PS2MOUSE_SET_DEFAULTS             0xF6
+#define PS2MOUSE_RESEND                   0xFE
+#define PS2MOUSE_RESET                    0xFF
 
-#define PS2MOUSE_INTELLIMOUSE_ID 0x03
+#define PS2MOUSE_INTELLIMOUSE_ID          0x03
 #define PS2MOUSE_INTELLIMOUSE_EXPLORER_ID 0x04
 
 void prepare_for_input() {
-	while (true) {
+	uint32 timeout = 100000;
+	while (timeout) {
 		if (inb(I8042_STATUS) & 1)
 			return;
+		timeout--;
 	}
 }
 uint8 mouse_read() {
@@ -62,7 +64,7 @@ void wait_then_write(uint8 port, uint8 data) {
 
 void expect_ack(char* location) {
 	char message[64] = "Not ack in ";
-	assert(strlen(message) + strlen(location) + 1 <= (int32) sizeof(message), "location string too long");
+	assert(strlen(message) + strlen(location) + 1 <= (int32)sizeof(message), "location string too long");
 	strcat(message, location);
 
 	uint8 data = mouse_read();
@@ -80,15 +82,14 @@ void set_sample_rate(uint8 rate) {
 	expect_ack("get_sample_rate 2");
 }
 
-
-#define BL 1<<0
-#define BR 1<<1
-#define BM 1<<2
-#define AO 1<<3
-#define XS 1<<4
-#define YS 1<<5
-#define XO 1<<6
-#define YO 1<<7
+#define BL 1 << 0
+#define BR 1 << 1
+#define BM 1 << 2
+#define AO 1 << 3
+#define XS 1 << 4
+#define YS 1 << 5
+#define XO 1 << 6
+#define YO 1 << 7
 
 bool mouseIsPresent = false;
 bool hasScrollWheel = false;
@@ -132,7 +133,7 @@ MouseEvent parseMouseData() {
 
 	if (hasFiveButtons && hasScrollWheel) {
 		event.dZ = (mouseBuffer[3] & 0x0f);
-		if (event.dZ == 15) {// -1 in 4 bits
+		if (event.dZ == 15) { // -1 in 4 bits
 			event.dZ = -1;
 		}
 		event.FourthButton = (mouseBuffer[3] & 0x10) == 0x10;
@@ -158,13 +159,13 @@ MouseEvent parseMouseData() {
 	return event;
 }
 
-void mouse_handler(struct regs *r __attribute__((__unused__))) {
+void mouse_handler(struct regs* r __attribute__((__unused__))) {
 	uint8 status = inb(I8042_STATUS);
 	if (!(((status & I8042_WHICH_BUFFER) == I8042_MOUSE_BUFFER) && (status & I8042_BUFFER_FULL)))
 		return;
 
 	uint8 data = inb(I8042_BUFFER);
-	
+
 	mouseBuffer[mouseBufferPosition] = data;
 	MouseEvent event = {0};
 
@@ -182,8 +183,7 @@ void mouse_handler(struct regs *r __attribute__((__unused__))) {
 		mouseBufferPosition++;
 	}
 
-	if(isFinishedPacket) {
-
+	if (isFinishedPacket) {
 		// fillRect(xPos, yPos, 5, 5, GColBLACK);
 		// fillRect(getScreenWidth()-20, zPos, 20, 10, GColBLACK);
 
@@ -242,7 +242,7 @@ void initMouse() {
 	mouse_write(PS2MOUSE_REQUEST_SINGLE_PACKET);
 	uint8 maybe_ack = mouse_read();
 	if (maybe_ack == I8042_ACK) {
-		//Mouse is available. Ignore next 3 packets
+		// Mouse is available. Ignore next 3 packets
 		mouse_read();
 		mouse_read();
 		mouse_read();
@@ -255,7 +255,7 @@ void initMouse() {
 		wait_then_write(I8042_STATUS, 0x60);
 		wait_then_write(I8042_BUFFER, status | 3); // enable mouse & keyboard ints
 
-		 // Set default settings.
+		// Set default settings.
 		mouse_write(PS2MOUSE_SET_DEFAULTS);
 		expect_ack("initMouse set defaults");
 
@@ -272,8 +272,8 @@ void initMouse() {
 			device_id = get_device_id();
 		}
 		if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
-		   hasScrollWheel = true;
-	   }
+			hasScrollWheel = true;
+		}
 
 		if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
 			// Try to enable 5 buttons as well!
@@ -283,7 +283,7 @@ void initMouse() {
 			device_id = get_device_id();
 		}
 		if (device_id == PS2MOUSE_INTELLIMOUSE_EXPLORER_ID) {
-		   hasFiveButtons = true;
+			hasFiveButtons = true;
 		}
 		irq_install_handler(12, mouse_handler);
 		printf("Detected mouse configuration - scroll wheel: %s, buttons: %i\n", (hasScrollWheel ? "true" : "false"), (hasFiveButtons ? 5 : 3));
