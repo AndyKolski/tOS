@@ -3,33 +3,33 @@
 #include <system.h>
 
 uint32 intDivCeil(uint32 a, uint32 b) { // calculates ceil(a/b) without using any floating point math
-	if (a%b == 0) {
-		return a/b;
+	if (a % b == 0) {
+		return a / b;
 	} else {
-		return a/b + 1;
+		return a / b + 1;
 	}
 }
 
 void sti() {
-	__asm__ __volatile__ ("sti"); 
+	asm volatile("sti");
 }
 void cli() {
-	__asm__ __volatile__ ("cli"); 
+	asm volatile("cli");
 }
 
 void halt() {
 	cli();
 	while (true) {
-		__asm__ volatile ("hlt");
+		asm volatile("hlt");
 	}
 }
 
 void reboot() {
-	 uint8_t good = 0x02;
-	 while (good & 0x02)
-		  good = inb(0x64);
-	 outb(0x64, 0xFE);
-	 halt();
+	uint8_t good = 0x02;
+	while (good & 0x02)
+		good = inb(0x64);
+	outb(0x64, 0xFE);
+	halt();
 }
 
 void _assert(char *file, uint32 line, const char *func, char *msg, bool conf) {
@@ -49,8 +49,7 @@ void panicNoLineNumber(char *msg) {
 	halt();
 }
 
-uintptr_t __stack_chk_guard = 0x681a7261; // Random number, picked using random.org
+uintptr_t __stack_chk_guard = 0xc87cd33f0308ac33; // Random number, picked using random.org
 void __stack_chk_fail(void) {
-	panicNoLineNumber("Stack smashing detected!");	
+	panicNoLineNumber("Stack smashing detected!");
 }
-

@@ -74,31 +74,33 @@ SECTION .bootstrap.text
 
 [BITS 32]
 
-NoLongMode: 
-	; This CPU doesn't support long mode - halt since we can't continue
+CPUNotSupported: 
+	; We can't continue because we need features that this CPU does not have.
 
-	; TODO: Implement a way to print a message to the screen, so we can tell the user why we're halting
-
-	hlt
-	jmp NoLongMode ; Loop forever
-
-global bootstrap_entry
-bootstrap_entry:
-
-	; In the bootstrap, we only set up enough paging structures to map the C kernel properly, then it can set up 
-	; anything else it needs for itself.
-
-	; We map the first two megabytes of memory near the top of the address space (-2GB), which is where the C kernel
-	; expects to be loaded.
-	; We also temporarily identity map the first two megabytes of memory so that nothing breaks when we enable paging.
-
-	; Once we are running code in the upper memory mapping, we can remove the identity mapping, jump 
-	; to the C kernel and forget about the bootstrap.
-
-
-
+	; If this computer has a VGA text buffer, we can easily print an error message to the screen.
 	
-	cli ; Ensure that all interrupts are disabled
+	mov eax, 0xb8000 ; VGA text buffer
+
+	and SI, 0xff
+	or SI, 0x4e00 ; Yellow on red
+
+	mov dword [eax], 0x4e724e45 ; Write the text "ER"
+	mov word [eax+4], SI ; Write the error number
+
+loopForever:
+	hlt
+	jmp loopForever
+
+
+global bootstrap_entry 
+bootstrap_entry:
+	;  This is where our code first starts running on boot. 
+	;  The bootloader set up a minimal environment for us, but we need to do everything else on our own.
+
+	; In the bootstrap we set up the call stack, then we set up just enough paging structures to map the C 
+	; kernel before we clean up after ourself, and call the C kernel.
+	
+	cli ; Ensure that all interrupts are disabled, just to be safe
 	
 	; Set up the stack (we don't have paging on yet, so we need to subtract the offset)
 	mov esp, (stack_top-OFFSET) 
@@ -107,16 +109,42 @@ bootstrap_entry:
 	push eax
 	push ebx
 
-	; Check that long mode is available, and if it isn't then jump to the NoLongMode label
-	mov eax, 0x80000000
+
+	; Check that the CPU supports the CPUID instruction
+	pushfd ; We have to go through the stack to access the flags register, for some reason.
+	pop eax
+	mov ebx, eax ; Save the original value of the flags register
+
+	xor eax, (1 << 21) ; Flip the ID bit
+
+	push eax ; write the new value to the register, then read the register again
+	popfd
+	pushfd
+	pop eax
+
+
+	mov SI, "1" ; print 1 on screen if this is the reason we stop
+
+	xor eax, ebx		; Check if the toggled ID bit stuck. If it hasn't, the cpu doesn't support the CPUID instruction.
+	jz CPUNotSupported	; CPUs without the CPUID instruction don't support 64-bit / long mode either, and the kernel is
+						; 64-bit only, we can't continue.
+
+
+	mov SI, "2" ; print 2 on screen if this is the reason we stop 
+
+	; First we need to check if the CPU supports the CPUID instruction we need to check for long mode
+	mov eax, 0x80000000 ; Get the highest CPUID function supported
     cpuid
     cmp eax, 0x80000001
-    jb NoLongMode
+    jb CPUNotSupported
+
+	mov SI, "3" ; print 3 on screen if this is the reason we stop
  	
+	; Now we can finally check for long mode itself
 	mov eax, 0x80000001
     cpuid
     test edx, (1 << 29)
-    jz NoLongMode
+    jz CPUNotSupported
 
 
 	; Set CR0.PG to 0 to ensure paging is disabled before we configure it
@@ -125,7 +153,7 @@ bootstrap_entry:
 	mov cr0, eax
 
 	
-	
+	; Set up the temporary identity mapping for the first 2 MiB of memory
 	extern pml4_table
 	extern pml3_table_highest
 	extern pml2_table_kernel
@@ -141,15 +169,28 @@ bootstrap_entry:
 
 	mov [(pml4_table - OFFSET) + ecx], eax
 
+
 	mov ecx, 0 ; first GB of memory
-	mov eax, 0 ; first GB of memory
+	mov eax, (pml2_table_low - OFFSET)
+
+	and eax, 0xFFFF_F000
+	or eax, (PRESENT | WRITABLE)
+
+	imul ecx, 8
+
+	mov [(pml3_table_low - OFFSET) + ecx], eax
+
+
+	mov ecx, 0 ; first 2MiB of memory
+	mov eax, 0
 
 	and eax, 0xFFFF_F000
 	or eax, (PRESENT | WRITABLE | PAGESIZE)
 
 	imul ecx, 8
 
-	mov [(pml3_table_low - OFFSET) + ecx], eax
+	mov [(pml2_table_low - OFFSET) + ecx], eax
+
 
 
 
@@ -168,13 +209,13 @@ bootstrap_entry:
 	or  eax, (1 << 8) | (1 << 11) ; set LME bit and NXE bits
 	wrmsr
  
-	; Set CR0.PG to 1 to enable paging and CR0.WP to 1 to write protect for the kernel
+	; Set CR0.PG to 1 to enable paging and CR0.WP to 1 to make write protect apply to supervisor mode too
 	mov eax, cr0
 	or  eax, (1 << 31) | (1 << 16)  ; set PG and WP bits
 	mov cr0, eax
 	
-	; Paging and long mode should be enabled now, but we're in 32-bit compatibility mode
 
+	; Paging and long mode should be enabled now, but we're still in 32-bit compatibility mode
 
 	lgdt [gdt_ptr_offset - OFFSET]
 
@@ -195,7 +236,7 @@ bootstrap_low64:
 	mov fs, ax
 	mov gs, ax
 
-	mov rdx, 0x7fffffff_fffffe00 ; Address mitmask
+	mov rdx, 0x7fffffff_fffffe00 ; Address bitmask
 
 	; map the first two megabytes of memory to the top of the address space
 
@@ -247,11 +288,9 @@ bootstrap_low64:
 		jne fillPML1
 	
 
-
 	; Reload cr3 to flush the TLB
 	mov rax, cr3
 	mov cr3, rax
-
 
 
 	; Jump to the high portion of the bootstrap, where we remove the identity mapping and jump to the C kernel
@@ -263,11 +302,6 @@ SECTION .text
 extern kmain
 
 bootstrap_high64:
-	nop
-	nop
-	nop
-	nop
-	nop
 	mov rdx, OFFSET
 	add rsp, rdx ; Switch to accessing the stack using the high mapping
 
@@ -317,4 +351,5 @@ ALIGN 4096
 ; For the temporary identity mapping
 pml3_table_low:
 	resq 512
-
+pml2_table_low:
+	resq 512

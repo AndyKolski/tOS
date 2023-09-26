@@ -4,22 +4,22 @@
 
 #pragma once
 
-typedef uint8_t			uint8;
-typedef uint16_t		uint16;
-typedef uint32_t		uint32;
-typedef uint64_t		uint64;
-typedef int8_t			int8;
-typedef int16_t			int16;
-typedef int32_t			int32;
-typedef int64_t			int64;
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
+typedef uint64_t uint64;
+typedef int8_t int8;
+typedef int16_t int16;
+typedef int32_t int32;
+typedef int64_t int64;
 
-extern void* _gdt_kernel_code_segment;
-#define gdt_kernel_code_segment (uint64)&_gdt_kernel_code_segment
-extern void* _gdt_kernel_data_segment;
-#define gdt_kernel_data_segment (uint64)&_gdt_kernel_data_segment
+extern void *_gdt_kernel_code_segment;
+#define gdt_kernel_code_segment (uint64) & _gdt_kernel_code_segment
+extern void *_gdt_kernel_data_segment;
+#define gdt_kernel_data_segment (uint64) & _gdt_kernel_data_segment
 
-extern void* __OFFSET;
-#define KERNEL_OFFSET (uintptr_t)&__OFFSET
+extern void *__OFFSET;
+#define KERNEL_OFFSET (uintptr_t) & __OFFSET
 
 #define XOR(A, B) (((A) || (B)) && !((A) && (B)))
 
@@ -43,9 +43,8 @@ struct regs {
 
 uint32 intDivCeil(uint32 a, uint32 b);
 
+// Calculates round(a/b) without using any floating point math
 #define intDivRound(a, b) ((a + (b / 2)) / b)
-// calculates round(a/b) without using any floating point math
-
 
 void sti();
 void cli();
@@ -54,12 +53,21 @@ void halt();
 
 void reboot();
 
-#define C_ASSERT(e) typedef char __C_ASSERT__[(e)?1:-1]
+#define C_ASSERT(e) typedef char __C_ASSERT__[(e) ? 1 : -1]
 
 void _assert(char *file, uint32 line, const char *func, char *msg, bool conf);
-void  _panic(char *file, uint32 line, const char *func, char *msg);
+void _panic(char *file, uint32 line, const char *func, char *msg);
 
 #define assert(conf, msg) _assert(__FILE__, __LINE__, __func__, msg, conf)
 #define assertf(msg)      _assert(__FILE__, __LINE__, __func__, msg, false)
 
-#define panic(msg)         _panic(__FILE__, __LINE__, __func__, msg)
+#define panic(msg) _panic(__FILE__, __LINE__, __func__, msg)
+
+#define DEBUG_LOGGING true
+
+#define DEBUG(...)           \
+	do {                     \
+		if (DEBUG_LOGGING) { \
+			__VA_ARGS__      \
+		}                    \
+	} while (0)

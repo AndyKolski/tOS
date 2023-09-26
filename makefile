@@ -3,6 +3,8 @@ ARCH := x86_64
 
 OSDIR := $(shell pwd)
 
+default: all
+
 include src/kernel/makefile # for KERNEL_OBJS
 include src/lib/makefile # for LIB_OBJS
 
@@ -93,8 +95,6 @@ ASFLAGS = -felf64
 
 .PHONY: all iso clean run debug dumpvars info
 
-info:
-	@echo "To build and run $(NAME), use the following command: make run"
 
 dumpvars:
 	$(info $$CC is [${CC}])

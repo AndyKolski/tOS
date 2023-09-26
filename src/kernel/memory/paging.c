@@ -12,28 +12,22 @@
 
 /// @brief Reloads CR3 register to flush the TLB. Global pages are not flushed.
 void reloadCR3() {
-	__asm__ volatile("movq %%cr3, %%rax; movq %%rax, %%cr3"
-	                 :
-	                 :
-	                 : "rax");
+	asm volatile("movq %%cr3, %%rax; movq %%rax, %%cr3" : : : "rax");
 }
 
 /// @brief Invalidates a single page in the TLB.
 /// @param virtualAddress The virtual address to invalidate.
 void invalidateVirtualAddress(void* virtualAddress) {
-	__asm__ volatile("invlpg (%0)"
-	                 :
-	                 : "r"(virtualAddress)
-	                 : "memory");
+	asm volatile("invlpg (%0)" : : "r"(virtualAddress) : "memory");
 }
 
-__attribute__((aligned(4096))) volatile paging_entry_t pml4_table[512] = {0};  // Root page table, set in CR3
+__attribute__((aligned(PAGE_SIZE))) volatile paging_entry_t pml4_table[512] = {0}; // Root page table, set in CR3
 
-__attribute__((aligned(4096))) volatile paging_entry_t pml3_table_highest[512] = {0};  // Highest PML3 table, controls the upper 512 GiB of memory
+__attribute__((aligned(PAGE_SIZE))) volatile paging_entry_t pml3_table_highest[512] = {0}; // Highest PML3 table, controls the upper 512 GiB of memory
 
-__attribute__((aligned(4096))) volatile paging_entry_t pml2_table_kernel[512] = {0};  // Controls the second highest GiB of memory. The kernel resides in the first 2 MiB of this table.
+__attribute__((aligned(PAGE_SIZE))) volatile paging_entry_t pml2_table_kernel[512] = {0}; // Controls the second highest GiB of memory. The kernel resides in the first 2 MiB of this table.
 
-__attribute__((aligned(4096))) volatile paging_entry_t pml1_table_kernel[512] = {0};  // Controls the first 2 MiB of the second-highest GiB of memory. This table controls access to the kernel.
+__attribute__((aligned(PAGE_SIZE))) volatile paging_entry_t pml1_table_kernel[512] = {0}; // Controls the first 2 MiB of the second-highest GiB of memory. This table controls access to the kernel.
 
 uint64 lowestKernelPML1 = UINT64_MAX;
 uint64 highestKernelPML1 = 0;
@@ -44,7 +38,7 @@ uint64 highestKernelPML1 = 0;
 										((uint64)(virtualAddress) >> 12 & 0x1ff)
 
 #define REC_POS        510
-#define RECURSIVE_ADDR 0xffffff0000000000  // We create a recursive mapping in pml4[REC_POS]
+#define RECURSIVE_ADDR 0xffffff0000000000 // We create a recursive mapping in pml4[REC_POS]
 
 void getIndicesFromVirtualAddress(void* virtualAddress, uint64* pml4_index, uint64* pml3_index, uint64* pml2_index, uint64* pml1_index) {
 	uint64 addr = (uint64)virtualAddress;
@@ -67,38 +61,38 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 
 	paging_entry_t* pml4_check = indicesToVirtRecursive(REC_POS, REC_POS, REC_POS, pml4_index);
 	if (!pml4_check->present) {
-		// printf("PML4 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index);
+		DEBUG(printf("PML4 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index););
 		uint64 newTable = (uint64)getFreePhysicalPage();
-		// printf("New table at %lx\n", newTable);
+		DEBUG(printf("New table at %lx\n", newTable););
 		*pml4_check = (paging_entry_t){.present = 1, .rw = 1, .user = 0, .nx = 1, .addr = newTable >> 12};
 		invalidateVirtualAddress(pml4_check);
 
 		// Clear the new table
-		memset(indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, 0), 0, 4096);
+		memset(indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, 0), 0, PAGE_SIZE);
 	}
 
 	paging_entry_t* pml3_check = indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, pml3_index);
 	if (!pml3_check->present) {
-		// printf("PML3 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index);
+		DEBUG(printf("PML3 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index););
 		uint64 newTable = (uint64)getFreePhysicalPage();
-		// printf("New table at %lx\n", newTable);
+		DEBUG(printf("New table at %lx\n", newTable););
 		*pml3_check = (paging_entry_t){.present = 1, .rw = 1, .user = 0, .nx = 1, .addr = newTable >> 12};
 		invalidateVirtualAddress(pml3_check);
 
 		// Clear the new table
-		memset(indicesToVirtRecursive(REC_POS, pml4_index, pml3_index, 0), 0, 4096);
+		memset(indicesToVirtRecursive(REC_POS, pml4_index, pml3_index, 0), 0, PAGE_SIZE);
 	}
 
 	paging_entry_t* pml2_check = indicesToVirtRecursive(REC_POS, pml4_index, pml3_index, pml2_index);
 	if (!pml2_check->present) {
-		// printf("PML2 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index);
+		DEBUG(printf("PML2 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index););
 		uint64 newTable = (uint64)getFreePhysicalPage();
-		// printf("New table at %lx\n", newTable);
+		DEBUG(printf("New table at %lx\n", newTable););
 		*pml2_check = (paging_entry_t){.present = 1, .rw = 1, .user = 0, .nx = 1, .addr = newTable >> 12};
 		invalidateVirtualAddress(pml2_check);
 
 		// Clear the new table
-		memset(indicesToVirtRecursive(pml4_index, pml3_index, pml2_index, 0), 0, 4096);
+		memset(indicesToVirtRecursive(pml4_index, pml3_index, pml2_index, 0), 0, PAGE_SIZE);
 	}
 
 	paging_entry_t* pml1_check = indicesToVirtRecursive(pml4_index, pml3_index, pml2_index, pml1_index);
@@ -128,7 +122,7 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 	invalidateVirtualAddress(pml1_check);
 }
 
-void getVirtualAddressInfo(void* virtualAddress) {
+void* getVirtualAddressInfo(void* virtualAddress) {
 	printf("Info for virtual address 0x%p:\n", virtualAddress);
 
 	uint64 pml4_index;
@@ -140,29 +134,33 @@ void getVirtualAddressInfo(void* virtualAddress) {
 	paging_entry_t* pml4_check = indicesToVirtRecursive(REC_POS, REC_POS, REC_POS, pml4_index);
 	if (!pml4_check->present) {
 		printf("PML4 entry (%d, %d, %d, %ld) not present\n", REC_POS, REC_POS, REC_POS, pml4_index);
-		return;
+		return NULL;
 	}
 
 	paging_entry_t* pml3_check = indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, pml3_index);
 	if (!pml3_check->present) {
 		printf("PML3 entry (%d, %d, %ld, %ld) not present\n", REC_POS, REC_POS, pml4_index, pml3_index);
-		return;
+		return NULL;
 	}
 
 	paging_entry_t* pml2_check = indicesToVirtRecursive(REC_POS, pml4_index, pml3_index, pml2_index);
 	if (!pml2_check->present) {
 		printf("PML2 entry (%d, %ld, %ld, %ld) not present\n", REC_POS, pml4_index, pml3_index, pml2_index);
-		return;
+		return NULL;
 	}
 
 	paging_entry_t* pml1_check = indicesToVirtRecursive(pml4_index, pml3_index, pml2_index, pml1_index);
 	if (!pml1_check->present) {
 		printf("PML1 entry (%ld, %ld, %ld, %ld) not present\n", pml4_index, pml3_index, pml2_index, pml1_index);
-		return;
+		return NULL;
 	}
 
-	printf("Virtual address is mapped to physical address 0x%p\n", (void*)(uintptr_t)(pml1_check->addr << 12));
+	void* physAddr = (void*)(uintptr_t)(pml1_check->addr << 12);
+
+	printf("Virtual address is mapped to physical address 0x%p\n", physAddr);
 	printf("Managed by recursive mapping (%ld %ld %ld %ld)\n", pml4_index, pml3_index, pml2_index, pml1_index);
+
+	return physAddr;
 }
 
 void mapRegion(void* physicalAddress, void* virtualAddress, size_t length, uint64 flags) {
@@ -235,31 +233,31 @@ void initPaging() {
 	printf("Kernel bss    start: 0x%p, end: 0x%p, size: %lu %s\n", BSS_START, BSS_END, numBytesToHuman(BSS_SIZE), numBytesToUnit(BSS_SIZE));
 
 	for (void* addr = TEXT_START; addr < TEXT_END; addr += PAGE_SIZE) {
-		// printf("[ TEXT ] phys addr: 0x%p, index: %lu\n", addr-KERNEL_OFFSET, ((uint64)addr-KERNEL_OFFSET) / PAGE_SIZE);
-		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT | FLAG_PAGE_EXECUTABLE);  // Map kernel text as executable and read-only
+		DEBUG(printf("[ TEXT ] phys addr: 0x%p, index: %lu\n", addr - KERNEL_OFFSET, ((uint64)addr - KERNEL_OFFSET) / PAGE_SIZE););
+		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT | FLAG_PAGE_EXECUTABLE); // Map kernel text as executable and read-only
 	}
 
 	for (void* addr = RODATA_START; addr < RODATA_END; addr += PAGE_SIZE) {
-		// printf("[RODATA] phys addr: 0x%p, index: %lu\n", addr-KERNEL_OFFSET, ((uint64)addr-KERNEL_OFFSET) / PAGE_SIZE);
-		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT);  // Map kernel rodata as read-only
+		DEBUG(printf("[RODATA] phys addr: 0x%p, index: %lu\n", addr - KERNEL_OFFSET, ((uint64)addr - KERNEL_OFFSET) / PAGE_SIZE););
+		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT); // Map kernel rodata as read-only
 	}
 
 	for (void* addr = DATA_START; addr < DATA_END; addr += PAGE_SIZE) {
-		// printf("[ DATA ] phys addr: 0x%p, index: %lu\n", addr-KERNEL_OFFSET, ((uint64)addr-KERNEL_OFFSET) / PAGE_SIZE);
-		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE);  // Map kernel data as read-write
+		DEBUG(printf("[ DATA ] phys addr: 0x%p, index: %lu\n", addr - KERNEL_OFFSET, ((uint64)addr - KERNEL_OFFSET) / PAGE_SIZE););
+		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE); // Map kernel data as read-write
 	}
 
 	for (void* addr = BSS_START; addr < BSS_END; addr += PAGE_SIZE) {
-		// printf("[ BSS  ] phys addr: 0x%p, index: %lu\n", addr-KERNEL_OFFSET, ((uint64)addr-KERNEL_OFFSET) / PAGE_SIZE);
-		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE);  // Map kernel bss as read-write
+		DEBUG(printf("[ BSS  ] phys addr: 0x%p, index: %lu\n", addr - KERNEL_OFFSET, ((uint64)addr - KERNEL_OFFSET) / PAGE_SIZE););
+		mapPage(VIRT_TO_INDICES(addr), addr - KERNEL_OFFSET, FLAG_PAGE_KERNEL | FLAG_PAGE_GLOBAL | FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE); // Map kernel bss as read-write
 	}
 
 	printf("First kernel page index: %lu, last kernel page index: %lu\n", lowestKernelPML1, highestKernelPML1);
 
-	for (uint64 i = 0; i < lowestKernelPML1; i++) {  // Remove unnecessary pages before the kernel
+	for (uint64 i = 0; i < lowestKernelPML1; i++) { // Remove unnecessary pages before the kernel
 		*indicesToVirtRecursive(511, 510, 0, i) = (paging_entry_t){0};
 	}
-	for (uint64 i = highestKernelPML1 + 1; i < 512; i++) {  // Remove unnecessary pages after the kernel
+	for (uint64 i = highestKernelPML1 + 1; i < 512; i++) { // Remove unnecessary pages after the kernel
 		*indicesToVirtRecursive(511, 510, 0, i) = (paging_entry_t){0};
 	}
 

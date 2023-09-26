@@ -1,20 +1,20 @@
-#include <time/pit.h>
-#include <time/rtc.h>
 #include <stdio.h>
 #include <system.h>
+#include <time/pit.h>
+#include <time/rtc.h>
 #include <time/time.h>
 
 const char *monthNames[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 const char *weekDayNames[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 
 const int daysPerMonth[2][12] = {
-	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }, // Normal year
-	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }  // Leap year
+	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}, // Normal year
+	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}  // Leap year
 };
 
-#define SECONDS_PER_DAY 86400 // 60 * 60 * 24
-#define	SECONDS_PER_HOUR 3600 // 60 * 60
-#define SECONDS_PER_MINUTE 60 // 60
+#define SECONDS_PER_DAY    86400 // 60 * 60 * 24
+#define SECONDS_PER_HOUR   3600  // 60 * 60
+#define SECONDS_PER_MINUTE 60    // 60
 
 #define DAYS_PER_NORMAL_YEAR 365
 #define DAYS_PER_LEAP_YEAR   366
@@ -41,7 +41,7 @@ void setTime(time_t time) {
 inline void PIT_Tick() {
 	PIT_ticks++;
 	// if (PIT_ticks % PIT_tps == 0) {
-	
+
 	// }
 }
 
@@ -63,12 +63,12 @@ void initTime() {
 
 void printHumanTime(time_t time) {
 	HumanTime hTime = getHumanTime(time);
-	printf("%s, %s %i %u %i:%02i:%02i %s", weekDayNames[hTime.weekday-1], monthNames[hTime.month-1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
+	printf("%s, %s %i %u %i:%02i:%02i %s", weekDayNames[hTime.weekday - 1], monthNames[hTime.month - 1], hTime.day, hTime.year, hTime.hours > 12 ? hTime.hours - 12 : hTime.hours, hTime.minutes, hTime.seconds, hTime.hours >= 12 ? "PM" : "AM");
 }
 
 time_t getTimeFromHuman(HumanTime time) {
 	time_t calculatedValue = 0;
-	for(uint8 i = 0; i < (time.year - 1970); i++){
+	for (uint8 i = 0; i < (time.year - 1970); i++) {
 		if (isLeapYear(1970 + i)) {
 			calculatedValue += 366 * SECONDS_PER_DAY;
 		} else {
@@ -78,11 +78,11 @@ time_t getTimeFromHuman(HumanTime time) {
 
 	bool leap = isLeapYear(time.year);
 
-	for(uint8 i = 0; i < time.month-1; i++){
+	for (uint8 i = 0; i < time.month - 1; i++) {
 		calculatedValue += daysPerMonth[leap][i] * SECONDS_PER_DAY;
 	}
 
-	calculatedValue += (time.day-1) * SECONDS_PER_DAY;
+	calculatedValue += (time.day - 1) * SECONDS_PER_DAY;
 
 	calculatedValue += time.hours * SECONDS_PER_HOUR;
 	calculatedValue += time.minutes * SECONDS_PER_MINUTE;
@@ -99,7 +99,7 @@ int8 timeZoneOffset = 0; //-7; //-6;
 HumanTime getHumanTime(time_t timestamp) {
 	HumanTime returnTime = {0};
 
-	timestamp += timeZoneOffset*3600;
+	timestamp += timeZoneOffset * 3600;
 
 	int second = timestamp % 60;
 	int minute = timestamp / SECONDS_PER_MINUTE % 60;
@@ -107,18 +107,17 @@ HumanTime getHumanTime(time_t timestamp) {
 
 	int daysSinceEpoch = timestamp / SECONDS_PER_DAY;
 
-	
 	int dayOfYear = 0;
 	uint32 year = 1970;
 	int remainingDays = daysSinceEpoch;
-	while(true) {
+	while (true) {
 		bool leap = isLeapYear(year);
-		if(leap && remainingDays >= DAYS_PER_LEAP_YEAR) {
-				remainingDays -= DAYS_PER_LEAP_YEAR;
-				year++;
+		if (leap && remainingDays >= DAYS_PER_LEAP_YEAR) {
+			remainingDays -= DAYS_PER_LEAP_YEAR;
+			year++;
 		} else if (!leap && remainingDays >= DAYS_PER_NORMAL_YEAR) {
-				remainingDays -= DAYS_PER_NORMAL_YEAR;
-				year++;
+			remainingDays -= DAYS_PER_NORMAL_YEAR;
+			year++;
 		} else {
 			dayOfYear = remainingDays;
 			break;
@@ -135,7 +134,7 @@ HumanTime getHumanTime(time_t timestamp) {
 		dayOfMonth -= daysPerMonth[leap][month];
 	}
 	month++;
-	dayOfMonth++;	
+	dayOfMonth++;
 
 	returnTime.seconds = second;
 	returnTime.minutes = minute;
@@ -158,9 +157,9 @@ uint64 getUptimeMs() {
 }
 
 void wait(uint64 ms) {
-	uint64 eticks = PIT_ticks + ((ms*PIT_tps)/1000);
-	while(PIT_ticks < eticks) {
-		__asm__ volatile ("hlt");
+	uint64 eticks = PIT_ticks + ((ms * PIT_tps) / 1000);
+	while (PIT_ticks < eticks) {
+		asm volatile("hlt");
 	}
 	return;
 }
