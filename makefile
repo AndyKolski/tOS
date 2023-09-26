@@ -172,7 +172,7 @@ run: out/$(NAME).iso
 
 startdebugvm: out/$(NAME).iso
 	killall $(QEMU) || true
-	xterm -e "$(QEMU) $(QEMUDEBUG) $(QEMUARGS)" &
+	gnome-terminal --tab --title="QEMU GDB Server Log" --command="$(QEMU) $(QEMUDEBUG) $(QEMUARGS)"
 
 
 debug: startdebugvm
