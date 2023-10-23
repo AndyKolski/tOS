@@ -117,35 +117,27 @@ iso: out/$(NAME).iso
 clean:
 	rm -rf out isodir
 
-out/obj/kernel:
-	mkdir out/obj/kernel/arch/$(ARCH) -p
-	mkdir out/obj/kernel/interrupts -p
-	mkdir out/obj/kernel/memory -p
-	mkdir out/obj/kernel/time -p
-	mkdir out/obj/kernel/pci -p
-mkdir out/obj/lib:
-	mkdir out/obj/lib -p
-	mkdir out/obj/lib/printf -p
-isodir/boot/grub:
-	mkdir isodir/boot/grub -p
-
 
 out/obj/kernel/%.o: src/kernel/%.asm
 	@echo Kernel Assemble: $@
+	@mkdir -p $(@D)
 	@$(AS) -o $@ $< $(ASFLAGS) 
 
 out/obj/kernel/%.o: src/kernel/%.c
 	@echo Kernel Compile: $@
+	@mkdir -p $(@D)
 	@$(CC) -o $@ $< $(CFLAGS)
 
 out/obj/lib/%.o: src/lib/%.c
 	@echo Lib Compile: $@
+	@mkdir -p $(@D)
 	@$(CC) -o $@ $< $(CFLAGS) $(LIBCFLAGS)
 
 	
 
-out/$(NAME).bin: out/obj/kernel out/obj/lib $(ALLOBJS) linker.ld
+out/$(NAME).bin: $(ALLOBJS) linker.ld
 	@echo Linking: $@
+	@mkdir -p $(@D)
 	@$(LD) $(ALLOBJS) -T linker.ld $(LDFLAGS) -o $@
 
 	@if ! grub-file --is-x86-multiboot2 $@; then \
@@ -157,13 +149,16 @@ out/$(NAME).bin: out/obj/kernel out/obj/lib $(ALLOBJS) linker.ld
 	fi
 
 
-isodir/boot/$(NAME).bin: out/$(NAME).bin isodir/boot/grub
+isodir/boot/$(NAME).bin: out/$(NAME).bin
+	@mkdir -p $(@D)
 	cp $< $@
 
-isodir/boot/grub/grub.cfg: isodir/boot/grub
+isodir/boot/grub/grub.cfg:
+	@mkdir -p $(@D)
 	@echo -e 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot2 /boot/$(NAME).bin Hello\n}' > $@
 
 out/$(NAME).iso: isodir/boot/$(NAME).bin isodir/boot/grub/grub.cfg
+	@mkdir -p $(@D)
 	grub-mkrescue -o $@ isodir --compress gz --quiet -volid "$(NAME) Boot Disk"
 
 
@@ -172,7 +167,7 @@ run: out/$(NAME).iso
 
 startdebugvm: out/$(NAME).iso
 	killall $(QEMU) || true
-	gnome-terminal --tab --title="QEMU GDB Server Log" --command="$(QEMU) $(QEMUDEBUG) $(QEMUARGS)"
+	gnome-terminal --tab --title="QEMU GDB Server Log" -- $(QEMU) $(QEMUDEBUG) $(QEMUARGS)
 
 
 debug: startdebugvm
