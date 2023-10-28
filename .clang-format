@@ -1,0 +1,65 @@
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+BasedOnStyle: Google
+IndentWidth: 4
+TabWidth: 4
+UseTab: AlignWithSpaces
+
+terOpenBracket: BlockIndent
+AlignConsecutiveBitFields: true
+AlignConsecutiveMacros: true
+
+AllowAllArgumentsOnNextLine: false
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: true
+
+BinPackArguments: true
+BinPackParameters: true
+
+BitFieldColonSpacing: Both
+
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterExternBlock: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyNamespace: true
+  SplitEmptyRecord: true
+
+BreakBeforeBraces: Attach
+BreakBeforeBinaryOperators: true
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+BreakStringLiterals: true
+
+ColumnLimit: 200
+
+SpacesBeforeTrailingComments: 1
+SpacesInSquareBrackets: false
+SortIncludes: CaseSensitive
+
+LineEnding: LF
+
+InsertNewlineAtEOF: true
+
+QualifierOrder: ["inline", "static", "type", "const", "volatile"]
