@@ -29,10 +29,11 @@ REQUIRED_BINS := $(AS) $(QEMU) $(LD) $(CC)
 $(foreach bin,$(REQUIRED_BINS),\
     $(if $(shell command -v $(bin) 2> /dev/null),,$(error Please install `$(bin)`. Try running the script Toolchain/build.sh)))
 
-override QEMUARGS := -drive format=raw,media=cdrom,file=out/$(NAME).iso\
--boot d\
+override QEMUARGS := -drive format=raw,media=disk,file=out/$(NAME).iso\
+-boot c\
 -debugcon stdio\
 -m 2048M\
+-M q35\
 -audiodev pa,id=audio0\
 -machine pcspk-audiodev=audio0\
 -rtc base=localtime\
