@@ -19,7 +19,7 @@ typedef struct bootData_t {
 } bootData_t;
 
 typedef struct memoryMapEntry_t {
-	uint64 baseAddress;
+	void *baseAddress;
 	uint64 length;
 	uint32 type;
 } memoryMapEntry_t;
@@ -29,6 +29,8 @@ typedef struct memoryMapEntry_t {
 #define MEMORY_ACPI_RECLAIMABLE 3
 #define MEMORY_NVS              4
 #define MEMORY_BADRAM           5
+
+static const __attribute__((unused)) char *memoryTypeString[] = {"", "Available", "Reserved", "ACPI Reclaimable", "ACPI non-volatile storage", "Bad RAM"};
 
 typedef struct memoryMap_t {
 	uint32 entryCount;

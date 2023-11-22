@@ -55,8 +55,8 @@ void reboot();
 
 #define C_ASSERT(e) typedef char __C_ASSERT__[(e) ? 1 : -1]
 
-void _assert(char *file, uint32 line, const char *func, char *msg, bool conf);
-void _panic(char *file, uint32 line, const char *func, char *msg);
+void _assert(const char *file, uint32 line, const char *func, const char *msg, bool conf);
+void _panic(const char *file, uint32 line, const char *func, const char *msg);
 
 #define assert(conf, msg) _assert(__FILE__, __LINE__, __func__, msg, conf)
 #define assertf(msg)      _assert(__FILE__, __LINE__, __func__, msg, false)

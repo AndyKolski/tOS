@@ -8,11 +8,11 @@
 
 memoryMap_t* bootloaderMemoryMap = NULL;
 
-bool bumpPMM = false;  // If this is true, we can use the bump allocator
+bool bumpPMM = false; // If this is true, we can use the bump allocator
 
 // Bump allocator:
 
-void* bumpAllocator = NULL;  // The bump allocator will allocate memory in reverse order, starting at the end of usable memory
+void* bumpAllocator = NULL; // The bump allocator will allocate memory in reverse order, starting at the end of usable memory
 
 void* bumpAllocatorBeginning = NULL;
 // Points to the first page allocated by the bump allocator.
@@ -64,15 +64,15 @@ void initPMM() {
 	// usable regions for a yet-to-be-implemented more advanced allocator
 
 	for (uint64 goOver = 1; goOver <= 2; goOver++) {
-		for (uint64 entryIndex = 0;
-		     entryIndex < bootloaderMemoryMap->entryCount; entryIndex++) {
-			memoryMapEntry_t* entry
-				= bootloaderMemoryMap->entries
-			      + (entryIndex * bootloaderMemoryMap->entrySize);
+		for (uint64 entryIndex = 0; entryIndex < bootloaderMemoryMap->entryCount; entryIndex++) {
+			memoryMapEntry_t* entry = bootloaderMemoryMap->entries + (entryIndex * bootloaderMemoryMap->entrySize);
 
-			// printf("%li: Region %lu: base: 0x%p, size: %lu %s, type: %u\n", goOver, entryIndex + 1, (void*)entry->baseAddress, numBytesToHuman(entry->length), numBytesToUnit(entry->length), entry->type);
+			if (goOver == 1) {
+				DEBUG(printf("Region #%lu: base: 0x%p, size: %4lu %s, type: %s\n", entryIndex + 1, entry->baseAddress, numBytesToHuman(entry->length), numBytesToUnit(entry->length),
+				             memoryTypeString[entry->type]););
+			}
 
-			if (entry->type == MEMORY_AVAILABLE && entry->baseAddress >= MiB) {
+			if (entry->type == MEMORY_AVAILABLE && entry->baseAddress >= (void*)MiB) {
 				if (goOver == 1) {
 					BA_CONSIDER_REGION(entry->baseAddress, entry->length);
 					availableRegions++;

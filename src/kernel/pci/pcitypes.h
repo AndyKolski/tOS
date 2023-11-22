@@ -1,4 +1,4 @@
-char *getDeviceType(uint8 classCode, uint8 subclass, uint8 interface) {
+const char *getDeviceType(uint8 classCode, uint8 subclass, uint8 interface) {
 	switch (classCode) {
 		case 0x00:
 			switch (subclass) {

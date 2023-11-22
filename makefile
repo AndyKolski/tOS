@@ -61,7 +61,8 @@ CWARNINGFLAGS := -Wall\
 -Werror\
 -Wcast-align\
 -Winline\
--Wparentheses
+-Wparentheses\
+-Wwrite-strings
 
 
 # -g: include debug symbols, -Og: optimize for debugging, -c: Compile code, but don't link it yet, -ffreestanding: Assume non-hosted environment,

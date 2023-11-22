@@ -71,7 +71,7 @@ void initISRs() {
 	idt_set_gate(31, (uintptr_t)isr31, GATE_INTERRUPT, 0);
 }
 
-char *exceptionMessages[32] = {
+const char *exceptionMessages[32] = {
 	"Division by Zero Exception",
 	"Debug Exception",
 	"Non Maskable Interrupt Exception",
@@ -122,8 +122,7 @@ void fault_handler(struct regs *r) {
 		if (r->int_no == E_PAGE_FAULT) {
 			uint64 faultAddress;
 
-			asm("movq %%cr2, %0"
-			    : "=r"(faultAddress));
+			asm("movq %%cr2, %0" : "=r"(faultAddress));
 
 			printf(" A %s process caused a protection fault while %s a %s page at address 0x%08lx.\n", \
 				r->err_code & 1<<2 ? "user" : "kernel", \
@@ -151,20 +150,12 @@ void fault_handler(struct regs *r) {
 				printf(" The fault originated externally to the processor.\n");
 			}
 
-			char *faultTable;
+			const char *faultTable;
 			switch ((uint32)(r->err_code >> 1) & 0b11) {
-				case 0b00:
-					faultTable = "GDT";
-					break;
-				case 0b01:
-					faultTable = "IDT";
-					break;
-				case 0b10:
-					faultTable = "LDT";
-					break;
-				case 0b11:
-					faultTable = "IDT";
-					break;
+				case 0b00: faultTable = "GDT"; break;
+				case 0b01: faultTable = "IDT"; break;
+				case 0b10: faultTable = "LDT"; break;
+				case 0b11: faultTable = "IDT"; break;
 
 				default:
 					// GCC doesn't realize that the switch statement covers all possible values and insists

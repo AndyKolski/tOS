@@ -62,7 +62,7 @@ void wait_then_write(uint8 port, uint8 data) {
 	outb(port, data);
 }
 
-void expect_ack(char* location) {
+void expect_ack(const char* location) {
 	char message[64] = "Not ack in ";
 	assert(strlen(message) + strlen(location) + 1 <= (int32)sizeof(message), "location string too long");
 	strcat(message, location);

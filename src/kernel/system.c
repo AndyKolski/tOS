@@ -32,19 +32,19 @@ void reboot() {
 	halt();
 }
 
-void _assert(char *file, uint32 line, const char *func, char *msg, bool conf) {
+void _assert(const char *file, uint32 line, const char *func, const char *msg, bool conf) {
 	if (!conf) {
 		printf("\n [!!!] Assertion failed at %s:%u in function %s - %s\n", file, line, func, msg);
 		halt();
 	}
 }
 
-void _panic(char *file, uint32 line, const char *func, char *msg) {
+void _panic(const char *file, uint32 line, const char *func, const char *msg) {
 	printf("\n [!!!] Kernel panic at %s:%u in function %s - %s\n", file, line, func, msg);
 	halt();
 }
 
-void panicNoLineNumber(char *msg) {
+void panicNoLineNumber(const char *msg) {
 	printf("\n [!!!] Kernel panic - %s\n", msg);
 	halt();
 }
