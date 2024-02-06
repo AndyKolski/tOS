@@ -161,7 +161,7 @@ isodir/boot/grub/grub.cfg:
 
 out/$(NAME).iso: isodir/boot/$(NAME).bin isodir/boot/grub/grub.cfg
 	@mkdir -p $(@D)
-	grub-mkrescue -o $@ isodir --compress gz --quiet -volid "$(NAME) Boot Disk"
+	grub-mkrescue -o $@ isodir --quiet -volid "$(NAME) Boot Disk"
 
 
 run: out/$(NAME).iso
