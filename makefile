@@ -157,7 +157,7 @@ isodir/boot/$(NAME).bin: out/$(NAME).bin
 
 isodir/boot/grub/grub.cfg:
 	@mkdir -p $(@D)
-	@echo -e 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tmultiboot2 /boot/$(NAME).bin Hello\n}' > $@
+	@echo -e 'set default="0"\nset timeout="1"\nmenuentry "$(NAME)" {\n\tinsmod all_video\n\tmultiboot2 /boot/$(NAME).bin Hello\n}' > $@
 
 out/$(NAME).iso: isodir/boot/$(NAME).bin isodir/boot/grub/grub.cfg
 	@mkdir -p $(@D)
