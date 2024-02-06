@@ -26,6 +26,8 @@ extern void *__OFFSET;
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
+#define ARRAY_NUM_ELEMS(x) (sizeof(x) / sizeof((x)[0]))
+
 #define KiB (1024)
 #define MiB (KiB * 1024)
 #define GiB (MiB * 1024)
@@ -38,8 +40,6 @@ struct regs {
 
 	uint64 rip, cs, rflags, rsp, ss;
 };
-
-
 
 uint32 intDivCeil(uint32 a, uint32 b);
 
