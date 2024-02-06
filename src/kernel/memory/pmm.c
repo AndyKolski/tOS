@@ -68,8 +68,13 @@ void initPMM() {
 			memoryMapEntry_t* entry = bootloaderMemoryMap->entries + (entryIndex * bootloaderMemoryMap->entrySize);
 
 			if (goOver == 1) {
-				DEBUG(printf("Region #%lu: base: 0x%p, size: %4lu %s, type: %s\n", entryIndex + 1, entry->baseAddress, numBytesToHuman(entry->length), numBytesToUnit(entry->length),
-				             memoryTypeString[entry->type]););
+				const char* typeName;
+				if (entry->type < ARRAY_NUM_ELEMS(memoryTypeStringsArray)) { // Sometimes we are given invalid types. We don't want to crash because of that
+					typeName = memoryTypeStringsArray[entry->type];
+				} else {
+					typeName = "Invalid Type";
+				}
+				DEBUG(printf("Region #%lu: base: 0x%p, size: %4lu %s, type: %s\n", entryIndex + 1, entry->baseAddress, numBytesToHuman(entry->length), numBytesToUnit(entry->length), typeName););
 			}
 
 			if (entry->type == MEMORY_AVAILABLE && entry->baseAddress >= (void*)MiB) {
