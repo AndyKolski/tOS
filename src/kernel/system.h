@@ -28,9 +28,9 @@ extern void *__OFFSET;
 
 #define ARRAY_NUM_ELEMS(x) (sizeof(x) / sizeof((x)[0]))
 
-#define KiB (1024)
-#define MiB (KiB * 1024)
-#define GiB (MiB * 1024)
+#define KiB (1024UL)
+#define MiB (KiB * 1024UL)
+#define GiB (MiB * 1024UL)
 
 /* This defines what the stack looks like after an ISR was running */
 struct regs {

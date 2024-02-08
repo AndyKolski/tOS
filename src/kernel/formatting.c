@@ -8,11 +8,11 @@
 /// @param numBytes The number of bytes to convert
 /// @return The number of bytes in a more appropriate unit
 uint64 numBytesToHuman(uint64 numBytes) {
-	if (numBytes >= GiB) {
+	if (numBytes >= GiB * 2) {
 		return intDivRound(numBytes, GiB);
-	} else if (numBytes >= MiB) {
+	} else if (numBytes >= MiB * 2) {
 		return intDivRound(numBytes, MiB);
-	} else if (numBytes >= KiB) {
+	} else if (numBytes >= KiB * 2) {
 		return intDivRound(numBytes, KiB);
 	} else {
 		return numBytes;
@@ -23,11 +23,11 @@ uint64 numBytesToHuman(uint64 numBytes) {
 /// @param numBytes The number of bytes to convert
 /// @return The unit of the number of bytes
 const char *numBytesToUnit(uint64 numBytes) {
-	if (numBytes >= GiB) {
+	if (numBytes >= GiB * 2) {
 		return "GiB";
-	} else if (numBytes >= MiB) {
+	} else if (numBytes >= MiB * 2) {
 		return "MiB";
-	} else if (numBytes >= KiB) {
+	} else if (numBytes >= KiB * 2) {
 		return "KiB";
 	} else {
 		return "B";
