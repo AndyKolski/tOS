@@ -41,6 +41,10 @@ override QEMUARGS := -drive format=raw,media=disk,file=out/$(NAME).iso\
 ${QEMUARGS}\
 #-serial file:serial.log #
 
+QEMUEFI = -smbios type=0,uefi=on\
+-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2-ovmf/x64/OVMF_CODE.fd
+
+
 # -gdb: listen for gdb connection on port 1234, -S: Start with the VM paused, -d: enable additional debug logging, -no-shutdown: don't exit on guest shutdown, -no-reboot: don't allow reboots (including triple faults)
 QEMUDEBUG = -s\
 -S\
@@ -95,7 +99,7 @@ LDFLAGS = -nostdlib -lgcc -z max-page-size=0x1000
 ASFLAGS = -felf64
 
 
-.PHONY: all iso clean run debug dumpvars info
+.PHONY: all iso clean run debug dumpvars 
 
 
 dumpvars:
@@ -107,6 +111,7 @@ dumpvars:
 	$(info $$LIB_OBJS is [${LIB_OBJS}])
 	$(info $$CFLAGS is [${CFLAGS}])
 	$(info $$OSDIR is [${OSDIR}])
+	$(info $$QEMUARGS is [${QEMUARGS}])
 	@true
 
 
@@ -167,6 +172,9 @@ out/$(NAME).iso: isodir/boot/$(NAME).bin isodir/boot/grub/grub.cfg
 run: out/$(NAME).iso
 	$(QEMU) $(QEMUARGS)
 
+efirun: QEMUARGS += $(QEMUEFI)
+efirun: run
+
 startdebugvm: out/$(NAME).iso
 	killall $(QEMU) || true
 	gnome-terminal --tab --title="QEMU GDB Server Log" -- $(QEMU) $(QEMUDEBUG) $(QEMUARGS)
@@ -174,3 +182,6 @@ startdebugvm: out/$(NAME).iso
 
 debug: startdebugvm
 	gdb -iex "file out/$(NAME).bin" -iex "target remote 127.0.0.1:1234"
+
+efidebug: QEMUARGS += $(QEMUEFI)
+efidebug: debug
