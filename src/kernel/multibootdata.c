@@ -43,6 +43,8 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 
 	assert(multibootInformationStructureData->total_size < 8 * KiB, "Multiboot data is too large (> 8 KiB)");
 
+	DEBUG(printf("Multiboot data total size: %lu %s\n", numBytesToHuman(multibootInformationStructureData->total_size), numBytesToUnit(multibootInformationStructureData->total_size)););
+
 	// hexDump(multibootData, multibootInformationStructureData->total_size);
 
 	struct multiboot_header_tag *tag = multibootData + sizeof(struct multibootInformationStructureData);
@@ -83,7 +85,7 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 				// printf("Memory map: version %d, %d entries, each entry is %d bytes\n", mmapTag->entry_version, memMap.entryCount, mmapTag->entry_size);
 				break;
 
-			default:  // Ignore all other tags
+			default: // Ignore all other tags
 				break;
 		}
 
@@ -101,7 +103,8 @@ displayData_t *getDisplayData() {
 	printf("Framebuffer address: 0x%x, size: 0x%lx\n", displayData.framebufferPhysAddress, displayData.framebufferSize);
 
 	if (!isFramebufferMapped) {
-		displayData.framebufferVirtAddress = mapPhysicalToKernel((void *)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
+		displayData.framebufferVirtAddress
+			= mapPhysicalToKernel((void *)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
 		isFramebufferMapped = true;
 	}
 	return &displayData;
