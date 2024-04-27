@@ -34,6 +34,10 @@ const char *numBytesToUnit(uint64 numBytes) {
 	}
 }
 
+const char *boolToString(bool b) {
+	return b ? "true" : "false";
+}
+
 void repeatString(const char *string, uint32 nTimes) {
 	for (uint32 i = 0; i < nTimes; i++) {
 		printf("%s", string);

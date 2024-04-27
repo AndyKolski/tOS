@@ -22,7 +22,7 @@ uint16 getPortFromNumber(uint8 com) {
 		case 4:
 			return COM4;
 		default:
-			assertf("Invalid COM number");
+			panic("Invalid COM number");
 			return 0;
 	}
 }
@@ -38,7 +38,7 @@ uint8 bitsPerCharFromNumber(uint8 number) {
 		case 8:
 			return 0b11;
 		default:
-			assertf("Invalid number of bits per character");
+			panic("Invalid number of bits per character");
 			return 0;
 	}
 }

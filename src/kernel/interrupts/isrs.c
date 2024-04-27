@@ -160,7 +160,7 @@ void fault_handler(struct regs *r) {
 				default:
 					// GCC doesn't realize that the switch statement covers all possible values and insists
 					// we either do this or disable the relevant warning for this section.
-					assertf("This line should be unreachable!");
+					panic("This line should be unreachable!");
 					faultTable = "unknown descriptor table";
 					break;
 			}

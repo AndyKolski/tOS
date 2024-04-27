@@ -50,17 +50,17 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 	struct multiboot_header_tag *tag = multibootData + sizeof(struct multibootInformationStructureData);
 	struct multiboot_tag_string *stringTag;
 	while (tag->type != MULTIBOOT_TAG_TYPE_END) {
-		// printf("Found tag with type: %d, size: %d\n", tag->type, tag->size);
+		DEBUG(printf("Found tag with type: %d, size: %d\n", tag->type, tag->size););
 		switch (tag->type) {
 			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
 				stringTag = (struct multiboot_tag_string *)tag;
 				bootData.bootloaderName = stringTag->string;
-				// printf("Bootloader name: %s\n", bootData.bootloaderName);
+				DEBUG(printf("Bootloader name: %s\n", bootData.bootloaderName););
 				break;
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
 				stringTag = (struct multiboot_tag_string *)tag;
 				bootData.cmdline = stringTag->string;
-				// printf("Command line: %s\n", bootData.cmdline);
+				DEBUG(printf("Command line: %s\n", bootData.cmdline););
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
@@ -73,7 +73,7 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 				displayData.pitch = framebufferTag->common.framebuffer_pitch;
 				displayData.depth = framebufferTag->common.framebuffer_bpp / 8;
 				// We wait to page in the framebuffer until it's needed and when advanced paging is available
-				// printf("Framebuffer: %d x %d, depth: %d, pitch: %d\n", displayData.width, displayData.height, displayData.depth, displayData.pitch);
+				DEBUG(printf("Framebuffer: %d x %d, depth: %d, pitch: %d\n", displayData.width, displayData.height, displayData.depth, displayData.pitch););
 				break;
 
 			case MULTIBOOT_TAG_TYPE_MMAP:
@@ -82,7 +82,7 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 				memMap.entryCount = (mmapTag->size - sizeof(struct multiboot_tag_mmap)) / mmapTag->entry_size;
 				memMap.entrySize = mmapTag->entry_size;
 				memMap.entries = (memoryMapEntry_t *)mmapTag->entries;
-				// printf("Memory map: version %d, %d entries, each entry is %d bytes\n", mmapTag->entry_version, memMap.entryCount, mmapTag->entry_size);
+				DEBUG(printf("Memory map: version %d, %d entries, each entry is %d bytes\n", mmapTag->entry_version, memMap.entryCount, mmapTag->entry_size););
 				break;
 
 			default: // Ignore all other tags
@@ -106,6 +106,8 @@ displayData_t *getDisplayData() {
 		displayData.framebufferVirtAddress
 			= mapPhysicalToKernel((void *)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
 		isFramebufferMapped = true;
+	} else {
+		displayData.framebufferVirtAddress = (void *)0xB8000;
 	}
 	return &displayData;
 }

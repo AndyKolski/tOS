@@ -109,6 +109,8 @@ typedef struct CommonHeader {
 	uint8 BIST;
 } CommonHeader;
 
+COMPILE_TIME_ASSERT(sizeof(CommonHeader) == 16, PCI_COMMON_HEADER_MUST_BE_16_BYTES);
+
 void probePCIDevice(uint8 bus, uint8 device, uint8 function) {
 	printf("Probing PCI device %x:%x:%x\n", bus, device, function);
 

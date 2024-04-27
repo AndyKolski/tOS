@@ -415,7 +415,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 			e1Prefix = false;
 			keyData.VKeyCode = KEY_Invalid;
 			isKeyDownEvent = true;
-			assertf("Unexpected E1 code");
+			panic("Unexpected E1 code");
 		}
 	} else {
 		keyData = scancodeLookup[scancode];	

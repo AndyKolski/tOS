@@ -1,4 +1,6 @@
 #include <interrupts/idt.h>
+#include <interrupts/isrs.h>
+#include <interrupts/pic.h>
 #include <io.h>
 #include <stdio.h>
 #include <system.h>
@@ -23,26 +25,27 @@ extern void irq15();
 void *irq_routines[16] = {0};
 
 void irq_install_handler(int irq, void (*handler)(struct regs *r)) {
+	assert(irq >= 0 && irq < 16, "Invalid IRQ number");
 	irq_routines[irq] = handler;
 }
 
 void initIRQs() {
-	idt_set_gate(32, (uintptr_t)irq0, GATE_INTERRUPT, 0);
-	idt_set_gate(33, (uintptr_t)irq1, GATE_INTERRUPT, 0);
-	idt_set_gate(34, (uintptr_t)irq2, GATE_INTERRUPT, 0);
-	idt_set_gate(35, (uintptr_t)irq3, GATE_INTERRUPT, 0);
-	idt_set_gate(36, (uintptr_t)irq4, GATE_INTERRUPT, 0);
-	idt_set_gate(37, (uintptr_t)irq5, GATE_INTERRUPT, 0);
-	idt_set_gate(38, (uintptr_t)irq6, GATE_INTERRUPT, 0);
-	idt_set_gate(39, (uintptr_t)irq7, GATE_INTERRUPT, 0);
-	idt_set_gate(40, (uintptr_t)irq8, GATE_INTERRUPT, 0);
-	idt_set_gate(41, (uintptr_t)irq9, GATE_INTERRUPT, 0);
-	idt_set_gate(42, (uintptr_t)irq10, GATE_INTERRUPT, 0);
-	idt_set_gate(43, (uintptr_t)irq11, GATE_INTERRUPT, 0);
-	idt_set_gate(44, (uintptr_t)irq12, GATE_INTERRUPT, 0);
-	idt_set_gate(45, (uintptr_t)irq13, GATE_INTERRUPT, 0);
-	idt_set_gate(46, (uintptr_t)irq14, GATE_INTERRUPT, 0);
-	idt_set_gate(47, (uintptr_t)irq15, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 0, (uintptr_t)irq0, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 1, (uintptr_t)irq1, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 2, (uintptr_t)irq2, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 3, (uintptr_t)irq3, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 4, (uintptr_t)irq4, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 5, (uintptr_t)irq5, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 6, (uintptr_t)irq6, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 7, (uintptr_t)irq7, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 8, (uintptr_t)irq8, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 9, (uintptr_t)irq9, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 10, (uintptr_t)irq10, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 11, (uintptr_t)irq11, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 12, (uintptr_t)irq12, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 13, (uintptr_t)irq13, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 14, (uintptr_t)irq14, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 15, (uintptr_t)irq15, GATE_INTERRUPT, 0);
 }
 
 void irq_handler(struct regs *r) {
@@ -55,12 +58,9 @@ void irq_handler(struct regs *r) {
 		printf("\n [!!!] Unhandled IRQ: %lu\n", r->int_no - 32);
 	}
 
-
 	// send an EOI (end of interrupt) command to the PICs.
-	if (r->int_no >= 40)
-	{
-		outb(0xA0, 0x20);
+	if (r->int_no - 32 >= 8) {
+		outb(PIC2_COMMAND_PORT, PIC_COMMAND_EOI);
 	}
-	outb(0x20, 0x20);
+	outb(PIC1_COMMAND_PORT, PIC_COMMAND_EOI);
 }
-	

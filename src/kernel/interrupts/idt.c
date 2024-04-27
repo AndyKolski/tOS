@@ -15,14 +15,14 @@ typedef struct interruptDescriptor {
 	uint32 reserved;
 } __attribute__((packed)) interruptDescriptor;
 
-C_ASSERT(sizeof(interruptDescriptor) == 16);
+COMPILE_TIME_ASSERT(sizeof(interruptDescriptor) == 16, IDT_ENTRY_MUST_BE_16_BYTES);
 
 typedef struct idt_ptr {
 	uint16 size;
 	uint64 address;
 } __attribute__((packed)) idt_ptr;
 
-C_ASSERT(sizeof(idt_ptr) == 10);
+COMPILE_TIME_ASSERT(sizeof(idt_ptr) == 10, IDT_POINTER_STRUCT_MUST_BE_10_BYTES);
 
 __attribute__((aligned(0x10))) static interruptDescriptor idt[256] = {0};
 idt_ptr idt_pointer = {0};

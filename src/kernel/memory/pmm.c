@@ -44,7 +44,7 @@ void* getPage() {
 		return ba_getPage(PAGE_SIZE);
 	} else {
 		// We haven't initialised the PMM yet, so we can't allocate memory
-		assertf("Attempted to allocate memory before the PMM was initialised");
+		panic("Attempted to allocate memory before the PMM was initialised");
 		return NULL;
 	}
 }

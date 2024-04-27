@@ -1,3 +1,4 @@
+#include <interrupts/isrs.h>
 #include <system.h>
 
 #pragma once

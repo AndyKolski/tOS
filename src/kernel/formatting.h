@@ -5,6 +5,8 @@
 uint64 numBytesToHuman(uint64 numBytes);
 const char *numBytesToUnit(uint64 numBytes);
 
+const char *boolToString(bool b);
+
 void repeatString(const char *string, uint32 nTimes);
 
 uint32 getNumberLength(uint32 num, uint32 base);
