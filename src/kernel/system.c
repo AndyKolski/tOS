@@ -24,11 +24,20 @@ void halt() {
 	}
 }
 
+#define I8042_BUFFER 0x60
+#define I8042_STATUS 0x64
+
+#define I8042_RESET 0xFE
 void reboot() {
-	uint8_t good = 0x02;
-	while (good & 0x02)
-		good = inb(0x64);
-	outb(0x64, 0xFE);
+	cli();
+
+	uint8_t status = inb(I8042_STATUS);
+	while (status & 0b00000010) {
+		inb(I8042_BUFFER);
+		status = inb(I8042_STATUS);
+	}
+	outb(I8042_STATUS, I8042_RESET);
+
 	halt();
 }
 
