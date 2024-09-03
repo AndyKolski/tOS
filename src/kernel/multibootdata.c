@@ -91,6 +91,13 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 
 		tag = (void *)tag + ((tag->size + 7) & ~7ul);
 	}
+
+	if (!displayData.isGraphicalFramebuffer) {
+		displayData.framebufferPhysAddress = 0xB8000;
+		displayData.framebufferSize = 80 * 25 * 2;
+		displayData.width = 80;
+		displayData.height = 25;
+	}
 }
 
 bootData_t *getBootData() {
@@ -106,8 +113,6 @@ displayData_t *getDisplayData() {
 		displayData.framebufferVirtAddress
 			= mapPhysicalToKernel((void *)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
 		isFramebufferMapped = true;
-	} else {
-		displayData.framebufferVirtAddress = (void *)0xB8000;
 	}
 	return &displayData;
 }
