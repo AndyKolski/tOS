@@ -1,16 +1,17 @@
+#include <memory/memregion.h>
 #include <system.h>
 
 #pragma once
 
 typedef struct displayData_t {
-	bool isGraphicalFramebuffer;   // If true, the framebuffer is graphical. If false, it's a text console
-	void *framebufferVirtAddress;  // The virtual address that the framebuffer is mapped to. Use this to access the framebuffer
-	uint32 framebufferPhysAddress; // Don't access this address directly, use framebufferVirtAddress instead
-	uint64 framebufferSize;        // The size of the framebuffer, in bytes
-	uint32 width;                  // The width of the framebuffer, in pixels if graphical, in characters if text
-	uint32 height;                 // The height of the framebuffer, in pixels if graphical, in characters if text
-	uint32 depth;                  // The number of bytes per pixel
-	uint32 pitch;                  // The number of bytes between one pixel and the one directly below it
+	bool isGraphicalFramebuffer;       // If true, the framebuffer is graphical. If false, it's a text console
+	memregion_t framebufferVirtRegion; // The virtual memory region that the framebuffer is mapped to. Use this to access the framebuffer
+	memregion_t framebufferPhysRegion; // The physical address that the framebuffer is mapped to. Don't access this address directly, use framebufferVirtAddress instead
+	bool isFramebufferMapped;          // If true, the framebuffer is mapped to a virtual address. If false, it's not mapped
+	uint32 width;                      // The width of the framebuffer, in pixels if graphical, in characters if text
+	uint32 height;                     // The height of the framebuffer, in pixels if graphical, in characters if text
+	uint32 depth;                      // The number of bytes per pixel
+	uint32 pitch;                      // The number of bytes between one pixel and the one directly below it
 } displayData_t;
 
 typedef struct bootData_t {

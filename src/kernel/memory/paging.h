@@ -1,4 +1,5 @@
 #include <system.h>
+#include <memory/memregion.h>
 
 #pragma once
 
@@ -31,10 +32,14 @@ typedef struct paging_entry_t {
 	uint64 nx       : 1;  // If set, page is not executable
 } paging_entry_t;
 
+void reloadCR3();
+
+void invalidateVirtualAddress(void* virtualAddress);
+
 void initPaging();
 
-void mapRegion(void* physicalAddress, void* virtualAddress, size_t length, uint64 flags);
+void mapRegion(memregion_t physicalRegion, memregion_t virtualRegion, uint64 flags);
 
-void* mapPhysicalToKernel(void* physicalAddress, size_t length, uint64 flags);
+memregion_t mapPhysicalToKernel(memregion_t physicalRegion, uint64 flags);
 
 void* getVirtualAddressInfo(void* virtualAddress);

@@ -14,6 +14,7 @@ keyboard.o\
 main.o\
 memory/paging.o\
 memory/pmm.o\
+memory/memregion.o\
 mouse.o\
 multiboot_header_asm.o\
 multibootdata.o\

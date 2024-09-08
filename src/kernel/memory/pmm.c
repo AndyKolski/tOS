@@ -67,7 +67,7 @@ void initPMM() {
 		for (uint64 entryIndex = 0; entryIndex < bootloaderMemoryMap->entryCount; entryIndex++) {
 			memoryMapEntry_t* entry = bootloaderMemoryMap->entries + (entryIndex * bootloaderMemoryMap->entrySize);
 
-			if (goOver == 1) {
+			if (goOver == 1) { // every region, only once
 				char typeBuffer[32];
 
 				if (entry->type < ARRAY_NUM_ELEMS(memoryTypeStringsArray)) { // Sometimes buggy firmware gives us invalid types. We don't want to crash because of that
@@ -79,17 +79,17 @@ void initPMM() {
 				DEBUG(printf("Region #%lu: base: 0x%p, size: %4lu %s, type: %s\n", entryIndex + 1, entry->baseAddress, numBytesToHuman(entry->length), numBytesToUnit(entry->length), typeBuffer););
 			}
 
-			if (entry->type == MEMORY_AVAILABLE && entry->baseAddress >= (void*)MiB) {
-				if (goOver == 1) {
+			if (entry->type == MEMORY_AVAILABLE && entry->baseAddress >= (void*)MiB) { // every available region after the first MiB
+				if (goOver == 1) {                                                     // only the first time
 					BA_CONSIDER_REGION(entry->baseAddress, entry->length);
 					availableRegions++;
-				} else if (goOver == 2) {
-					// TODO: Use this region in a more advanced allocator
+				} else if (goOver == 2) { // only the second time
+										  // TODO: Use this region in a more advanced allocator
 				}
 			}
 		}
 
-		if (goOver == 1) {
+		if (goOver == 1) { // at the end of the first pass
 			bumpAllocatorBeginning = bumpAllocator;
 			bumpPMM = true;
 

@@ -1,32 +1,32 @@
 #include <display.h>
 #include <font.h>
+#include <formatting.h>
 #include <io.h>
+#include <multibootdata.h>
 #include <serial.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <system.h>
-#include <formatting.h>
-#include <multibootdata.h>
 
- // TODO: The VESA framebuffer needs to be double-buffered, and it needs a 
- // cursor, among other fixes.
+// TODO: The VESA framebuffer needs to be double-buffered, and it needs a
+// cursor, among other fixes.
 
- // TODO: Lots of this code is old, badly written, and generally not great. I
- // should rewrite a good portion of it at some point.
+// TODO: Lots of this code is old, badly written, and generally not great. I
+// should rewrite a good portion of it at some point.
 
 uint32 *graphicFB; // pointer to the graphical framebuffer
-uint16 *BIOSFB; // pointer to the BIOS text console framebuffer
+uint16 *BIOSFB;    // pointer to the BIOS text console framebuffer
 
-uint32 framebuffer_width = 0; // framebuffer width, in pixels
+uint32 framebuffer_width = 0;  // framebuffer width, in pixels
 uint32 framebuffer_height = 0; // framebuffer height, in pixels
-uint8 framebuffer_depth = 0; // the number of bytes per pixel
-uint32 framebuffer_pitch = 0; // the number of bytes between one pixel and the one directly below it
+uint8 framebuffer_depth = 0;   // the number of bytes per pixel
+uint32 framebuffer_pitch = 0;  // the number of bytes between one pixel and the one directly below it
 
-uint8 framebuffer_depth_doublewords = 0; // the number of doublewords per pixel
+uint8 framebuffer_depth_doublewords = 0;  // the number of doublewords per pixel
 uint32 framebuffer_pitch_doublewords = 0; // the number of doublewords between one pixel and the one directly below it
 
-uint32 terminalWidth = 0; // the width of the terminal, in characters
+uint32 terminalWidth = 0;  // the width of the terminal, in characters
 uint32 terminalHeight = 0; // the height of the terminal, in characters
 
 uint32 lineHeight = 0; // the height of a line of text, in pixels (fontHeight + 1)
@@ -42,14 +42,13 @@ color_t textColor = GColWHITE;
 color_t backgroundColor = GColBLACK;
 
 void initDisplay() {
-
 	displayData_t displayData = *getDisplayData();
 
 	FBScreen = displayData.isGraphicalFramebuffer;
 
 	if (FBScreen) { // We have a graphical framebuffer
-		graphicFB = displayData.framebufferVirtAddress;
-		
+		graphicFB = displayData.framebufferVirtRegion.start;
+
 		framebuffer_width = displayData.width;
 		framebuffer_height = displayData.height;
 		framebuffer_depth = displayData.depth;
@@ -59,14 +58,15 @@ void initDisplay() {
 		framebuffer_pitch_doublewords = framebuffer_pitch / 4;
 
 		lineHeight = fontHeight + 1;
-		terminalWidth = framebuffer_width/(fontWidth+1);
-		terminalHeight = framebuffer_height/(lineHeight);
+		terminalWidth = framebuffer_width / (fontWidth + 1);
+		terminalHeight = framebuffer_height / (lineHeight);
 
 		clearScreen();
 		isDisplayInitialized = true;
-		printf("Created console with size %u x %u (%u px x %u px @ %i bpp) at 0x%x (virt 0x%p) (%lu %s)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, displayData.depth * 8, displayData.framebufferPhysAddress, graphicFB, numBytesToHuman(displayData.framebufferSize), numBytesToUnit(displayData.framebufferSize));
+		printf("Created console with size %u x %u (%u px x %u px @ %i bpp) at 0x%p (virt 0x%p) (%lu %s)\n", terminalWidth, terminalHeight, framebuffer_width, framebuffer_height, displayData.depth * 8,
+		       displayData.framebufferPhysRegion.start, graphicFB, numBytesToHuman(displayData.framebufferPhysRegion.length), numBytesToUnit(displayData.framebufferPhysRegion.length));
 	} else { // We have a BIOS text console
-		BIOSFB = displayData.framebufferVirtAddress;
+		BIOSFB = displayData.framebufferVirtRegion.start;
 		terminalWidth = displayData.width;
 		terminalHeight = displayData.height;
 		for (uint8 y = 0; y < 25; y++) {
@@ -140,7 +140,7 @@ void fillRect(uint32 xPosition, uint32 yPosition, uint32 width, uint32 height, c
 	if (yPosition + height > framebuffer_height) {
 		return;
 	}
-	
+
 	fillRect_UNSAFE(xPosition, yPosition, width, height, color);
 }
 
@@ -176,7 +176,7 @@ void placeChar(char character, uint32 xPosition, uint32 yPosition) {
 	uint32 verticalOffset = yPosition * framebuffer_pitch_doublewords;
 	for (uint32 loopYPosition = yPosition; loopYPosition < fontHeight + yPosition; loopYPosition++) {
 		for (uint32 loopXPosition = xPosition; loopXPosition < fontWidth + 1u + xPosition; loopXPosition++) {
-			if (font[(uint8)character][loopYPosition-yPosition] >> (fontWidth - (loopXPosition - xPosition)) & 1) {
+			if (font[(uint8)character][loopYPosition - yPosition] >> (fontWidth - (loopXPosition - xPosition)) & 1) {
 				setColor = textColor;
 			} else {
 				setColor = backgroundColor;
@@ -187,9 +187,6 @@ void placeChar(char character, uint32 xPosition, uint32 yPosition) {
 	}
 }
 
-			
-
-
 void cursorMoved() {
 	if (!isDisplayInitialized) {
 		return;
@@ -199,9 +196,9 @@ void cursorMoved() {
 	} else {
 		uint16 pos = cursorY * terminalWidth + cursorX;
 		outb(0x3D4, 0x0F);
-		outb(0x3D5, (uint8) (pos & 0xFF));
+		outb(0x3D5, (uint8)(pos & 0xFF));
 		outb(0x3D4, 0x0E);
-		outb(0x3D5, (uint8) ((pos >> 8) & 0xFF));
+		outb(0x3D5, (uint8)((pos >> 8) & 0xFF));
 	}
 }
 
@@ -222,21 +219,18 @@ uint32 getScreenHeight() {
 	return framebuffer_height;
 }
 uint32 getTerminalWidth() {
-	return framebuffer_width/fontWidth;
+	return framebuffer_width / fontWidth;
 }
 uint32 getTerminalHeight() {
-	return framebuffer_height/fontHeight;
+	return framebuffer_height / fontHeight;
 }
-
-
-
 
 void scrollBIOS() {
 	if (!isDisplayInitialized) {
 		return;
 	}
 	for (uint32 i = 0; i < terminalHeight; ++i) {
-		memcpy((uint8*)&BIOSFB[i * terminalWidth], (uint8*)&BIOSFB[(i+1) * terminalWidth], terminalWidth*2);
+		memcpy((uint8 *)&BIOSFB[i * terminalWidth], (uint8 *)&BIOSFB[(i + 1) * terminalWidth], terminalWidth * 2);
 	}
 	cursorY--;
 	return;
@@ -248,12 +242,8 @@ void scrollTerminal() {
 	}
 
 	// For each line of text in the framebuffer, we copy it to the line above it
-	for (uint32 i = 0; i < terminalHeight-1; i++) {
-		memcpy(
-			(uint8*)(graphicFB + (i * (lineHeight) * framebuffer_pitch_doublewords)),
-			(uint8*)(graphicFB + ((i+1) * (lineHeight) * framebuffer_pitch_doublewords)),
-			framebuffer_pitch * lineHeight
-		);
+	for (uint32 i = 0; i < terminalHeight - 1; i++) {
+		memcpy((uint8 *)(graphicFB + (i * (lineHeight)*framebuffer_pitch_doublewords)), (uint8 *)(graphicFB + ((i + 1) * (lineHeight)*framebuffer_pitch_doublewords)), framebuffer_pitch * lineHeight);
 	}
 
 	// We fill the bottom line with blank space
@@ -279,8 +269,8 @@ void terminalPrintChar(char character) {
 			}
 			return;
 		}
-		placeChar(character, cursorX*(fontWidth+1)+1, cursorY*(fontHeight+1)+1);
-		if (cursorX+1 < terminalWidth) {
+		placeChar(character, cursorX * (fontWidth + 1) + 1, cursorY * (fontHeight + 1) + 1);
+		if (cursorX + 1 < terminalWidth) {
 			cursorX++;
 		} else {
 			cursorX = 0;
@@ -300,7 +290,7 @@ void terminalPrintChar(char character) {
 			return;
 		}
 		BIOSFB[cursorY * terminalWidth + cursorX] = character | (15 | 0 << 4) << 8;
-		if (cursorX+1 < terminalWidth) {
+		if (cursorX + 1 < terminalWidth) {
 			cursorX++;
 		} else {
 			cursorX = 0;
@@ -320,16 +310,16 @@ void terminalBackspace() {
 	if (FBScreen) {
 		if (cursorX > 0) {
 			cursorX--;
-		} else if(cursorY > 0) {
-			cursorX = terminalWidth-1;
+		} else if (cursorY > 0) {
+			cursorX = terminalWidth - 1;
 			cursorY--;
 		}
-		fillRect(cursorX*(fontWidth+1)+1, cursorY*(fontHeight+1)+1, fontWidth+1, fontHeight, backgroundColor); 
+		fillRect(cursorX * (fontWidth + 1) + 1, cursorY * (fontHeight + 1) + 1, fontWidth + 1, fontHeight, backgroundColor);
 	} else {
 		if (cursorX > 0) {
 			cursorX--;
-		} else if(cursorY > 0) {
-			cursorX = terminalWidth-1;
+		} else if (cursorY > 0) {
+			cursorX = terminalWidth - 1;
 			cursorY--;
 		}
 		BIOSFB[cursorY * terminalWidth + cursorX] = ' ' | (15 | 0 << 4) << 8;
@@ -338,61 +328,61 @@ void terminalBackspace() {
 }
 
 color_t _colorFromHSV(uint8 h, uint8 s, uint8 v) {
-	    uint8 r = 0;
-	    uint8 g = 0;
-	    uint8 b = 0;
+	uint8 r = 0;
+	uint8 g = 0;
+	uint8 b = 0;
 
-	    uint8 region = 0;
-	    uint8 remainder = 0;
-	    uint8 p = 0;
-	    uint8 q = 0;
-	    uint8 t = 0;
+	uint8 region = 0;
+	uint8 remainder = 0;
+	uint8 p = 0;
+	uint8 q = 0;
+	uint8 t = 0;
 
-	    if (s == 0) {
-	        r = v;
-	        g = v;
-	        b = v;
-	        return colorFromRGB(r, g, b);
-	    }
+	if (s == 0) {
+		r = v;
+		g = v;
+		b = v;
+		return colorFromRGB(r, g, b);
+	}
 
-	    region = h / 43;
-	    remainder = (h - (region * 43)) * 6; 
+	region = h / 43;
+	remainder = (h - (region * 43)) * 6;
 
-	    p = (v * (255 - s)) >> 8;
-	    q = (v * (255 - ((s * remainder) >> 8))) >> 8;
-	    t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
+	p = (v * (255 - s)) >> 8;
+	q = (v * (255 - ((s * remainder) >> 8))) >> 8;
+	t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
 
-	    switch (region) {
-	        case 0:
-	            r = v;
-	            g = t;
-	            b = p;
-	            break;
-	        case 1:
-	            r = q;
-	            g = v;
-	            b = p;
-	            break;
-	        case 2:
-	            r = p;
-	            g = v;
-	            b = t;
-	            break;
-	        case 3:
-	            r = p;
-	            g = q;
-	            b = v;
-	            break;
-	        case 4:
-	            r = t;
-	            g = p;
-	            b = v;
-	            break;
-	        default:
-	            r = v;
-	            g = p;
-	            b = q;
-	            break;
-	    }
-	    return colorFromRGB(r, g, b);
+	switch (region) {
+		case 0:
+			r = v;
+			g = t;
+			b = p;
+			break;
+		case 1:
+			r = q;
+			g = v;
+			b = p;
+			break;
+		case 2:
+			r = p;
+			g = v;
+			b = t;
+			break;
+		case 3:
+			r = p;
+			g = q;
+			b = v;
+			break;
+		case 4:
+			r = t;
+			g = p;
+			b = v;
+			break;
+		default:
+			r = v;
+			g = p;
+			b = q;
+			break;
+	}
+	return colorFromRGB(r, g, b);
 }

@@ -35,7 +35,9 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 
 	// Map the multiboot data to a virtual address so we can access it. We don't know how large the multiboot data is, so we map 8 KiB and hope that is enough.
 	// TODO: Read the length, and map the exact amount of memory needed
-	mapRegion((void *)(uintptr_t)multibootPhysLocation - offset, multibootData, (8 * KiB) + offset, FLAG_PAGE_PRESENT);
+	memregion_t multibootPhysRegion = createMemRegion((void *)(uintptr_t)multibootPhysLocation - offset, (8 * KiB) + offset, false);
+	memregion_t multibootVirtRegion = createMemRegion(multibootData, (8 * KiB) + offset, true);
+	mapRegion(multibootPhysRegion, multibootVirtRegion, FLAG_PAGE_PRESENT);
 
 	multibootData += offset;
 
@@ -66,8 +68,8 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
 				struct multiboot_tag_framebuffer *framebufferTag = (struct multiboot_tag_framebuffer *)tag;
 				displayData.isGraphicalFramebuffer = framebufferTag->common.framebuffer_type == MULTIBOOT_FRAMEBUFFER_TYPE_RGB;
-				displayData.framebufferPhysAddress = framebufferTag->common.framebuffer_addr;
-				displayData.framebufferSize = framebufferTag->common.framebuffer_pitch * framebufferTag->common.framebuffer_height;
+				displayData.framebufferPhysRegion
+					= createMemRegion((void *)(uintptr_t)framebufferTag->common.framebuffer_addr, framebufferTag->common.framebuffer_pitch * framebufferTag->common.framebuffer_height, false);
 				displayData.width = framebufferTag->common.framebuffer_width;
 				displayData.height = framebufferTag->common.framebuffer_height;
 				displayData.pitch = framebufferTag->common.framebuffer_pitch;
@@ -93,8 +95,7 @@ void parseMultibootData(uint32 bootloaderMagic, uint32 multibootPhysLocation) {
 	}
 
 	if (!displayData.isGraphicalFramebuffer) {
-		displayData.framebufferPhysAddress = 0xB8000;
-		displayData.framebufferSize = 80 * 25 * 2;
+		displayData.framebufferPhysRegion = createMemRegion((void *)0xB8000, 80 * 25 * 2, false);
 		displayData.width = 80;
 		displayData.height = 25;
 	}
@@ -104,15 +105,12 @@ bootData_t *getBootData() {
 	return &bootData;
 }
 
-bool isFramebufferMapped = false;
-
 displayData_t *getDisplayData() {
-	printf("Framebuffer address: 0x%x, size: 0x%lx\n", displayData.framebufferPhysAddress, displayData.framebufferSize);
+	printf("Framebuffer address: 0x%p, size: 0x%lx\n", displayData.framebufferPhysRegion.start, displayData.framebufferPhysRegion.length);
 
-	if (!isFramebufferMapped) {
-		displayData.framebufferVirtAddress
-			= mapPhysicalToKernel((void *)(uintptr_t)displayData.framebufferPhysAddress, displayData.framebufferSize, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
-		isFramebufferMapped = true;
+	if (!displayData.isFramebufferMapped) {
+		displayData.framebufferVirtRegion = mapPhysicalToKernel(displayData.framebufferPhysRegion, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
+		displayData.isFramebufferMapped = true;
 	}
 	return &displayData;
 }

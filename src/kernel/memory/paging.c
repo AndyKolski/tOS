@@ -1,4 +1,5 @@
 #include <formatting.h>
+#include <memory/memregion.h>
 #include <memory/paging.h>
 #include <memory/pmm.h>
 #include <stdio.h>
@@ -110,15 +111,14 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 		}
 	}
 
-	*pml1_check = (paging_entry_t){
-		.present = (flags & FLAG_PAGE_PRESENT) ? 1 : 0,
-		.rw = (flags & FLAG_PAGE_WRITABLE) ? 1 : 0,
-		.user = (flags & FLAG_PAGE_USER) ? 1 : 0,
-		.nx = (flags & FLAG_PAGE_EXECUTABLE) ? 0 : 1,
-		.pwt = (flags & FLAG_PAGE_WRITETHROUGH_CACHE) ? 1 : 0,
-		.pcd = (flags & FLAG_PAGE_CACHE_DISABLE) ? 1 : 0,
-		.global = (flags & FLAG_PAGE_GLOBAL) ? 1 : 0,
-		.addr = (uint64)physicalAddress >> 12};
+	*pml1_check = (paging_entry_t){.present = (flags & FLAG_PAGE_PRESENT) ? 1 : 0,
+	                               .rw = (flags & FLAG_PAGE_WRITABLE) ? 1 : 0,
+	                               .user = (flags & FLAG_PAGE_USER) ? 1 : 0,
+	                               .nx = (flags & FLAG_PAGE_EXECUTABLE) ? 0 : 1,
+	                               .pwt = (flags & FLAG_PAGE_WRITETHROUGH_CACHE) ? 1 : 0,
+	                               .pcd = (flags & FLAG_PAGE_CACHE_DISABLE) ? 1 : 0,
+	                               .global = (flags & FLAG_PAGE_GLOBAL) ? 1 : 0,
+	                               .addr = (uint64)physicalAddress >> 12};
 	invalidateVirtualAddress(pml1_check);
 }
 
@@ -163,20 +163,28 @@ void* getVirtualAddressInfo(void* virtualAddress) {
 	return physAddr;
 }
 
-void mapRegion(void* physicalAddress, void* virtualAddress, size_t length, uint64 flags) {
-	assert(length > 0, "Tried to map a region of size 0");
-	assert((uint64)physicalAddress % PAGE_SIZE == 0, "Physical address is not 4KB aligned");
-	assert((uint64)virtualAddress % PAGE_SIZE == 0, "Virtual address is not 4KB aligned");
+/// @brief Maps a region of physical memory to a region of virtual memory
+/// @param physicalRegion The region of physical memory to map
+/// @param virtualRegion  The region of virtual memory to map to
+/// @param flags A bitmap of flags to control the mapping behaviour and change page options
+void mapRegion(memregion_t physicalRegion, memregion_t virtualRegion, uint64 flags) {
+	assert(physicalRegion.length == virtualRegion.length, "Physical and virtual regions are not the same size");
+	assert(physicalRegion.length > 0, "Tried to map a region of size 0");
+	assert((uint64)physicalRegion.start % PAGE_SIZE == 0, "Physical address is not 4KB aligned");
+	assert((uint64)virtualRegion.start % PAGE_SIZE == 0, "Virtual address is not 4KB aligned");
+	assert(physicalRegion.isVirtual == false, "Physical region is virtual");
+	assert(virtualRegion.isVirtual == true, "Virtual region is not virtual");
 
-	uint64 numPages = intDivCeil(length, PAGE_SIZE);
+	uint64 numPages = intDivCeil(physicalRegion.length, PAGE_SIZE);
 
-	printf("Mapping %lu %s region from phys 0x%p -> virt 0x%p (%lu %lu-%s page(s))\n", numBytesToHuman(length), numBytesToUnit(length), physicalAddress, virtualAddress, numPages, numBytesToHuman(PAGE_SIZE), numBytesToUnit(PAGE_SIZE));
+	printf("Mapping %lu %s region from phys 0x%p-0x%p -> virt 0x%p-0x%p (%lu %lu-%s page(s))\n", numBytesToHuman(physicalRegion.length), numBytesToUnit(physicalRegion.length), physicalRegion.start,
+	       physicalRegion.start + physicalRegion.length, virtualRegion.start, virtualRegion.start + virtualRegion.length, numPages, numBytesToHuman(PAGE_SIZE), numBytesToUnit(PAGE_SIZE));
 
 	if (numPages == 1) {
-		mapPage(VIRT_TO_INDICES(virtualAddress), physicalAddress, flags);
+		mapPage(VIRT_TO_INDICES(virtualRegion.start), physicalRegion.start, flags);
 	} else {
 		for (uint64 i = 0; i < numPages; i++) {
-			mapPage(VIRT_TO_INDICES(virtualAddress + (i * PAGE_SIZE)), physicalAddress + (i * PAGE_SIZE), flags);
+			mapPage(VIRT_TO_INDICES(virtualRegion.start + (i * PAGE_SIZE)), physicalRegion.start + (i * PAGE_SIZE), flags);
 		}
 	}
 
@@ -189,26 +197,25 @@ uint64 upperMapLocation = 0xffff800000000000;
 // TODO: Change this to actually keep track of used and freed virtual memory
 
 /// @brief Maps a region of physical memory to kernel virtual memory
-/// @param physicalAddress The physical address to be mapped
-/// @param length The length of the region to be mapped in bytes
+/// @param physicalRegion The region of physical memory to map
 /// @param flags Allows to configure how the page is mapped
-/// @return A pointer to the virtual address of the mapped region
-void* mapPhysicalToKernel(void* physicalAddress, size_t length, uint64 flags) {
-	assert(length > 0, "Tried to map a region of size 0");
-	assert(physicalAddress != NULL, "Tried to map a region with a NULL physical address");
-	assert((uint64)physicalAddress % PAGE_SIZE == 0, "Physical address is not 4KB aligned");
+/// @return The virtual region that the physical region was mapped to
+memregion_t mapPhysicalToKernel(memregion_t physicalRegion, uint64 flags) {
+	assert(physicalRegion.length > 0, "Tried to map a region of size 0");
+	assert(physicalRegion.start != NULL, "Tried to map a region with a NULL physical address");
+	assert((uint64)physicalRegion.start % PAGE_SIZE == 0, "Physical address is not 4KB aligned");
+	assert(physicalRegion.isVirtual == false, "Physical region is virtual");
 
 	if (upperMapLocation % PAGE_SIZE != 0) {
 		upperMapLocation += PAGE_SIZE - (upperMapLocation % PAGE_SIZE);
 	}
 
-	void* virtualAddress = (void*)upperMapLocation;
+	memregion_t virtualRegion = createMemRegion((void*)upperMapLocation, physicalRegion.length, true);
+	upperMapLocation += physicalRegion.length;
 
-	mapRegion(physicalAddress, virtualAddress, length, flags);
+	mapRegion(physicalRegion, virtualRegion, flags);
 
-	upperMapLocation += length;
-
-	return virtualAddress;
+	return virtualRegion;
 }
 
 /// @brief Sets up recursive paging and replaces the existing kernel mapping with one which uses 4 KiB pages and has the correct protection flags
