@@ -30,22 +30,22 @@ void irq_install_handler(int irq, void (*handler)(struct regs *r)) {
 }
 
 void initIRQs() {
-	idt_set_gate(32 + 0, (uintptr_t)irq0, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 1, (uintptr_t)irq1, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 2, (uintptr_t)irq2, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 3, (uintptr_t)irq3, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 4, (uintptr_t)irq4, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 5, (uintptr_t)irq5, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 6, (uintptr_t)irq6, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 7, (uintptr_t)irq7, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 8, (uintptr_t)irq8, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 9, (uintptr_t)irq9, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 10, (uintptr_t)irq10, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 11, (uintptr_t)irq11, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 12, (uintptr_t)irq12, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 13, (uintptr_t)irq13, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 14, (uintptr_t)irq14, GATE_INTERRUPT, 0);
-	idt_set_gate(32 + 15, (uintptr_t)irq15, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 0, irq0, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 1, irq1, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 2, irq2, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 3, irq3, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 4, irq4, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 5, irq5, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 6, irq6, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 7, irq7, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 8, irq8, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 9, irq9, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 10, irq10, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 11, irq11, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 12, irq12, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 13, irq13, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 14, irq14, GATE_INTERRUPT, 0);
+	idt_set_gate(32 + 15, irq15, GATE_INTERRUPT, 0);
 }
 
 void irq_handler(struct regs *r) {

@@ -27,10 +27,11 @@ COMPILE_TIME_ASSERT(sizeof(idt_ptr) == 10, IDT_POINTER_STRUCT_MUST_BE_10_BYTES);
 __attribute__((aligned(0x10))) static interruptDescriptor idt[256] = {0};
 idt_ptr idt_pointer = {0};
 
-void idt_set_gate(uint8 index, uint64 handler, uint8 gate, uint8 minRing) {
-	idt[index].lowAddress = (handler & 0xFFFF);
-	idt[index].middleAddress = (handler >> 16) & 0xFFFF;
-	idt[index].highAddress = (handler >> 32) & 0xFFFFFFFF;
+void idt_set_gate(uint8 index, void (*handler)(void), uint8 gate, uint8 minRing) {
+	uint64 handler_address = (uint64)handler;
+	idt[index].lowAddress = (handler_address & 0xFFFF);
+	idt[index].middleAddress = (handler_address >> 16) & 0xFFFF;
+	idt[index].highAddress = (handler_address >> 32) & 0xFFFFFFFF;
 
 	idt[index].codeSegment = gdt_kernel_code_segment;
 	idt[index].IST = 0b111 & 0;
