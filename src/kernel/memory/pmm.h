@@ -38,4 +38,5 @@ extern char __BSS_END;
 
 void initPMM();
 
-void* getFreePhysicalPage();
+void* getPhysicalPage();
+memregion_t getContiguousPhysicalPages(uint32 numPages);

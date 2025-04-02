@@ -15,6 +15,8 @@ main.o\
 memory/paging.o\
 memory/pmm.o\
 memory/memregion.o\
+memory/allocators/bump.o\
+memory/allocators/bitmap.o\
 mouse.o\
 multiboot_header_asm.o\
 multibootdata.o\

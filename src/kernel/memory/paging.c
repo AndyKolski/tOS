@@ -63,7 +63,7 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 	paging_entry_t* pml4_check = indicesToVirtRecursive(REC_POS, REC_POS, REC_POS, pml4_index);
 	if (!pml4_check->present) {
 		DEBUG(printf("PML4 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index););
-		uint64 newTable = (uint64)getFreePhysicalPage();
+		uint64 newTable = (uint64)getPhysicalPage();
 		DEBUG(printf("New table at %lx\n", newTable););
 		*pml4_check = (paging_entry_t){.present = 1, .rw = 1, .user = 0, .nx = 1, .addr = newTable >> 12};
 		invalidateVirtualAddress(pml4_check);
@@ -75,7 +75,7 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 	paging_entry_t* pml3_check = indicesToVirtRecursive(REC_POS, REC_POS, pml4_index, pml3_index);
 	if (!pml3_check->present) {
 		DEBUG(printf("PML3 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index););
-		uint64 newTable = (uint64)getFreePhysicalPage();
+		uint64 newTable = (uint64)getPhysicalPage();
 		DEBUG(printf("New table at %lx\n", newTable););
 		*pml3_check = (paging_entry_t){.present = 1, .rw = 1, .user = 0, .nx = 1, .addr = newTable >> 12};
 		invalidateVirtualAddress(pml3_check);
@@ -87,7 +87,7 @@ void mapPage(uint64 pml4_index, uint64 pml3_index, uint64 pml2_index, uint64 pml
 	paging_entry_t* pml2_check = indicesToVirtRecursive(REC_POS, pml4_index, pml3_index, pml2_index);
 	if (!pml2_check->present) {
 		DEBUG(printf("PML2 entry (%ld, %ld, %ld, %ld) not present, creating new table\n", pml4_index, pml3_index, pml2_index, pml1_index););
-		uint64 newTable = (uint64)getFreePhysicalPage();
+		uint64 newTable = (uint64)getPhysicalPage();
 		DEBUG(printf("New table at %lx\n", newTable););
 		*pml2_check = (paging_entry_t){.present = 1, .rw = 1, .user = 0, .nx = 1, .addr = newTable >> 12};
 		invalidateVirtualAddress(pml2_check);
@@ -177,8 +177,9 @@ void mapRegion(memregion_t physicalRegion, memregion_t virtualRegion, uint64 fla
 
 	uint64 numPages = intDivCeil(physicalRegion.length, PAGE_SIZE);
 
-	printf("Mapping %lu %s region from phys 0x%p-0x%p -> virt 0x%p-0x%p (%lu %lu-%s page(s))\n", numBytesToHuman(physicalRegion.length), numBytesToUnit(physicalRegion.length), physicalRegion.start,
-	       physicalRegion.start + physicalRegion.length, virtualRegion.start, virtualRegion.start + virtualRegion.length, numPages, numBytesToHuman(PAGE_SIZE), numBytesToUnit(PAGE_SIZE));
+	DEBUG(printf("Mapping %lu %s region from phys 0x%p-0x%p -> virt 0x%p-0x%p (%lu %lu-%s page(s))\n", numBytesToHuman(physicalRegion.length), numBytesToUnit(physicalRegion.length),
+	             physicalRegion.start, physicalRegion.start + physicalRegion.length, virtualRegion.start, virtualRegion.start + virtualRegion.length, numPages, numBytesToHuman(PAGE_SIZE),
+	             numBytesToUnit(PAGE_SIZE)););
 
 	if (numPages == 1) {
 		mapPage(VIRT_TO_INDICES(virtualRegion.start), physicalRegion.start, flags);
