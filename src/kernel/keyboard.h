@@ -186,7 +186,7 @@ void clearKeyboardBuffer();
 #define KEY_WWW_Favorites 139
 #define KEY_WWW_Refresh 140
 #define KEY_WWW_Stop 141
-#define KEY_WWW_Foreward 142
+#define KEY_WWW_Forward 142
 #define KEY_WWW_Back 143
 #define KEY_ACPI_Power 144
 #define KEY_ACPI_Sleep 145

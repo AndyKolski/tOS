@@ -48,6 +48,16 @@ char* strcat(char* destination, const char* source) {
 	return destination;
 }
 
+/// @brief Concatenates n characters from one string to another
+/// @param destination The string to be appended to
+/// @param source The string to be appended
+/// @param n The number of characters to append
+/// @return A pointer to the destination string
+char* strncat(char* destination, const char* source, size_t n) {
+	strncpy(destination + strlen(destination), source, n);
+	return destination;
+}
+
 /// @brief Compares two strings
 /// @param s1 The first string to compare
 /// @param s2 The second string to compare
@@ -77,6 +87,17 @@ int strncmp(const char* s1, const char* s2, size_t n) {
 char *strcpy(char *dest, const char* src) {
 	char *ret = dest;
 	while ((*dest++ = *src++)) {}
+	return ret;
+}
+
+/// @brief Copies a string up to a given length n
+/// @param dest The destination address, to which the string is copied
+/// @param src The source address, from which the string is copied
+/// @param n The maximum number of characters to copy
+/// @return A pointer to the destination address
+char *strncpy(char *dest, const char* src, size_t n) {
+	char *ret = dest;
+	while (n-- && (*dest++ = *src++)) {}
 	return ret;
 }
 

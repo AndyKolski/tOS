@@ -301,7 +301,7 @@ const keyPressEventDataLUTEntry e0ScancodeLookup[255] = {
 	{ 0,   0,  0, 0, 0, 0, 0, KEY_WWW_Favorites},     // 0x66
 	{ 0,   0,  0, 0, 0, 0, 0, KEY_WWW_Refresh},       // 0x67
 	{ 0,   0,  0, 0, 0, 0, 0, KEY_WWW_Stop},          // 0x68
-	{ 0,   0,  0, 0, 0, 0, 0, KEY_WWW_Foreward},      // 0x69
+	{ 0,   0,  0, 0, 0, 0, 0, KEY_WWW_Forward},      // 0x69
 	{ 0,   0,  0, 0, 0, 0, 0, KEY_WWW_Back},          // 0x6A
 	{ 0,   0,  0, 0, 0, 0, 0, KEY_MyComputer},        // 0x6B
 	{ 0,   0,  0, 0, 0, 0, 0, KEY_Email},             // 0x6C

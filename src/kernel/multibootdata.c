@@ -109,6 +109,7 @@ displayData_t *getDisplayData() {
 	printf("Framebuffer address: 0x%p, size: 0x%lx\n", displayData.framebufferPhysRegion.start, displayData.framebufferPhysRegion.length);
 
 	if (!displayData.isFramebufferMapped) {
+		DEBUG(printf("Mapping framebuffer to virtual address\n"););
 		displayData.framebufferVirtRegion = mapPhysicalToKernel(displayData.framebufferPhysRegion, FLAG_PAGE_PRESENT | FLAG_PAGE_WRITABLE | FLAG_PAGE_WRITETHROUGH_CACHE);
 		displayData.isFramebufferMapped = true;
 	}

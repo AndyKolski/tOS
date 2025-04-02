@@ -52,7 +52,9 @@ void _panic(const char *file, uint32 line, const char *func, const char *msg);
 #define assert(conf, msg) _assert(__FILE__, __LINE__, __func__, msg, conf)
 #define panic(msg)        _panic(__FILE__, __LINE__, __func__, msg)
 
-#define DEBUG_LOGGING true
+#ifndef DEBUG_LOGGING
+	#define DEBUG_LOGGING true
+#endif
 
 #define DEBUG(...)           \
 	do {                     \
