@@ -91,20 +91,55 @@ BARInfo getBARInfo(uint8 bus, uint8 device, uint8 function, uint8 BAR) {
 	return info;
 }
 
+typedef struct commandRegister {
+	uint16 ioSpace                  : 1;
+	uint16 memorySpace              : 1;
+	uint16 busMaster                : 1;
+	uint16 specialCycles            : 1; // Deprecated in PCIe, should always be 0
+	uint16 memoryWriteAndInvalidate : 1; // Deprecated in PCIe, should always be 0
+	uint16 vgaPaletteSnoop          : 1; // Deprecated in PCIe, should always be 0
+	uint16 parityErrorResponse      : 1;
+	uint16 reserved1                : 1; // Deprecated in PCIe, should always be 0
+	uint16 serrEnable               : 1;
+	uint16 fastBackToBack           : 1; // Read only
+	uint16 interruptDisable         : 1;
+	uint16 reserved2                : 4;
+} commandRegister;
+
+COMPILE_TIME_ASSERT(sizeof(commandRegister) == 2, PCI_COMMAND_REGISTER_MUST_BE_2_BYTES);
+
+typedef struct statusRegister {
+	uint16 reserved1           : 3;
+	uint16 interruptStatus     : 1;
+	uint16 capabilitiesList    : 1; // PCIe devices are required to have this bit set
+	uint16 is66MHzCapable      : 1; // Deprecated in PCIe, should always be 0
+	uint16 reserved2           : 1;
+	uint16 fastBackToBack      : 1; // Deprecated in PCIe, should always be 0
+	uint16 dataParityError     : 1;
+	uint16 devselTiming        : 2; // Deprecated in PCIe, should always be 0
+	uint16 signaledTargetAbort : 1;
+	uint16 receivedTargetAbort : 1;
+	uint16 receivedMasterAbort : 1;
+	uint16 signaledSystemError : 1;
+	uint16 detectedParityError : 1;
+} statusRegister;
+
+COMPILE_TIME_ASSERT(sizeof(statusRegister) == 2, PCI_STATUS_REGISTER_MUST_BE_2_BYTES);
+
 typedef struct CommonHeader {
 	uint16 vendorID;
 	uint16 deviceID;
 
-	uint16 command;
-	uint16 status;
+	commandRegister command;
+	statusRegister status;
 
 	uint8 revisionID;
 	uint8 progIF;
 	uint8 subclass;
 	uint8 class;
 
-	uint8 cacheLineSize;
-	uint8 latencyTimer;
+	uint8 cacheLineSize; // Deprecated in PCIe, should always be 0
+	uint8 latencyTimer;  // Deprecated in PCIe, should always be 0
 	uint8 headerType;
 	uint8 BIST;
 } CommonHeader;
@@ -124,7 +159,12 @@ void probePCIDevice(uint8 bus, uint8 device, uint8 function) {
 
 	CommonHeader *header = (CommonHeader *)config;
 
-	if (header->headerType == 0) {
+	if (header->headerType & 0x80) {
+		printf("Device is a multi-function device\n");
+	}
+
+	if ((header->headerType & 0x7f) == 0) { // header type 0 - general device
+
 		for (uint8 i = 0; i < 6; i++) {
 			BARInfo info = getBARInfo(bus, device, function, i);
 
