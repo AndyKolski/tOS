@@ -1,18 +1,20 @@
+#include <ctype.h>
 #include <display.h>
-#include <io.h>
 #include <interrupts/irq.h>
+#include <io.h>
 #include <keyboard.h>
 #include <stdio.h>
+#include <string.h>
 #include <system.h>
 #include <time/time.h>
 
-#define IRQ_KEYBOARD 1
-#define I8042_BUFFER 0x60
-#define I8042_STATUS 0x64
-#define I8042_ACK 0xFA
-#define I8042_BUFFER_FULL 0x01
-#define I8042_WHICH_BUFFER 0x20
-#define I8042_MOUSE_BUFFER 0x20
+#define IRQ_KEYBOARD          1
+#define I8042_BUFFER          0x60
+#define I8042_STATUS          0x64
+#define I8042_ACK             0xFA
+#define I8042_BUFFER_FULL     0x01
+#define I8042_WHICH_BUFFER    0x20
+#define I8042_MOUSE_BUFFER    0x20
 #define I8042_KEYBOARD_BUFFER 0x00
 
 typedef struct keyPressEventDataLUTEntry {
@@ -328,13 +330,12 @@ const keyPressEventDataLUTEntry e0ScancodeLookup[255] = {
 
 #define BUFFER_CALC_OFFSET(in) ((in + bufferOffset) % KEYBOARD_BUFFER_SIZE)
 
-
 void addCharToBuffer(keyPressEvent c) {
 	bufferOffset += 1;
 	if (bufferOffset == KEYBOARD_BUFFER_SIZE) {
 		bufferOffset = 0;
 	}
-	keyboardBuffer[BUFFER_CALC_OFFSET(KEYBOARD_BUFFER_SIZE-1)] = c;
+	keyboardBuffer[BUFFER_CALC_OFFSET(KEYBOARD_BUFFER_SIZE - 1)] = c;
 }
 
 void clearBuffer() {
@@ -348,7 +349,7 @@ keyPressEvent getCharFromBuffer() {
 	for (uint32 i = 0; i < KEYBOARD_BUFFER_SIZE; ++i) {
 		keyPressEvent read = keyboardBuffer[BUFFER_CALC_OFFSET(i)];
 		if (read.isValid == true) {
-			keyboardBuffer[BUFFER_CALC_OFFSET(i)] = makeKeyPressEvent(KEY_Invalid, 0);;
+			keyboardBuffer[BUFFER_CALC_OFFSET(i)] = makeKeyPressEvent(KEY_Invalid, 0);
 			return read;
 		}
 	}
@@ -418,7 +419,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 			panic("Unexpected E1 code");
 		}
 	} else {
-		keyData = scancodeLookup[scancode];	
+		keyData = scancodeLookup[scancode];
 	}
 
 	lastIn = inByte;
@@ -434,7 +435,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 
 	if (keyData.VKeyCode == KEY_Invalid) {
 		return;
-		//printf("%x (%x) %s %s %i %c\n", scancode, inByte, isKeyDownEvent ? "down" : "up", e0Prefix ? "true" : "false", keyData.VKeyCode, keyData.ASCII);
+		// printf("%x (%x) %s %s %i %c\n", scancode, inByte, isKeyDownEvent ? "down" : "up", e0Prefix ? "true" : "false", keyData.VKeyCode, keyData.ASCII);
 	}
 
 	if (keyData.VKeyCode == KEY_Break) { // Break doesn't have an up code apparently
@@ -443,7 +444,7 @@ void keyboard_handler(struct regs *r __attribute__((__unused__))) {
 
 	if (isKeyDownEvent) {
 		// printf("Id: %i (%s) ", keyData.VKeyCode, "");
-		
+
 		if (keyData.IsPrintable) {
 			if (XOR(lockStates.CapsLock && keyData.CapsLockWorks, keyPressStates[KEY_LeftShift] || keyPressStates[KEY_RightShift]) && keyData.CanUppercase) {
 				keyPressed(makeKeyPressEvent(keyData.VKeyCode, keyData.UpperASCII));
@@ -486,13 +487,12 @@ bool isKeyDown(uint8 keyId) {
 
 void setKeyDownState(uint8 keyId, bool newState) {
 	if (newState != keyPressStates[keyId]) { // on state change
-
 	}
 	keyPressStates[keyId] = newState;
 }
 
- // TODO: Implement a better way for functions (and eventually programs) to 
- // wait for and read key state changes/presses.
+// TODO: Implement a better way for functions (and eventually programs) to
+// wait for and read key state changes/presses.
 
 void clearKeyboardBuffer() {
 	clearBuffer();
@@ -517,6 +517,85 @@ keyPressEvent readKey() {
 	}
 }
 
+/// @brief Reads a line of input from the keyboard into the provided buffer.
+/// @param buffer The buffer to store the input string.
+/// @param bufferCapacity The maximum capacity of the buffer, including space for the null terminator.
+/// @param prompt The prompt to display before reading input.
+/// @return The length of the input string, excluding the null terminator.
+uint32 readLine(char *buffer, uint32 bufferCapacity, const char *prompt) {
+	uint32 cursorPos = strlen(buffer);
+	printf(prompt);
+
+	bool terminalEchoInitialState = getTerminalEcho();
+	setTerminalEcho(false);
+
+	uint32 startingY = getCursorYPosition();
+	uint32 startingX = getCursorXPosition();
+	while (true) {
+		if (cursorPos >= bufferCapacity) {
+			cursorPos = bufferCapacity - 1;
+		}
+		setCursorPosition(startingX, startingY);
+		printf("%s ", buffer);
+
+		setCursorPosition(startingX + cursorPos, startingY);
+		keyPressEvent event = readKey();
+
+		uint32 bufferStrLen = strlen(buffer);
+
+		if (event.code == KEY_Enter) {
+			printf("\n");
+			break;
+		} else if (event.code == KEY_LeftArrow) {
+			if (cursorPos > 0) {
+				cursorPos--;
+			}
+		} else if (event.code == KEY_RightArrow) {
+			if (cursorPos < bufferStrLen) {
+				cursorPos++;
+			}
+		} else if (event.code == KEY_Home) {
+			cursorPos = 0;
+		} else if (event.code == KEY_End) {
+			cursorPos = bufferStrLen;
+		} else if (event.code == KEY_Delete) {
+			if (cursorPos >= bufferStrLen) {
+				continue;
+			}
+			for (size_t i = 0; i < bufferStrLen - cursorPos + 1; i++) {
+				buffer[cursorPos + i] = buffer[cursorPos + i + 1];
+			}
+		} else if (event.code == KEY_Backspace) {
+			if (cursorPos == 0) {
+				continue;
+			}
+			for (size_t i = 0; i < bufferStrLen - cursorPos + 1; i++) {
+				buffer[cursorPos + i - 1] = buffer[cursorPos + i];
+			}
+
+			cursorPos--;
+
+		} else if (isPrint(event.ASCII)) {
+			if (bufferStrLen >= bufferCapacity - 1) { // leave room for a final null character
+				continue;
+			}
+
+			if (cursorPos < bufferStrLen) {
+				for (size_t i = 0; i < bufferStrLen - cursorPos; i++) {
+					buffer[bufferStrLen - i] = buffer[bufferStrLen - i - 1];
+				}
+			}
+
+			buffer[cursorPos] = event.ASCII;
+			cursorPos++;
+		}
+	}
+
+	setTerminalEcho(terminalEchoInitialState);
+
+	return strlen(buffer);
+}
+
 void setTerminalEcho(bool new) {
 	terminalEcho = new;
 }
@@ -531,10 +610,10 @@ void initKeyboard() {
 }
 
 void kbd_ack(void) {
-	while(!(inb(0x60)==0xfa));
+	while (inb(0x60) != 0xfa) {}
 }
 void setKeyboardLEDs(uint8 ledstatus) {
-	outb(0x60,0xed);
+	outb(0x60, 0xed);
 	kbd_ack();
-	outb(0x60,ledstatus);
+	outb(0x60, ledstatus);
 }

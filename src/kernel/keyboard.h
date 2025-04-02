@@ -16,6 +16,7 @@ void updateLEDs();
 void setKeyboardLEDs(uint8 ledstatus);
 char readChar();
 keyPressEvent readKey();
+uint32 readLine(char *buffer, uint32 bufferCapacity, const char *prompt);
 void setTerminalEcho(bool new);
 bool getTerminalEcho();
 void clearKeyboardBuffer();
