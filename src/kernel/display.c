@@ -38,8 +38,10 @@ bool FBScreen = false; // is the display graphical or a text console
 
 bool isDisplayInitialized = false;
 
-color_t textColor = GColWHITE;
-color_t backgroundColor = GColBLACK;
+color_t textColor = G_COLOR_WHITE;
+color_t backgroundColor = G_COLOR_BLACK;
+
+#define BIOS_CHAR(character) (character | (BIOS_COLOR_WHITE | BIOS_COLOR_BLACK << 4) << 8)
 
 void initDisplay() {
 	displayData_t displayData = *getDisplayData();
@@ -69,11 +71,7 @@ void initDisplay() {
 		BIOSFB = displayData.framebufferVirtRegion.start;
 		terminalWidth = displayData.width;
 		terminalHeight = displayData.height;
-		for (uint8 y = 0; y < 25; y++) {
-			for (uint8 x = 0; x < 80; x++) {
-				BIOSFB[y * 80 + x] = ' ' | (15 | 0 << 4) << 8;
-			}
-		}
+		clearScreen();
 		isDisplayInitialized = true;
 		printf("Created console with size %ux%u\n", terminalWidth, terminalHeight);
 	}
@@ -151,8 +149,16 @@ void fillScreen(color_t color) {
 }
 
 void clearScreen() {
-	fillScreen(backgroundColor);
-	setCursorPosition(0, 0);
+	if (FBScreen) {
+		fillScreen(backgroundColor);
+		setCursorPosition(0, 0);
+	} else {
+		for (uint8 y = 0; y < terminalHeight; y++) {
+			for (uint8 x = 0; x < terminalWidth; x++) {
+				BIOSFB[y * terminalWidth + x] = BIOS_CHAR(' ');
+			}
+		}
+	}
 }
 
 /// @brief Place a character on the screen at the specified position.
@@ -161,6 +167,9 @@ void clearScreen() {
 /// @param yPosition The vertical position of the character to place, in pixels.
 void placeChar(char character, uint32 xPosition, uint32 yPosition) {
 	if (!isDisplayInitialized) {
+		return;
+	}
+	if (!FBScreen) {
 		return;
 	}
 	if (xPosition >= framebuffer_width || yPosition >= framebuffer_height) {
@@ -207,9 +216,20 @@ void setColors(color_t text, color_t background) {
 	backgroundColor = background;
 }
 void setCursorPosition(uint32 xPosition, uint32 yPosition) {
-	cursorX = xPosition;
-	cursorY = yPosition;
+	if (xPosition <= terminalWidth) {
+		cursorX = xPosition;
+	}
+	if (yPosition <= terminalHeight) {
+		cursorY = yPosition;
+	}
 	cursorMoved();
+}
+
+uint32 getCursorXPosition() {
+	return cursorX;
+}
+uint32 getCursorYPosition() {
+	return cursorY;
 }
 
 uint32 getScreenWidth() {
@@ -219,20 +239,29 @@ uint32 getScreenHeight() {
 	return framebuffer_height;
 }
 uint32 getTerminalWidth() {
-	return framebuffer_width / fontWidth;
+	return terminalWidth;
 }
 uint32 getTerminalHeight() {
-	return framebuffer_height / fontHeight;
+	return terminalHeight;
 }
 
 void scrollBIOS() {
 	if (!isDisplayInitialized) {
 		return;
 	}
-	for (uint32 i = 0; i < terminalHeight; ++i) {
-		memcpy((uint8 *)&BIOSFB[i * terminalWidth], (uint8 *)&BIOSFB[(i + 1) * terminalWidth], terminalWidth * 2);
+	for (uint32 i = 0; i < terminalHeight - 1; ++i) {
+		uint16 *currentLine = &BIOSFB[i * terminalWidth];
+		uint16 *nextLine = &BIOSFB[(i + 1) * terminalWidth];
+		memcpy((void *)currentLine, (void *)nextLine, terminalWidth * 2); // memcpy works in bytes, each character is 2 bytes, so we multiply by 2
 	}
-	cursorY--;
+
+	for (size_t x = 0; x < terminalWidth; x++) {
+		BIOSFB[((terminalHeight - 1) * terminalWidth) + x] = BIOS_CHAR(' ');
+	}
+
+	if (cursorY > 0) {
+		cursorY--;
+	}
 	return;
 }
 
@@ -289,7 +318,7 @@ void terminalPrintChar(char character) {
 			cursorMoved();
 			return;
 		}
-		BIOSFB[cursorY * terminalWidth + cursorX] = character | (15 | 0 << 4) << 8;
+		BIOSFB[cursorY * terminalWidth + cursorX] = BIOS_CHAR(character);
 		if (cursorX + 1 < terminalWidth) {
 			cursorX++;
 		} else {
@@ -322,7 +351,7 @@ void terminalBackspace() {
 			cursorX = terminalWidth - 1;
 			cursorY--;
 		}
-		BIOSFB[cursorY * terminalWidth + cursorX] = ' ' | (15 | 0 << 4) << 8;
+		BIOSFB[cursorY * terminalWidth + cursorX] = BIOS_CHAR(' ');
 	}
 	cursorMoved();
 }
