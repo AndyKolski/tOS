@@ -1,7 +1,7 @@
 #pragma once
 
-uint8 fontWidth = 5;
-uint8 fontHeight = 11;
+const uint8 fontWidth = 5;
+const uint8 fontHeight = 11;
 
 const uint8 font[0xff][11] = {
 	{0b0000000,0b0000000,0b0000000,0b0000000,0b0000000,0b0000000,0b0000000,0b0000000,0b0000000,0b0000000,0b0000000},
