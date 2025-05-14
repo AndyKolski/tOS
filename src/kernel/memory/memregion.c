@@ -2,7 +2,7 @@
 #include <system.h>
 
 /// @brief Creates a new memory region
-/// @param start The address of the first bite of the region
+/// @param start The address of the first byte of the region
 /// @param length The length of the region
 /// @param isVirtual Whether the region is virtual or physical memory. Comparison functions will assert if this is not the same for both regions
 /// @return The memory region
