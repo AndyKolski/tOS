@@ -50,10 +50,7 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 	initKeyboard();
 	puts("Enabling interrupts...");
 	sti();
-
-	printf("Testing printf: char: %c, string: %s, int: %i, negative int: %i, hex: 0x%x, hex 2: 0x%x\n", '!', "Hello world", 42, -10, 0xabcdef12, 0xcafe);
-
-	// enumeratePCIDevices();
+	
 
 	puts("OK");
 
