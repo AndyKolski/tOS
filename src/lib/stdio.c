@@ -6,11 +6,19 @@
 #include <stddef.h>
 #include <string.h>
 
+
+void VMputchar_args(char c, void *arg __attribute__((unused))) {
+	outb(0xe9, (uint8)c);
+}
+void VMputchar(char c) {
+	outb(0xe9, (uint8)c);
+}
+
 /// @brief Prints a single character to the screen
 /// @param chr The character to print
 /// @return The character that was printed
 char putchar(char chr) {
-	outb(0xe9, (uint8)chr);
+	VMputchar(chr);
 
 	if (chr == '\n') {
 		serial_putc('\r');
