@@ -42,8 +42,8 @@ void initPMM() {
 
 	printf("Found %u memory regions\n", bootloaderMemoryMap->entryCount);
 
-	// We go over the memory map twice. First to find the last region for the bump allocator, and again to find the
-	// usable regions for a yet-to-be-implemented more advanced allocator
+	// We go over the memory map twice. First to find the last large region for the bump allocator, and again to find the
+	// usable regions for the bitmap allocator
 	for (uint64 goOver = 1; goOver <= 2; goOver++) {
 		for (uint64 entryIndex = 0; entryIndex < bootloaderMemoryMap->entryCount; entryIndex++) {
 			memoryMapEntry_t* entry = bootloaderMemoryMap->entries + (entryIndex * bootloaderMemoryMap->entrySize);
@@ -60,8 +60,9 @@ void initPMM() {
 				DEBUG(printf("Region #%2lu: base: 0x%p, size: %4lu %3s, type: %s\n", entryIndex + 1, entry->baseAddress, numBytesToHuman(entry->length), numBytesToUnit(entry->length), typeBuffer););
 			}
 
-			if (entry->type == MEMORY_AVAILABLE && entry->baseAddress >= (void*)MiB) { // every available region after the first MiB
-				if (goOver == 1) {                                                     // only the first pass
+			if (entry->type == MEMORY_AVAILABLE && entry->baseAddress >= (void*)MiB && entry->length > MiB) { // every available region larger than a MiB, starting after the first MiB
+
+				if (goOver == 1) { // only the first pass
 					BA_CONSIDER_REGION(entry->baseAddress, entry->length);
 					availableRegions++;
 				} else if (goOver == 2) { // only the second time
@@ -82,12 +83,11 @@ void initPMM() {
 		}
 	}
 
-
 	bumpPMM = false;
 
 	// printf("BA: %p, BAB: %p %ld\n", bumpAllocator, bumpAllocatorBeginning, bumpAllocatorBeginning-bumpAllocator);
 
-	bitmap_markRegionAllocated(createMemRegion(bumpAllocator, (size_t)(bumpAllocatorBeginning-bumpAllocator), false));
+	bitmap_markRegionAllocated(createMemRegion(bumpAllocator, (size_t)(bumpAllocatorBeginning - bumpAllocator), false));
 	bitmap_markRegionAllocated(createMemRegion(KERNEL_START, KERNEL_SIZE, false));
 
 	bitmapPMM = true;
