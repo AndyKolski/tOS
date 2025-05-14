@@ -182,6 +182,8 @@ void bitmap_printStats() {
 	for (uint64 bitmapHeaderIndex = 0; bitmapHeaderIndex < bitmapCount; bitmapHeaderIndex++) {
 		bitmap_header_t* thisHeader = &bitmapHeaders[bitmapHeaderIndex];
 
+		printf("Bitmap header %lu/%lu: region 0x%p-0x%p, region length: %lu pages (%lu %s)\n", bitmapHeaderIndex+1, bitmapCount, thisHeader->regionStart, thisHeader->regionStart + thisHeader->regionLengthPages * PAGE_SIZE, thisHeader->regionLengthPages, numBytesToHuman(thisHeader->regionLengthPages * PAGE_SIZE), numBytesToUnit(thisHeader->regionLengthPages * PAGE_SIZE));
+
 		for (uint64 testBit = 0; testBit < thisHeader->regionLengthPages; testBit++) {
 			if (isPageAllocated(thisHeader, testBit)) {
 				allocatedPages++;
