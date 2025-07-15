@@ -24,20 +24,34 @@ void halt() {
 	}
 }
 
-#define I8042_BUFFER 0x60
-#define I8042_STATUS 0x64
+#define I8042_BUFFER         0x60
+#define I8042_STATUS_COMMAND 0x64 // Reads are status, writes go to command
 
 #define I8042_RESET 0xFE
 void reboot() {
 	cli();
 
-	uint8_t status = inb(I8042_STATUS);
-	while (status & 0b00000010) {
-		inb(I8042_BUFFER);
-		status = inb(I8042_STATUS);
-	}
-	outb(I8042_STATUS, I8042_RESET);
+	// Wait for input buffer to clear
+	while (inb(I8042_STATUS_COMMAND) & 0x02) {}
 
+	// Send "Write output port" command
+	outb(I8042_STATUS_COMMAND, 0xD1);
+
+	// Wait again for input buffer to clear
+	while (inb(I8042_STATUS_COMMAND) & 0x02) {}
+
+	// Send data with reset bit (bit 0) cleared to cause CPU reset
+	outb(I8042_BUFFER, 0x00);
+
+	// Use the Reset Control Register as a fallback
+	outb(0xCF9, 0x06);
+
+	// If that didn't work, try triple faulting the cpu
+	uint8_t lidt_buffer[10] = {0};
+	asm volatile("lidt %0" : : "m"(lidt_buffer));
+	asm volatile("int3");
+
+	// Just in case, we halt instead of returning.
 	halt();
 }
 
