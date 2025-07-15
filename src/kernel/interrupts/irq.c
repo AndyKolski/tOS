@@ -48,6 +48,8 @@ void initIRQs() {
 	idt_set_gate(32 + 15, irq15, GATE_INTERRUPT, 0);
 }
 
+uint32 unhandled_irqs = 0;
+
 void irq_handler(struct regs *r) {
 	void (*handler)(struct regs *r);
 
@@ -55,7 +57,13 @@ void irq_handler(struct regs *r) {
 	if (handler) {
 		handler(r);
 	} else {
-		printf("\n [!!!] Unhandled IRQ: %lu\n", r->int_no - 32);
+		if (unhandled_irqs < 10) {
+			printf(" [!!!] Unhandled IRQ: %lu\n", r->int_no - 32);
+		} else if (unhandled_irqs == 10) {
+			printf(" [!!!] 10 unhandled IRQs, suppressing further messages.\n");
+		}
+
+		unhandled_irqs++;
 	}
 
 	// send an EOI (end of interrupt) command to the PICs.
