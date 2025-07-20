@@ -1,5 +1,6 @@
 #include <formatting.h>
 #include <io.h>
+#include <pci/devices.h>
 #include <pci/pci.h>
 #include <pci/pcitypes.h>
 #include <stdio.h>
@@ -16,6 +17,30 @@
 
 #define PCI_CONFIG_ADDRESS 0xCF8
 #define PCI_CONFIG_DATA    0xCFC
+
+#define MAX_PCI_DEVICES 32
+pci_device_t pci_devices[MAX_PCI_DEVICES];
+uint32 pci_device_count;
+
+#define MAX_PCI_DRIVERS 16
+pci_driver_t *pci_drivers[MAX_PCI_DRIVERS];
+uint32 pci_driver_count = 0;
+
+void pci_register_driver(pci_driver_t *driver) {
+	if (pci_driver_count < MAX_PCI_DRIVERS) {
+		pci_drivers[pci_driver_count++] = driver;
+	} else {
+		printf("PCI driver registry full\n");
+	}
+}
+
+bool check_driver_matches_device(pci_driver_t *driver, pci_device_t *device) {
+	return (driver->vendor_id == PCI_ANY_ID || driver->vendor_id == device->vendor_id) &&       // Vendor ID
+	       (driver->device_id == PCI_ANY_ID || driver->device_id == device->device_id) &&       // Device ID
+	       (driver->class_code == PCI_ANY_CLASS || driver->class_code == device->class_code) && // Class
+	       (driver->subclass == PCI_ANY_CLASS || driver->subclass == device->subclass) &&       // Subclass
+	       (driver->prog_if == PCI_ANY_CLASS || driver->prog_if == device->prog_if);            // Programming interface
+}
 
 uint32 enforceConfigReservedBits(uint32 config) {
 	if (config & 0x3) {
@@ -46,14 +71,6 @@ void pciWriteConfig(uint8 bus, uint8 device, uint8 function, uint8 reg, uint32 d
 	uint32 address = 0x80000000 | (((uint32)bus) << 16) | (((uint32)device) << 11) | (((uint32)function) << 8) | (((uint32)reg) << 2);
 	pciWrite(address, data);
 }
-
-typedef struct BARInfo {
-	uint64 base;
-	uint64 size;
-	bool isMemory;
-	bool is64Bit;        // Memory only
-	bool isPrefetchable; // Memory only
-} BARInfo;
 
 BARInfo getBARInfo(uint8 bus, uint8 device, uint8 function, uint8 BAR) {
 	BARInfo info = {0};
@@ -191,6 +208,8 @@ void enumeratePCIDevices() {
 			for (uint8 function = 0; function < 8; function++) {
 				uint16 vendorID = pciReadConfig(bus, device, function, 0) & 0xFFFF;
 				if (vendorID != 0xFFFF) {
+					pci_device_t thisDevice;
+
 					uint16 deviceID = (pciReadConfig(bus, device, function, 0) >> 16) & 0xFFFF;
 
 					uint32 register2 = pciReadConfig(bus, device, function, 0x2);
@@ -199,7 +218,58 @@ void enumeratePCIDevices() {
 					uint8 subclassCode = (register2 >> 16) & 0xFF;
 					uint8 interfaceCode = (register2 >> 8) & 0xFF;
 
-					printf("Found PCI device: %02x:%02x.%x -> %04x:%04x (Class %02x, Subclass %02x, IF %02x) - %s\n", bus, device, function, vendorID, deviceID, classCode, subclassCode, interfaceCode, getDeviceType(classCode, subclassCode, interfaceCode));
+					thisDevice.bus = bus;
+					thisDevice.device = device;
+					thisDevice.function = function;
+
+					thisDevice.vendor_id = vendorID;
+					thisDevice.device_id = deviceID;
+
+					thisDevice.class_code = classCode;
+					thisDevice.subclass = subclassCode;
+					thisDevice.prog_if = interfaceCode;
+
+					thisDevice.irq = pciReadConfig(bus, device, function, 0xf) & 0xFF;
+
+					for (uint8 i = 0; i < 6; i++) {
+						BARInfo info = getBARInfo(bus, device, function, i);
+						thisDevice.bars[i] = info;
+
+						if (info.is64Bit) {
+							i++; // Skip the upper 32 bits of this BAR
+						}
+					}
+
+					if (pci_device_count < MAX_PCI_DEVICES) {
+						pci_devices[pci_device_count++] = thisDevice;
+					} else {
+						printf("Unable to register PCI device\n");
+					}
+
+					// printf("Found PCI device: %02x:%02x.%x -> %04x:%04x (Class %02x, Subclass %02x, IF %02x) - %s\n", bus, device, function, vendorID, deviceID, classCode, subclassCode,
+					// interfaceCode, getDeviceType(thisDevice));
+				}
+			}
+		}
+	}
+}
+
+void initPCI() {
+	// Check if the PCI bus is present
+	if (pciReadConfig(0, 0, 0, 0) == 0xFFFFFFFF) {
+		printf("No PCI bus found.\n");
+		return;
+	}
+
+	register_pci_drivers();
+
+	enumeratePCIDevices();
+
+	for (uint32_t i = 0; i < pci_device_count; i++) {
+		for (size_t j = 0; j < pci_driver_count; j++) {
+			if (check_driver_matches_device(pci_drivers[j], &pci_devices[i])) {
+				if (pci_drivers[j]->probe(&pci_devices[i])) {
+					break; // this driver works, no need to continue
 				}
 			}
 		}

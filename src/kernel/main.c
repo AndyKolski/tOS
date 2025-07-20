@@ -50,12 +50,13 @@ int kmain(uint32 bootloaderMagic, uint32 multibootLocation) {
 	initKeyboard();
 	puts("Enabling interrupts...");
 	sti();
-	
+	puts("Initializing PCI");
+	initPCI();
 
 	puts("OK");
 
 	while (true) {
-		__asm__ volatile("hlt");  // nothing to do, so we halt the processor until something needs to happen, which we deal with, and then halt again
+		__asm__ volatile("hlt"); // nothing to do, so we halt the processor until something needs to happen, which we deal with, and then halt again
 	}
 	return 0;
 }

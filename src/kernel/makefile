@@ -1,6 +1,8 @@
 include src/kernel/arch/$(ARCH)/makefile
+include src/kernel/pci/devices/makefile
 KERNEL_OBJS := \
 $(KERNEL_ARCH_OBJS)\
+$(KERNEL_PCI_DRIVERS)\
 display.o\
 interrupts/idt.o\
 interrupts/irq_asm.o\
@@ -22,6 +24,8 @@ multiboot_header_asm.o\
 multibootdata.o\
 pcspeaker.o\
 pci/pci.o\
+pci/pcitypes.o\
+pci/devices.o\
 serial.o\
 system.o\
 time/pit.o\
